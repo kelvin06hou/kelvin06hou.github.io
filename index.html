@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Modern Single‑File Website</title>
+  <meta name="description" content="A clean, responsive single-file website template (HTML/CSS/JS)." />
+
+  <style>
+    :root{
+      --bg:#0f1724; --card:#0b1220; --muted:#9aa4b2; --accent:#6ee7b7; --glass: rgba(255,255,255,0.04);
+      --maxw:1100px; --radius:14px; font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,#071023 0%, var(--bg) 100%);color:#e6eef6}
+    a{color:var(--accent);text-decoration:none}
+    .container{max-width:var(--maxw);margin:0 auto;padding:28px}
+
+    /* header */
+    header{display:flex;align-items:center;justify-content:space-between;padding:12px 0}
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#06b6d4,#7c3aed);display:flex;align-items:center;justify-content:center;font-weight:700;color:#021022}
+    nav{display:flex;gap:18px;align-items:center}
+    .cta{padding:8px 14px;border-radius:10px;background:linear-gradient(90deg,var(--accent),#60a5fa);color:#021022;font-weight:600}
+
+    /* hero */
+    .hero{display:grid;grid-template-columns:1fr 420px;gap:28px;align-items:center;margin-top:28px}
+    .hero-card{background:var(--card);padding:28px;border-radius:20px;box-shadow:0 6px 30px rgba(2,6,23,0.6);backdrop-filter: blur(6px)}
+    h1{margin:0 0 12px;font-size:clamp(24px,4vw,40px);line-height:1.02}
+    p.lead{color:var(--muted);margin:0 0 18px}
+    .actions{display:flex;gap:12px}
+
+    /* features */
+    .features{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:22px}
+    .feature{background:var(--glass);padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
+    .feature h3{margin:0 0 8px;font-size:16px}
+    .feature p{margin:0;color:var(--muted);font-size:14px}
+
+    /* sidebar card */
+    .meta .stat{display:flex;justify-content:space-between;padding:10px 12px;border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);margin-bottom:10px}
+
+    /* gallery */
+    .gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:18px}
+    .gallery img{width:100%;height:100px;object-fit:cover;border-radius:8px}
+
+    /* contact */
+    .contact{margin-top:28px;padding:18px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border-radius:12px}
+    .row{display:flex;gap:12px}
+    .input, textarea{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit}
+    .btn{padding:10px 14px;border-radius:10px;background:linear-gradient(90deg,var(--accent),#60a5fa);border:none;color:#021022;font-weight:700;cursor:pointer}
+
+    footer{margin-top:28px;padding:18px 0;color:var(--muted);font-size:14px;text-align:center}
+
+    /* responsive */
+    @media (max-width:980px){
+      .hero{grid-template-columns:1fr}
+      .gallery{grid-template-columns:repeat(2,1fr)}
+      nav{display:none}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <div class="logo">MS</div>
+        <div>
+          <div style="font-weight:700">ModernSite</div>
+          <div style="font-size:12px;color:var(--muted)">Single-file template</div>
+        </div>
+      </div>
+
+      <nav>
+        <a href="#features">Features</a>
+        <a href="#gallery">Gallery</a>
+        <a href="#contact">Contact</a>
+        <a class="cta" href="#contact">Get Started</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="hero-card">
+          <h1>Beautiful, responsive website — in a single HTML file</h1>
+          <p class="lead">A minimal, accessible template with a modern look. Use it as a starter for landing pages, portfolios or small business sites.</p>
+
+          <div class="features" id="features">
+            <div class="feature">
+              <h3>Responsive layout</h3>
+              <p>Scales smoothly from phones to large screens using CSS grid and flexible units.</p>
+            </div>
+            <div class="feature">
+              <h3>Accessible</h3>
+              <p>Semantic HTML and clear focus states make the site usable for everyone.</p>
+            </div>
+            <div class="feature">
+              <h3>Easy to customize</h3>
+              <p>Everything is in one file: tweak colors, fonts, or structure quickly.</p>
+            </div>
+          </div>
+
+          <div style="margin-top:18px" class="actions">
+            <a class="btn" href="#contact">Contact us</a>
+            <a style="align-self:center;color:var(--muted)" href="#gallery">See examples →</a>
+          </div>
+        </div>
+
+        <aside class="meta">
+          <div class="hero-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <div style="font-weight:700">Quick stats</div>
+              <div style="font-size:12px;color:var(--muted)">Updated today</div>
+            </div>
+
+            <div class="stat"><div>Visitors</div><div style="font-weight:700">1,234</div></div>
+            <div class="stat"><div>Downloads</div><div style="font-weight:700">402</div></div>
+            <div class="stat"><div>Stars</div><div style="font-weight:700">8.9k</div></div>
+
+            <div style="margin-top:12px;color:var(--muted);font-size:13px">Short demo gallery</div>
+            <div class="gallery" id="gallery">
+              <img src="https://picsum.photos/seed/1/400/300" alt="demo image 1">
+              <img src="https://picsum.photos/seed/2/400/300" alt="demo image 2">
+              <img src="https://picsum.photos/seed/3/400/300" alt="demo image 3">
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      <section class="contact" id="contact">
+        <h2 style="margin-top:0">Get in touch</h2>
+        <p style="margin-top:0;color:var(--muted)">Send us a message and we will reply within 1–2 business days.</p>
+
+        <form id="contactForm" onsubmit="return handleSubmit(event)">
+          <div class="row">
+            <input class="input" id="name" placeholder="Your name" required>
+            <input class="input" id="email" type="email" placeholder="Email address" required>
+          </div>
+          <div style="margin-top:8px">
+            <textarea id="message" class="input" placeholder="Message" rows="5" required></textarea>
+          </div>
+          <div style="margin-top:12px;display:flex;gap:12px;align-items:center">
+            <button class="btn" type="submit">Send message</button>
+            <div id="formResult" style="color:var(--muted)"></div>
+          </div>
+        </form>
+      </section>
+
+      <footer>
+        &copy; <span id="year"></span> ModernSite • Built with a single HTML file
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    // small JS enhancements
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    function handleSubmit(e){
+      e.preventDefault();
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const message = document.getElementById('message').value.trim();
+      const result = document.getElementById('formResult');
+
+      if(!name || !email || !message){
+        result.textContent = 'Please fill all fields.'; return false;
+      }
+      // fake send – replace with real server endpoint as needed
+      result.textContent = 'Sending...';
+      setTimeout(()=>{
+        result.textContent = 'Thanks, ' + name + '! We received your message.';
+        document.getElementById('contactForm').reset();
+      },800);
+      return false;
+    }
+  </script>
+</body>
+</html>
