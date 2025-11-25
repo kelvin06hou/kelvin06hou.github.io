@@ -18,16 +18,37 @@
 <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-java.min.js"></script>
   <title>Programming site</title>
   <meta name="description" content="Template Site" />
-<body></body>
+<body>
+  <h2>Enter something:</h2>
+<input type="text" id="userInput" placeholder="Type here">
+<button id="saveBtn">Save</button>
 
-    <form id="contactForm">
-      <label for="name">Name:</label>
-      <input type="text" id="name" name="name" required>
-      <label for="email">Email:</label>
-      <input type="email" id="email" name="email" required>
-      <button type="submit">Submit</button>
-    </form>
-    <script src="alert.js"></script>
+<h3>Your previous input:</h3>
+<p id="displayInput"></p>
+
+<script>
+  const inputField = document.getElementById('userInput');
+  const display = document.getElementById('displayInput');
+  const saveBtn = document.getElementById('saveBtn');
+
+  // Load saved input on page load
+  window.onload = () => {
+    const saved = localStorage.getItem('userInput');
+    if (saved) {
+      display.textContent = saved;
+      inputField.value = saved; // Optional: show in input box
+    }
+  }
+
+  // Save input to localStorage
+  saveBtn.addEventListener('click', () => {
+    const value = inputField.value;
+    localStorage.setItem('userInput', value);
+    display.textContent = value;
+  });
+</script>
+</body>
+
   
   <br></br>
   <pre class="code-block code-cpp">
