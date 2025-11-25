@@ -43,9 +43,39 @@
   // Save input to localStorage
   saveBtn.addEventListener('click', () => {
     const value = inputField.value;
+    const timestamp = new Date().getTime(); // milliseconds
     localStorage.setItem('userInput', value);
-    display.textContent = value;
-  });
+    localStorage.setItem('inputTime', timestamp);
+    display.textContent = "Your answer has been recorded!";
+});
+
+const publishTime = new Date().getTime() + 60000; // 60,000 ms = 1 min
+function checkAnswer() {
+    const currentTime = new Date().getTime();
+    if (currentTime >= publishTime) {
+        // Show correct answer
+        const correctAnswer = "42"; // example
+        const userAnswer = localStorage.getItem('userInput');
+        display.textContent = `Correct answer: ${correctAnswer}\nYour answer: ${userAnswer}`;
+        
+        // Give marks
+        let marks = (userAnswer === correctAnswer) ? 1 : 0;
+        display.textContent += `\nMarks: ${marks}`;
+    } else {
+        display.textContent = "Correct answer will be published soon...";
+    }
+}
+
+// Check every second
+setInterval(checkAnswer, 1000);
+
+</script>
+
+<script>
+
+
+
+
 </script>
 </body>
 
