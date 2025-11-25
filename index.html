@@ -28,74 +28,61 @@
 
 <script>
   const inputField = document.getElementById('userInput');
-  const display = document.getElementById('displayInput');
-  const saveBtn = document.getElementById('saveBtn');
+const saveBtn = document.getElementById('saveBtn');
+const status = document.getElementById('status');
 
-  // Load saved input on page load
-  window.onload = () => {
-    const saved = localStorage.getItem('userInput');
-    if (saved) {
-      display.textContent = saved;
-      inputField.value = saved; // Optional: show in input box
-    }
-  }
+// Load previous answer
+const savedAnswer = localStorage.getItem('userInput');
+if (savedAnswer) inputField.value = savedAnswer;
 
-  // Save input to localStorage
-  saveBtn.addEventListener('click', () => {
-    const value = inputField.value;
-    const timestamp = new Date().getTime(); // milliseconds
-    localStorage.setItem('userInput', value);
-    localStorage.setItem('inputTime', timestamp);
-    display.textContent = "Your answer has been recorded!";
-});
+// Load publish time
+let publishTime = localStorage.getItem('publishTime');
+if (publishTime) publishTime = parseInt(publishTime);
 
-const publishTime = new Date().getTime() + 60000; // 60,000 ms = 1 min
-function checkAnswer() {
-    const currentTime = new Date().getTime();
-    if (currentTime >= publishTime) {
-        // Show correct answer
-        const correctAnswer = "42"; // example
+// Function to check time and update UI
+function checkTimer() {
+    if (!publishTime) return;
+
+    const now = new Date().getTime();
+
+    if (now >= publishTime) {
+        // Disable button immediately
+        saveBtn.disabled = true;
+
         const userAnswer = localStorage.getItem('userInput');
-        display.textContent = `Correct answer: ${correctAnswer}\nYour answer: ${userAnswer}`;
-        
-        // Give marks
-        let marks = (userAnswer === correctAnswer) ? 1 : 0;
-        display.textContent += `\nMarks: ${marks}`;
+        const correctAnswer = "42";
+        const marks = (userAnswer === correctAnswer) ? 1 : 0;
+
+        status.textContent = `Correct answer: ${correctAnswer}\nYour answer: ${userAnswer}\nMarks: ${marks}`;
+
+        // Remove publish time to stop future checks
+        localStorage.removeItem('publishTime');
+        publishTime = null;
     } else {
-        display.textContent = "Correct answer will be published soon...";
+        const secondsLeft = Math.ceil((publishTime - now) / 1000);
+        status.textContent = `Correct answer will be revealed in ${secondsLeft} seconds.`;
     }
 }
 
+// Run check immediately on page load
+checkTimer();
+
 // Check every second
-setInterval(() => {
-  if (!publishTime) return;
+setInterval(checkTimer, 1000);
 
-  const now = new Date().getTime();
+// Save button click
+saveBtn.addEventListener('click', () => {
+    const answer = inputField.value;
+    localStorage.setItem('userInput', answer);
 
-  if (now >= publishTime) {
-    const userAnswer = localStorage.getItem('userInput');
-    const correctAnswer = "42";
-    let marks = (userAnswer === correctAnswer) ? 1 : 0;
+    // Set publish time if not already set
+    if (!publishTime) {
+        publishTime = new Date().getTime() + 60000; // 1 minute later
+        localStorage.setItem('publishTime', publishTime);
+    }
 
-    status.textContent = `Correct answer: ${correctAnswer}\nYour answer: ${userAnswer}\nMarks: ${marks}`;
-
-    // Disable the save button after time is up
-    saveBtn.disabled = true;
-
-    // Clear publishTime
-    localStorage.removeItem('publishTime');
-    publishTime = null;
-  } else {
-    const secondsLeft = Math.ceil((publishTime - now) / 1000);
-    status.textContent = `Correct answer will be revealed in ${secondsLeft} seconds.`;
-  }
-}, 1000);
-</script>
-
-<script>
-
-
-
+    status.textContent = "Your answer has been recorded!";
+});
 
 </script>
 </body>
