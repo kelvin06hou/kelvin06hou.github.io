@@ -18,76 +18,7 @@
 <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-java.min.js"></script>
   <title>Programming site</title>
   <meta name="description" content="Template Site" />
-<body>
-  <h2>Enter something:</h2>
-<input type="text" id="userInput" placeholder="Type here">
-<button id="saveBtn">Save</button>
-
-<h3>Your previous input:</h3>
-<p id="displayInput"></p>
-
-<script>
-  const inputField = document.getElementById('userInput');
-const saveBtn = document.getElementById('saveBtn');
-const status = document.getElementById('status');
-
-// Load previous answer
-const savedAnswer = localStorage.getItem('userInput');
-if (savedAnswer) inputField.value = savedAnswer;
-
-// Load publish time
-let publishTime = localStorage.getItem('publishTime');
-if (publishTime) publishTime = parseInt(publishTime);
-
-// Function to check time and update UI
-function checkTimer() {
-    if (!publishTime) return;
-
-    const now = new Date().getTime();
-
-    if (now >= publishTime) {
-        // Disable button immediately
-        saveBtn.disabled = true;
-
-        const userAnswer = localStorage.getItem('userInput');
-        const correctAnswer = "42";
-        const marks = (userAnswer === correctAnswer) ? 1 : 0;
-
-        status.textContent = `Correct answer: ${correctAnswer}\nYour answer: ${userAnswer}\nMarks: ${marks}`;
-
-        // Remove publish time to stop future checks
-        localStorage.removeItem('publishTime');
-        publishTime = null;
-    } else {
-        const secondsLeft = Math.ceil((publishTime - now) / 1000);
-        status.textContent = `Correct answer will be revealed in ${secondsLeft} seconds.`;
-    }
-}
-
-// Run check immediately on page load
-checkTimer();
-
-// Check every second
-setInterval(checkTimer, 1000);
-
-// Save button click
-saveBtn.addEventListener('click', () => {
-    const answer = inputField.value;
-    localStorage.setItem('userInput', answer);
-
-    // Set publish time if not already set
-    if (!publishTime) {
-        publishTime = new Date().getTime() + 60000; // 1 minute later
-        localStorage.setItem('publishTime', publishTime);
-    }
-
-    status.textContent = "Your answer has been recorded!";
-});
-
-</script>
-</body>
-
-  
+<body></body>
   <br></br>
   <pre class="code-block code-cpp">
 // This is a C/C++ source code
@@ -104,10 +35,10 @@ b = int(input())
 print(a + b)
 </pre>
 
-<pre class="code-block code-python"><code class="language-python">
+<pre class="code-block code-python">
 def add(a, b):
     return a + b
-</code></pre>
+</pre>
 
 <pre class="code-block code-shell">
 $ echo "This is shell command"
@@ -121,11 +52,12 @@ This is the output of some program
 <pre class="code-block code-generic">
 Any other file content goes here.
 </pre>
-
 </html>
 
+<!-- command
 //git status
 //git add .
 //git commit -m "Message"
 //git pull -- rebase origin main
 //git push origin main 重點是這句
+-->
