@@ -40,7 +40,7 @@
    =============================== */
 
 /* C / C++ — blue */
-.code-cpp::before {
+.code-cpp::after {
     background-color: #2d66c3;
 }
 
