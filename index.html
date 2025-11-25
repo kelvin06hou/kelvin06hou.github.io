@@ -67,8 +67,29 @@ function checkAnswer() {
 }
 
 // Check every second
-setInterval(checkAnswer, 1000);
+setInterval(() => {
+  if (!publishTime) return;
 
+  const now = new Date().getTime();
+
+  if (now >= publishTime) {
+    const userAnswer = localStorage.getItem('userInput');
+    const correctAnswer = "42";
+    let marks = (userAnswer === correctAnswer) ? 1 : 0;
+
+    status.textContent = `Correct answer: ${correctAnswer}\nYour answer: ${userAnswer}\nMarks: ${marks}`;
+
+    // Disable the save button after time is up
+    saveBtn.disabled = true;
+
+    // Clear publishTime
+    localStorage.removeItem('publishTime');
+    publishTime = null;
+  } else {
+    const secondsLeft = Math.ceil((publishTime - now) / 1000);
+    status.textContent = `Correct answer will be revealed in ${secondsLeft} seconds.`;
+  }
+}, 1000);
 </script>
 
 <script>
