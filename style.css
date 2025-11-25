@@ -9,7 +9,7 @@
     margin: 24px 0;
     position: relative;
     overflow-x: auto;
-    line-height: 1.45;
+    line-height: 1;
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 
     /* striped background */
