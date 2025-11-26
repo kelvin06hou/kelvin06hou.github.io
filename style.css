@@ -14,7 +14,7 @@
 
     background: repeating-linear-gradient(
         to bottom,
-        #eef1f4 0px,
+        #eef1f4 30px, /**/
         #eef1f4 26px,
         #ffffff 26px,
         #ffffff 52px
