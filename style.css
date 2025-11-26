@@ -3,7 +3,7 @@
    =============================== */
 .code-block {
     font-family: Consolas, Monaco, "Courier New", monospace;
-    font-size: 20px;
+    font-size: 12px;
     line-height: 14px;  /* MATCH background stripe height */
     border-radius: 6px;
     padding: 10px 16px 12px 18px;
