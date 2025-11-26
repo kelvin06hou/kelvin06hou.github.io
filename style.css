@@ -4,15 +4,14 @@
 .code-block {
     font-family: Consolas, Monaco, "Courier New", monospace;
     font-size: 14px;
+    line-height: 26px;  /* MATCH background stripe height */
     border-radius: 6px;
-    padding: 12px 16px 12px 18px; /* extra left padding because of color bar */
+    padding: 12px 16px 12px 18px;
     margin: 24px 0;
     position: relative;
     overflow-x: auto;
-    line-height: 1.4;
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 
-    /* striped background */
     background: repeating-linear-gradient(
         to bottom,
         #eef1f4 0px,
@@ -21,6 +20,7 @@
         #ffffff 52px
     );
 }
+
 
 /* ===============================
    LEFT EDGE COLOR BAR
