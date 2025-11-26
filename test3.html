@@ -45,6 +45,51 @@ function switchTab(lang) {
     document.getElementById(lang).classList.add('active');
 }
 
+// Black-box test cases
+const testCases = [
+    { input: "5", expected: "10" },
+    { input: "2", expected: "4" },
+    { input: "-3", expected: "-6" }
+];
+
+async function runCode(lang) {
+    let code = document.getElementById(lang + "-code").value;
+
+    let results = "";
+    let passedCount = 0;
+
+    for (let i = 0; i < testCases.length; i++) {
+        let input = testCases[i].input;
+        let expected = testCases[i].expected;
+
+        // Send code + test input to backend
+        let res = await fetch("run_code.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                language: lang,
+                code: code,
+                input: input
+            })
+        });
+
+        let output = (await res.text()).trim();
+
+        if (output === expected) {
+            results += `Test ${i+1}: PASS\n`;
+            passedCount++;
+        } else {
+            results += `Test ${i+1}: FAIL (expected ${expected}, got ${output})\n`;
+        }
+    }
+
+    results += `\nTotal Passed: ${passedCount}/${testCases.length}`;
+
+    document.getElementById(lang + "-output").textContent = results;
+}
+
+
+/*
 function runCode(lang) {
     let code = document.getElementById(lang + "-code").value;
 
@@ -60,6 +105,7 @@ function runCode(lang) {
 
     document.getElementById(lang + "-output").textContent = output;
 }
+*/
 </script>
 
 </body>
