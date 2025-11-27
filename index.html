@@ -19,6 +19,16 @@ import { getAnalytics } from "firebase/analytics";
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+
+</script>
+
+
+
+<script type="module">
+  // Import the Firebase SDKs
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
 const firebaseConfig = {
   apiKey: "AIzaSyC-IaeYoBz6CiJAs8tusAt-dxU8B4lwi_0",
   authDomain: "kelvin06hou-id.firebaseapp.com",
@@ -32,7 +42,25 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
+
+  // Form submit logic
+  document.getElementById("contactForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const name = document.getElementById("name").value;
+    const email = document.getElementById("email").value;
+
+    await addDoc(collection(db, "contacts"), {
+      name: name,
+      email: email,
+      timestamp: new Date()
+    });
+
+    alert("Data saved to Firebase!");
+  });
 </script>
+
+
 <!-- Language components -->
 <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-python.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-c.min.js"></script>
