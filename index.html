@@ -10,7 +10,29 @@
 
 <!-- Prism JS -->
 <script src="https://cdn.jsdelivr.net/npm/prismjs/prism.js"></script>
+<script>
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
 
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyC-IaeYoBz6CiJAs8tusAt-dxU8B4lwi_0",
+  authDomain: "kelvin06hou-id.firebaseapp.com",
+  projectId: "kelvin06hou-id",
+  storageBucket: "kelvin06hou-id.firebasestorage.app",
+  messagingSenderId: "163838748410",
+  appId: "1:163838748410:web:07555194f1ff485884cb43",
+  measurementId: "G-PKHVBZKWP1"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+</script>
 <!-- Language components -->
 <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-python.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-c.min.js"></script>
