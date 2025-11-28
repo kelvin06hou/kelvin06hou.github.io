@@ -4,7 +4,7 @@
 .code-block {
     font-family: Consolas, Monaco, "Courier New", monospace;
     font-size: 14px;
-    line-height: 26px;  /* MATCH background stripe height */
+    line-height: 20px;  /* MATCH background stripe height */
     border-radius: 6px;
     padding: 12px 16px 12px 18px;
     margin: 24px 0;
