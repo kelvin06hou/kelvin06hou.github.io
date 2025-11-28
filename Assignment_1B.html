@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Simple Quiz Box</title>
+  <style>
+    :root{ --bg:#0f1724; --card:#0b1220; --accent:#6ee7b7; --muted:#94a3b8; --glass: rgba(255,255,255,0.03);} 
+    html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; background:linear-gradient(180deg,#071025 0%, #0b1320 100%); color:#e6eef8}
+    .wrap{min-height:100%;display:flex;align-items:center;justify-content:center;padding:48px}
+    .card{width:900px;max-width:96%;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:12px;padding:24px;box-shadow:0 8px 30px rgba(2,6,23,0.6);backdrop-filter: blur(6px);border:1px solid rgba(255,255,255,0.04)}
+    header{display:flex;align-items:flex-start;gap:16px}
+    .title{font-size:20px;font-weight:700;margin:0}
+    .meta{color:var(--muted);font-size:13px}
+    .info{margin-top:8px;color:#cfe7ff;background:var(--glass);padding:12px;border-radius:8px;border:1px solid rgba(255,255,255,0.02)}
+
+    form{margin-top:18px;display:grid;gap:18px}
+    .q{background:rgba(255,255,255,0.01);padding:14px;border-radius:10px;border:1px solid rgba(255,255,255,0.02)}
+    .q h3{margin:0 0 8px 0;font-size:16px}
+    .options{display:flex;flex-direction:column;gap:6px}
+    label.option{display:flex;align-items:center;gap:8px;padding:8px;border-radius:8px;cursor:pointer}
+    input[type="radio"]{accent-color:var(--accent);width:18px;height:18px}
+    input[type="text"], textarea{width:100%;padding:10px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.04);color:inherit;font-family:inherit}
+    textarea{min-height:140px;font-family:monospace}
+    .controls{display:flex;gap:10px;align-items:center}
+    button{background:linear-gradient(90deg,var(--accent),#34d399);border:none;padding:10px 14px;border-radius:10px;color:#04221a;font-weight:700;cursor:pointer}
+    button.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted);font-weight:600}
+    .result{margin-top:12px;padding:10px;border-radius:8px;background:rgba(0,0,0,0.25);color:#dfffe6}
+    .small{font-size:13px;color:var(--muted)}
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    /* responsive */
+    @media (max-width:520px){ .card{padding:16px} .title{font-size:18px} }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <main class="card">
+      <!--
+        To change title & information: edit the HTML below (the elements with id="quizTitle" and id="quizInfo").
+        To change answers/keys, edit the 'ANSWER_KEY' object in the <script> section near the bottom.
+      -->
+      <header>
+        <div style="flex:1">
+          <h1 id="quizTitle" class="title">Sample Quiz: JavaScript Basics</h1>
+          <div id="quizInfo" class="info small">Instructions: Answer the multiple-choice questions, write a short answer, and solve the code task in the code box. This is a single-file demo — you can edit questions/answers directly in the HTML/JS.</div>
+        </div>
+        <div class="small" style="text-align:right;min-width:120px">Total questions: <strong id="totalQ">3</strong><br><span class="small">Time: optional</span></div>
+      </header>
+
+      <form id="quizForm" onsubmit="return false">
+        <!-- Question 1: 5-option MCQ -->
+        <section class="q" data-qid="q1">
+          <h3>1. What is the output of <code>typeof []</code> in JavaScript?</h3>
+          <div class="options">
+            <label class="option"><input type="radio" name="q1" value="A"> A) "array"</label>
+            <label class="option"><input type="radio" name="q1" value="B"> B) "object"</label>
+            <label class="option"><input type="radio" name="q1" value="C"> C) "list"</label>
+            <label class="option"><input type="radio" name="q1" value="D"> D) "undefined"</label>
+            <label class="option"><input type="radio" name="q1" value="E"> E) "null"</label>
+          </div>
+        </section>
+
+        <!-- Question 2: 5-option MCQ -->
+        <section class="q" data-qid="q2">
+          <h3>2. Which keyword creates a block-scoped variable?</h3>
+          <div class="options">
+            <label class="option"><input type="radio" name="q2" value="A"> A) var</label>
+            <label class="option"><input type="radio" name="q2" value="B"> B) const</label>
+            <label class="option"><input type="radio" name="q2" value="C"> C) let</label>
+            <label class="option"><input type="radio" name="q2" value="D"> D) static</label>
+            <label class="option"><input type="radio" name="q2" value="E"> E) def</label>
+          </div>
+        </section>
+
+        <!-- Question 3: Short answer -->
+        <section class="q" data-qid="q3">
+          <h3>3. Short answer: Name one primitive data type in JavaScript.</h3>
+          <input type="text" id="q3" name="q3" placeholder="Type your short answer here...">
+        </section>
+
+        <!-- Question 4: Code-writing input -->
+        <section class="q" data-qid="q4">
+          <h3>4. Code task: Write a small JavaScript function named <code>sumTwo</code> that takes two numbers and returns their sum. (You can run JS in the sandbox below)</h3>
+          <textarea id="codeArea" placeholder="// Example:\nfunction sumTwo(a, b) {\n  return a + b;\n}\nconsole.log(sumTwo(2,3));"></textarea>
+
+          <div class="row" style="margin-top:8px;align-items:center">
+            <div class="controls">
+              <button id="runCode">Run (JS)</button>
+              <button class="secondary" id="clearCode">Clear</button>
+            </div>
+            <div class="small">Output:</div>
+          </div>
+
+          <iframe id="sandbox" style="width:100%;height:160px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);margin-top:8px;background:#001;" sandbox="allow-scripts"></iframe>
+        </section>
+
+        <div class="row" style="margin-top:6px">
+          <button id="grade">Submit & Grade</button>
+          <button class="secondary" id="reset">Reset</button>
+          <div id="feedback" style="flex:1"></div>
+        </div>
+
+        <div id="resultBox" class="result" hidden></div>
+      </form>
+
+    </main>
+  </div>
+
+  <script>
+    // ANSWER KEY: edit these values if you change questions
+    const ANSWER_KEY = {
+      q1: 'B', // typeof [] -> 'object'
+      q2: 'C', // let
+      // q3 is free-text; we will accept a few examples
+      q3: ['string','number','boolean','undefined','symbol','bigint','null']
+    }
+
+    const totalQ = 4; document.getElementById('totalQ').textContent = totalQ;
+
+    // grading logic
+    document.getElementById('grade').addEventListener('click', () => {
+      const res = {score:0, total:3, details:[]}; // only grade MCQs and short answer here
+      // q1 & q2
+      ['q1','q2'].forEach((qid)=>{
+        const el = document.querySelector(`input[name="${qid}"]:checked`);
+        const val = el ? el.value : null;
+        const ok = (val === ANSWER_KEY[qid]);
+        res.details.push({qid, val, ok});
+        if(ok) res.score++;
+      });
+
+      // q3 short answer (basic check)
+      const short = (document.getElementById('q3').value || '').trim().toLowerCase();
+      const ok3 = short.length>0 && ANSWER_KEY.q3.includes(short.replace(/\s+/g, ''));
+      res.details.push({qid:'q3', val:short, ok: ok3});
+      if(ok3) res.score++;
+
+      // show results
+      const box = document.getElementById('resultBox');
+      box.hidden = false;
+      box.innerHTML = `<strong>Score:</strong> ${res.score} / ${res.total} <br><div class="small" style="margin-top:8px">Details: ${res.details.map(d=>`${d.qid}: ${d.ok? '✓' : '✗' }`).join(' | ')}</div>`;
+      document.getElementById('feedback').innerHTML = '';
+    });
+
+    document.getElementById('reset').addEventListener('click', ()=>{
+      document.getElementById('quizForm').reset();
+      document.getElementById('resultBox').hidden = true;
+      document.getElementById('feedback').innerHTML = '';
+    });
+
+    // sandboxed JS runner: writes code into iframe and runs it inside a simple console
+    function runInSandbox(code){
+      const iframe = document.getElementById('sandbox');
+      const blob = new Blob([`
+        <!doctype html><html><body style="background:#001;color:#cfe7ff;font-family:monospace;padding:8px"><pre id=output></pre><script>
+        const print = (...args)=>{document.getElementById('output').textContent += args.join(' ') + '\n';};
+        try{\n${code}\n} catch(e){print('Error:', e.message)}
+        </script></body></html>
+      `], {type:'text/html'});
+      iframe.src = URL.createObjectURL(blob);
+    }
+
+    document.getElementById('runCode').addEventListener('click', (e)=>{
+      e.preventDefault();
+      const code = document.getElementById('codeArea').value || '';
+      runInSandbox(code);
+    });
+
+    document.getElementById('clearCode').addEventListener('click', (e)=>{
+      e.preventDefault();
+      document.getElementById('codeArea').value = '';
+      document.getElementById('sandbox').src = 'about:blank';
+    });
+
+    // small UX: show small message when loaded
+    window.addEventListener('load', ()=>{
+      const fb = document.getElementById('feedback');
+      fb.innerHTML = '<span class="small">Tip: edit the title/info directly in the HTML, or change ANSWER_KEY inside the JS to set keys.</span>';
+    });
+  </script>
+</body>
+</html>
