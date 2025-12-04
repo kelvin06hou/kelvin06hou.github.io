@@ -23,7 +23,7 @@ button {
     padding: 10px 20px;
     margin-top: 10px;
 }
-.timer {
+.timer, .deadline {
     font-weight: bold;
     color: darkred;
 }
@@ -37,7 +37,10 @@ button {
 <h2>Write your code (Python)</h2>
 
 <div class="timer" id="timer"></div>
-<div>Remaining Submissions: <span id="tries">5</span>/5</div>
+<div class="deadline" id="deadlineBox"></div>
+
+<div>Remaining Submissions (Session): <span id="tries">5</span>/5</div>
+<div>Total Submissions Used: <span id="totalCount">0</span>/10</div>
 
 <textarea id="code-input">
 x = int(input())
@@ -45,13 +48,41 @@ print(x * 2)
 </textarea>
 
 <br>
-<button onclick="runTests()">Submit</button>
+<button id="submitBtn" onclick="runTests()">Submit</button>
 
 <div class="result" id="result-box">Loading Python runtime…</div>
 <div class="history" id="history-box">Submission History:</div>
 
 <script>
-// ======================= TIME + ATTEMPT LIMIT =======================
+// ======================= FIXED DEADLINE =======================
+// 🔒 HARD DEADLINE (FIXED)
+const DEADLINE = new Date("2025-12-04T22:30:00").getTime();
+
+// ======================= TOTAL SUBMISSION LIMIT =======================
+let totalSubmissions = Number(localStorage.getItem("totalSubmissions") || 0);
+document.getElementById("totalCount").textContent = totalSubmissions;
+
+function checkDeadlineAndLimit() {
+    const now = Date.now();
+    const btn = document.getElementById("submitBtn");
+
+    if (now > DEADLINE) {
+        btn.disabled = true;
+        btn.style.display = "none";
+        document.getElementById("deadlineBox").textContent =
+            "❌ Deadline Passed (2025-12-04 22:30)";
+    }
+
+    if (totalSubmissions >= 10) {
+        btn.disabled = true;
+        btn.style.display = "none";
+        document.getElementById("deadlineBox").textContent =
+            "❌ Maximum 10 Total Submissions Reached";
+    }
+}
+checkDeadlineAndLimit();
+
+// ======================= SESSION TIME + ATTEMPT LIMIT =======================
 const startTime = Date.now();
 const timeLimit = 5 * 60 * 1000;
 let attempts = 5;
@@ -59,7 +90,7 @@ let attempts = 5;
 setInterval(() => {
     const remaining = timeLimit - (Date.now() - startTime);
     if (remaining <= 0) {
-        document.getElementById("timer").textContent = "❌ Submission Closed";
+        document.getElementById("timer").textContent = "❌ Session Closed";
     } else {
         const m = Math.floor(remaining / 60000);
         const s = Math.floor((remaining % 60000) / 1000);
@@ -103,18 +134,39 @@ renderHistory();
 // ======================= MAIN JUDGE =======================
 async function runTests() {
 
+    checkDeadlineAndLimit();
+
     if (!pyodideReady) {
-        document.getElementById("result-box").textContent = "Python still loading...";
+        document.getElementById("result-box").textContent =
+            "Python still loading...";
         return;
     }
 
-    if (attempts <= 0 || Date.now() - startTime > timeLimit) {
-        document.getElementById("result-box").textContent = "❌ Submissions Closed";
+    if (attempts <= 0) {
+        document.getElementById("result-box").textContent =
+            "❌ Session Attempt Limit Reached";
+        return;
+    }
+
+    if (Date.now() > DEADLINE) {
+        document.getElementById("result-box").textContent =
+            "❌ Deadline Passed";
+        return;
+    }
+
+    if (totalSubmissions >= 10) {
+        document.getElementById("result-box").textContent =
+            "❌ Maximum Overall Submissions Reached";
         return;
     }
 
     attempts--;
+    totalSubmissions++;
+
+    localStorage.setItem("totalSubmissions", totalSubmissions);
+
     document.getElementById("tries").textContent = attempts;
+    document.getElementById("totalCount").textContent = totalSubmissions;
 
     const userCode = document.getElementById("code-input").value;
     const hasInput = /\binput\s*\(/.test(userCode);
@@ -123,7 +175,7 @@ async function runTests() {
     let passed = 0;
 
     try {
-        // ✅ CASE 1 — SAFE EXECUTION CHECK (WITH DUMMY INPUT)
+        // ✅ Case 1: Safe Execution
         await pyodide.runPythonAsync(`
 import sys
 from io import StringIO
@@ -132,9 +184,8 @@ sys.stdout = StringIO()
         `);
 
         await pyodide.runPythonAsync(userCode);
-        resultText += "✅";  // Execution successful
+        resultText += "✅";
 
-        // ✅ CASE 2–11 — BLACK BOX TESTS
         for (let i = 0; i < inputs.length; i++) {
 
             await pyodide.runPythonAsync(`
@@ -150,7 +201,6 @@ sys.stdout = StringIO()
                 `sys.stdout.getvalue().strip()`
             );
 
-            // ❌ If no input() OR no output → auto fail
             if (!hasInput || actual === "") {
                 resultText += "❌";
                 continue;
@@ -166,23 +216,20 @@ sys.stdout = StringIO()
 
         resultText += `\nBlack-Box Passed: ${passed}/10`;
 
-        if (passed === 10) {
-            resultText += "\n🎉 All hidden test cases passed!";
-        }
-
         document.getElementById("result-box").textContent = resultText;
 
         saveHistory({
             time: new Date().toLocaleTimeString(),
-            result: resultText.replace(/\n/g, " ")
+            result: resultText.replace(/\n/g," ")
         });
+
+        checkDeadlineAndLimit();
 
     } catch (err) {
         document.getElementById("result-box").textContent =
             "❌ Runtime Error:\n" + err;
     }
 }
-
 </script>
 
 </body>
