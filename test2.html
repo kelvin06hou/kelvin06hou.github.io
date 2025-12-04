@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Code Judge</title>
+<title>Python Code Judge</title>
 <style>
 textarea {
     width: 100%;
@@ -16,24 +16,43 @@ textarea {
     border-radius: 6px;
     background: #f4f4f4;
     white-space: pre-wrap;
+    font-family: Consolas, monospace;
+}
+button {
+    padding: 10px 20px;
+    margin-top: 10px;
 }
 </style>
+
+<!-- Pyodide -->
+<script src="https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js"></script>
 </head>
+
 <body>
 
-<h2>Write your code (JavaScript)</h2>
+<h2>Write your code (Python)</h2>
+
 <textarea id="code-input">
-// Must define a function solve(input)
-function solve(input) {
-    return input * 2;
-}
+# Must define a function solve(input)
+def solve(input):
+    return input * 2
 </textarea>
 
+<br>
 <button onclick="runTests()">Run Tests</button>
 
-<div class="result" id="result-box">Output will appear here…</div>
+<div class="result" id="result-box">Loading Python runtime…</div>
 
 <script>
+let pyodideReady = false;
+
+async function loadPyodideRuntime() {
+    window.pyodide = await loadPyodide();
+    pyodideReady = true;
+    document.getElementById("result-box").textContent = "Python runtime ready.";
+}
+loadPyodideRuntime();
+
 // ===============================================
 // Hidden Test Cases (Black-box Testing)
 // ===============================================
@@ -50,36 +69,42 @@ const tests = [
     {input: 1, expected: 2}
 ];
 
-function runTests() {
+async function runTests() {
+    if (!pyodideReady) {
+        document.getElementById("result-box").textContent = "Python is still loading. Please wait…";
+        return;
+    }
+
     const userCode = document.getElementById("code-input").value;
     let resultText = "";
 
     try {
-        // Evaluate user code safely
-        eval(userCode);
+        // Load user Python code
+        await pyodide.runPythonAsync(userCode);
 
-        if (typeof solve !== "function") {
-            document.getElementById("result-box").textContent =
-                "Error: You must define a function solve(input)";
-            return;
-        }
+        // ✅ Case 1: Execution Successful
+        resultText += "Case 1: ✅ Execution Successful\n";
 
         let passed = 0;
 
-        tests.forEach((t, index) => {
-            let actual = solve(t.input);
+        // ✅ Case 2–11: Black-box tests ONLY
+        for (let i = 0; i < tests.length; i++) {
+            const t = tests[i];
+            pyodide.globals.set("test_input", t.input);
+            const actual = await pyodide.runPythonAsync(`solve(test_input)`);
+
             if (actual === t.expected) {
-                resultText += `Test ${index+1}: PASS\n`;
+                resultText += `Case ${i + 2}: ✅ PASS\n`;
                 passed++;
             } else {
-                resultText += `Test ${index+1}: FAIL (expected ${t.expected}, got ${actual})\n`;
+                resultText += `Case ${i + 2}: ❌ FAIL\n`;
             }
-        });
+        }
 
-        resultText += `\nTotal Passed: ${passed}/10`;
+        resultText += `\nBlack-Box Passed: ${passed}/10`;
 
         if (passed === tests.length) {
-            resultText += "\n🎉 Congratulations! You passed all test cases!";
+            resultText += "\n🎉 All hidden test cases passed!";
         }
 
         document.getElementById("result-box").textContent = resultText;
