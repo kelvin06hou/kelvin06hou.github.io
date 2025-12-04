@@ -10,7 +10,7 @@ textarea {
     font-family: Consolas, monospace;
     font-size: 14px;
 }
-.result {
+.result, .history {
     margin-top: 20px;
     padding: 10px;
     border-radius: 6px;
@@ -22,28 +22,52 @@ button {
     padding: 10px 20px;
     margin-top: 10px;
 }
+.timer {
+    font-weight: bold;
+    color: darkred;
+}
 </style>
 
-<!-- Pyodide -->
 <script src="https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js"></script>
 </head>
 
 <body>
 
 <h2>Write your code (Python)</h2>
+<div class="timer" id="timer"></div>
+<div>Remaining Submissions: <span id="tries">5</span>/5</div>
 
 <textarea id="code-input">
-# You must define a function output()
-def output():
-    print(2 * 2)
+# Your program must use input() and print output
+x = int(input())
+print(x * 2)
 </textarea>
 
 <br>
-<button onclick="runTests()">Run Tests</button>
+<button onclick="runTests()">Submit</button>
 
 <div class="result" id="result-box">Loading Python runtime…</div>
+<div class="history" id="history-box">Submission History:</div>
 
 <script>
+// ======================= TIMER & SUBMISSION LIMIT =======================
+const startTime = Date.now();
+const timeLimit = 5 * 60 * 1000; // 5 minutes
+let attempts = 5;
+
+setInterval(() => {
+    const remaining = timeLimit - (Date.now() - startTime);
+    if (remaining <= 0) {
+        document.getElementById("timer").textContent = "❌ Submission Closed";
+    } else {
+        const minutes = Math.floor(remaining / 60000);
+        const seconds = Math.floor((remaining % 60000) / 1000);
+        document.getElementById("timer").textContent = 
+            `Time Remaining: ${minutes}:${seconds.toString().padStart(2,"0")}`;
+    }
+}, 1000);
+
+// ======================= PYODIDE =======================
 let pyodideReady = false;
 
 async function loadPyodideRuntime() {
@@ -53,62 +77,75 @@ async function loadPyodideRuntime() {
 }
 loadPyodideRuntime();
 
-// ===============================================
-// Hidden Test Cases (Black-box Testing)
-// (Only internal judge knows expected output)
-// ===============================================
-const tests = [
-    "4",
-    "10",
-    "20",
-    "-6",
-    "0",
-    "24",
-    "14",
-    "198",
-    "-40",
-    "2"
-];
+// ======================= BLACK BOX DATA =======================
+const inputs = ["2","5","10","-3","0","12","7","99","-20","1"];
+const outputs = ["4","10","20","-6","0","24","14","198","-40","2"];
 
+function saveHistory(data) {
+    let history = JSON.parse(localStorage.getItem("submissions") || "[]");
+    history.push(data);
+    localStorage.setItem("submissions", JSON.stringify(history));
+    displayHistory();
+}
+
+function displayHistory() {
+    let history = JSON.parse(localStorage.getItem("submissions") || "[]");
+    let text = "Submission History:\n";
+    history.forEach(h => {
+        text += `${h.time} → ${h.result}\n`;
+    });
+    document.getElementById("history-box").textContent = text;
+}
+displayHistory();
+
+// ======================= MAIN JUDGE =======================
 async function runTests() {
-    if (!pyodideReady) {
-        document.getElementById("result-box").textContent =
-            "Python is still loading. Please wait…";
+    if (!pyodideReady) return;
+
+    if (attempts <= 0 || Date.now() - startTime > timeLimit) {
+        document.getElementById("result-box").textContent = "❌ Submissions Closed";
         return;
     }
+
+    attempts--;
+    document.getElementById("tries").textContent = attempts;
 
     const userCode = document.getElementById("code-input").value;
     let resultText = "";
 
+    const hasInput = userCode.includes("input(");
+
     try {
-        // Redirect Python stdout to a buffer
+        // Setup output buffer
         await pyodide.runPythonAsync(`
 import sys
 from io import StringIO
 sys.stdout = StringIO()
         `);
 
-        // Run user code
+        // ✅ CASE 1 — EXECUTION CHECK
         await pyodide.runPythonAsync(userCode);
-
-        // ✅ Case 1: Execution Successful
         resultText += "✅";
 
         let passed = 0;
 
-        // ✅ Case 2–11: Black-box output checks ONLY
-        for (let i = 0; i < tests.length; i++) {
+        for (let i = 0; i < inputs.length; i++) {
 
-            // Clear output buffer
-            await pyodide.runPythonAsync(`sys.stdout = StringIO()`);
+            await pyodide.runPythonAsync(`
+sys.stdin = StringIO("${inputs[i]}")
+sys.stdout = StringIO()
+            `);
 
-            // Run output()
-            await pyodide.runPythonAsync(`output()`);
-
-            // Read printed output
+            await pyodide.runPythonAsync(userCode);
             let actual = await pyodide.runPythonAsync(`sys.stdout.getvalue().strip()`);
 
-            if (actual === tests[i]) {
+            // ❌ No input() OR No output → auto fail
+            if (!hasInput || actual === "") {
+                resultText += "❌";
+                continue;
+            }
+
+            if (actual === outputs[i]) {
                 resultText += "✅";
                 passed++;
             } else {
@@ -118,11 +155,16 @@ sys.stdout = StringIO()
 
         resultText += `\nBlack-Box Passed: ${passed}/10`;
 
-        if (passed === tests.length) {
+        if (passed === 10) {
             resultText += "\n🎉 All hidden test cases passed!";
         }
 
         document.getElementById("result-box").textContent = resultText;
+
+        saveHistory({
+            time: new Date().toLocaleTimeString(),
+            result: resultText.replace(/\n/g," ")
+        });
 
     } catch (err) {
         document.getElementById("result-box").textContent =
