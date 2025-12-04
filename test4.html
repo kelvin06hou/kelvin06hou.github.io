@@ -120,14 +120,21 @@ async function runTests() {
     const hasInput = /\binput\s*\(/.test(userCode);
 
     let resultText = "";
+    let passed = 0;
 
     try {
-        // ✅ CASE 1 — EXECUTION CHECK
+        // ✅ CASE 1 — SAFE EXECUTION CHECK (WITH DUMMY INPUT)
+        await pyodide.runPythonAsync(`
+import sys
+from io import StringIO
+sys.stdin = StringIO("0")
+sys.stdout = StringIO()
+        `);
+
         await pyodide.runPythonAsync(userCode);
-        resultText += "✅";
+        resultText += "✅";  // Execution successful
 
-        let passed = 0;
-
+        // ✅ CASE 2–11 — BLACK BOX TESTS
         for (let i = 0; i < inputs.length; i++) {
 
             await pyodide.runPythonAsync(`
@@ -139,9 +146,11 @@ sys.stdout = StringIO()
 
             await pyodide.runPythonAsync(userCode);
 
-            let actual = await pyodide.runPythonAsync(`sys.stdout.getvalue().strip()`);
+            let actual = await pyodide.runPythonAsync(
+                `sys.stdout.getvalue().strip()`
+            );
 
-            // ❌ No input() OR No print → auto fail
+            // ❌ If no input() OR no output → auto fail
             if (!hasInput || actual === "") {
                 resultText += "❌";
                 continue;
@@ -173,6 +182,7 @@ sys.stdout = StringIO()
             "❌ Runtime Error:\n" + err;
     }
 }
+
 </script>
 
 </body>
