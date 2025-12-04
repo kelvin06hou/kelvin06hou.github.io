@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Python Code Judge</title>
+
 <style>
 textarea {
     width: 100%;
@@ -34,11 +35,11 @@ button {
 <body>
 
 <h2>Write your code (Python)</h2>
+
 <div class="timer" id="timer"></div>
 <div>Remaining Submissions: <span id="tries">5</span>/5</div>
 
 <textarea id="code-input">
-# Your program must use input() and print output
 x = int(input())
 print(x * 2)
 </textarea>
@@ -50,9 +51,9 @@ print(x * 2)
 <div class="history" id="history-box">Submission History:</div>
 
 <script>
-// ======================= TIMER & SUBMISSION LIMIT =======================
+// ======================= TIME + ATTEMPT LIMIT =======================
 const startTime = Date.now();
-const timeLimit = 5 * 60 * 1000; // 5 minutes
+const timeLimit = 5 * 60 * 1000;
 let attempts = 5;
 
 setInterval(() => {
@@ -60,10 +61,10 @@ setInterval(() => {
     if (remaining <= 0) {
         document.getElementById("timer").textContent = "❌ Submission Closed";
     } else {
-        const minutes = Math.floor(remaining / 60000);
-        const seconds = Math.floor((remaining % 60000) / 1000);
-        document.getElementById("timer").textContent = 
-            `Time Remaining: ${minutes}:${seconds.toString().padStart(2,"0")}`;
+        const m = Math.floor(remaining / 60000);
+        const s = Math.floor((remaining % 60000) / 1000);
+        document.getElementById("timer").textContent =
+            `Time Remaining: ${m}:${s.toString().padStart(2,"0")}`;
     }
 }, 1000);
 
@@ -78,17 +79,18 @@ async function loadPyodideRuntime() {
 loadPyodideRuntime();
 
 // ======================= BLACK BOX DATA =======================
-const inputs = ["2","5","10","-3","0","12","7","99","-20","1"];
+const inputs  = ["2","5","10","-3","0","12","7","99","-20","1"];
 const outputs = ["4","10","20","-6","0","24","14","198","-40","2"];
 
+// ======================= HISTORY =======================
 function saveHistory(data) {
     let history = JSON.parse(localStorage.getItem("submissions") || "[]");
     history.push(data);
     localStorage.setItem("submissions", JSON.stringify(history));
-    displayHistory();
+    renderHistory();
 }
 
-function displayHistory() {
+function renderHistory() {
     let history = JSON.parse(localStorage.getItem("submissions") || "[]");
     let text = "Submission History:\n";
     history.forEach(h => {
@@ -96,11 +98,15 @@ function displayHistory() {
     });
     document.getElementById("history-box").textContent = text;
 }
-displayHistory();
+renderHistory();
 
 // ======================= MAIN JUDGE =======================
 async function runTests() {
-    if (!pyodideReady) return;
+
+    if (!pyodideReady) {
+        document.getElementById("result-box").textContent = "Python still loading...";
+        return;
+    }
 
     if (attempts <= 0 || Date.now() - startTime > timeLimit) {
         document.getElementById("result-box").textContent = "❌ Submissions Closed";
@@ -111,18 +117,11 @@ async function runTests() {
     document.getElementById("tries").textContent = attempts;
 
     const userCode = document.getElementById("code-input").value;
+    const hasInput = /\binput\s*\(/.test(userCode);
+
     let resultText = "";
 
-    const hasInput = userCode.includes("input(");
-
     try {
-        // Setup output buffer
-        await pyodide.runPythonAsync(`
-import sys
-from io import StringIO
-sys.stdout = StringIO()
-        `);
-
         // ✅ CASE 1 — EXECUTION CHECK
         await pyodide.runPythonAsync(userCode);
         resultText += "✅";
@@ -132,14 +131,17 @@ sys.stdout = StringIO()
         for (let i = 0; i < inputs.length; i++) {
 
             await pyodide.runPythonAsync(`
+import sys
+from io import StringIO
 sys.stdin = StringIO("${inputs[i]}")
 sys.stdout = StringIO()
             `);
 
             await pyodide.runPythonAsync(userCode);
+
             let actual = await pyodide.runPythonAsync(`sys.stdout.getvalue().strip()`);
 
-            // ❌ No input() OR No output → auto fail
+            // ❌ No input() OR No print → auto fail
             if (!hasInput || actual === "") {
                 resultText += "❌";
                 continue;
@@ -163,12 +165,12 @@ sys.stdout = StringIO()
 
         saveHistory({
             time: new Date().toLocaleTimeString(),
-            result: resultText.replace(/\n/g," ")
+            result: resultText.replace(/\n/g, " ")
         });
 
     } catch (err) {
         document.getElementById("result-box").textContent =
-            "Runtime Error:\n" + err;
+            "❌ Runtime Error:\n" + err;
     }
 }
 </script>
