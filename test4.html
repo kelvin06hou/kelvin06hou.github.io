@@ -33,9 +33,9 @@ button {
 <h2>Write your code (Python)</h2>
 
 <textarea id="code-input">
-# Must define a function solve(input)
-def solve(input):
-    return input * 2
+# You must define a function output()
+def output():
+    print(2 * 2)
 </textarea>
 
 <br>
@@ -55,23 +55,25 @@ loadPyodideRuntime();
 
 // ===============================================
 // Hidden Test Cases (Black-box Testing)
+// (Only internal judge knows expected output)
 // ===============================================
 const tests = [
-    {input: 2, expected: 4},
-    {input: 5, expected: 10},
-    {input: 10, expected: 20},
-    {input: -3, expected: -6},
-    {input: 0, expected: 0},
-    {input: 12, expected: 24},
-    {input: 7, expected: 14},
-    {input: 99, expected: 198},
-    {input: -20, expected: -40},
-    {input: 1, expected: 2}
+    "4",
+    "10",
+    "20",
+    "-6",
+    "0",
+    "24",
+    "14",
+    "198",
+    "-40",
+    "2"
 ];
 
 async function runTests() {
     if (!pyodideReady) {
-        document.getElementById("result-box").textContent = "Python is still loading. Please wait…";
+        document.getElementById("result-box").textContent =
+            "Python is still loading. Please wait…";
         return;
     }
 
@@ -79,7 +81,14 @@ async function runTests() {
     let resultText = "";
 
     try {
-        // Load user Python code
+        // Redirect Python stdout to a buffer
+        await pyodide.runPythonAsync(`
+import sys
+from io import StringIO
+sys.stdout = StringIO()
+        `);
+
+        // Run user code
         await pyodide.runPythonAsync(userCode);
 
         // ✅ Case 1: Execution Successful
@@ -87,17 +96,23 @@ async function runTests() {
 
         let passed = 0;
 
-        // ✅ Case 2–11: Black-box tests ONLY
+        // ✅ Case 2–11: Black-box output checks ONLY
         for (let i = 0; i < tests.length; i++) {
-            const t = tests[i];
-            pyodide.globals.set("test_input", t.input);
-            const actual = await pyodide.runPythonAsync(`solve(test_input)`);
 
-            if (actual === t.expected) {
-                resultText += `✅`;
+            // Clear output buffer
+            await pyodide.runPythonAsync(`sys.stdout = StringIO()`);
+
+            // Run output()
+            await pyodide.runPythonAsync(`output()`);
+
+            // Read printed output
+            let actual = await pyodide.runPythonAsync(`sys.stdout.getvalue().strip()`);
+
+            if (actual === tests[i]) {
+                resultText += "✅";
                 passed++;
             } else {
-                resultText += `❌`;
+                resultText += "❌";
             }
         }
 
