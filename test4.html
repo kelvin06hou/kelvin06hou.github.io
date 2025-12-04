@@ -49,6 +49,7 @@ print(x * 2)
 
 <br>
 <button id="submitBtn" onclick="runTests()">Submit</button>
+<button onclick="clearAllRecords()">🗑️ Clear Submission Record</button>
 
 <div class="result" id="result-box">Loading Python runtime…</div>
 <div class="history" id="history-box">Submission History:</div>
@@ -130,6 +131,37 @@ function renderHistory() {
     document.getElementById("history-box").textContent = text;
 }
 renderHistory();
+
+// -----Clean history--------
+function clearAllRecords() {
+
+    if (!confirm("Are you sure you want to clear ALL submission records?")) {
+        return;
+    }
+
+    // ✅ Reset storage
+    localStorage.removeItem("submissions");
+    localStorage.removeItem("totalSubmissions");
+
+    // ✅ Reset runtime values
+    totalSubmissions = 0;
+    attempts = 5;
+
+    // ✅ Update UI
+    document.getElementById("totalCount").textContent = 0;
+    document.getElementById("tries").textContent = 5;
+    document.getElementById("result-box").textContent = "✅ Submission records cleared.";
+    document.getElementById("history-box").textContent = "Submission History:";
+
+    // ✅ Restore submit button ONLY if deadline & limit allow
+    const btn = document.getElementById("submitBtn");
+    btn.style.display = "inline-block";
+    btn.disabled = false;
+
+    checkDeadlineAndLimit();  // re-apply lock if deadline passed
+}
+
+
 
 // ======================= MAIN JUDGE =======================
 async function runTests() {
