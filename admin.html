@@ -1,155 +1,133 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="utf-8" />
+  <meta charset="UTF-8">
   <title>MCQ Admin (Supabase)</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body { font-family: Arial, sans-serif; margin: 24px; line-height: 1.5; }
-    .container { max-width: 900px; margin: 0 auto; }
-    .card { border: 1px solid #ccc; padding: 16px; border-radius: 12px; margin-bottom: 16px; }
-    .row { display: flex; gap: 12px; flex-wrap: wrap; }
-    label { font-weight: bold; }
-    input, textarea, select, button { padding: 8px; }
-    textarea { width: 100%; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-    .danger { background: #a00; color: white; }
+    body { font-family: Arial; padding: 20px; }
+    .card { border: 1px solid #ccc; padding: 12px; margin-bottom: 12px; border-radius: 8px; }
+    textarea, input, select, button { width: 100%; padding: 6px; margin-top: 6px; }
+    button { cursor: pointer; }
   </style>
 </head>
 <body>
-<div class="container">
-  <h1>Admin — MCQ (Supabase)</h1>
 
-  <div class="card">
-    <h2>Exam Settings</h2>
-    <div class="row">
-      <div>
-        <label>Deadline</label><br />
-        <input type="datetime-local" id="deadline" />
-      </div>
-      <div>
-        <label>Publish Results</label><br />
-        <select id="publishFlag">
-          <option value="false">Not Published</option>
-          <option value="true">Published</option>
-        </select>
-      </div>
-    </div>
-    <br />
-    <button id="saveSettingsBtn">Save Settings</button>
-  </div>
+<h1>Admin Panel</h1>
 
-  <div class="card">
-    <h2>Question Bank</h2>
-    <div id="questionEditor"></div>
-    <button id="addQuestionBtn">Add Question</button>
-    <button id="saveQuestionsBtn">Save All Questions</button>
-  </div>
+<div class="card">
+  <h3>Settings</h3>
+  Deadline:
+  <input id="deadline" type="datetime-local">
+  Publish:
+  <select id="publish">
+    <option value="false">No</option>
+    <option value="true">Yes</option>
+  </select>
+  <button onclick="saveSettings()">Save Settings</button>
+</div>
 
-  <div class="card">
-    <h2>Submissions & Auto-Marking</h2>
-    <div id="submissionTable"></div>
-  </div>
+<div class="card">
+  <h3>Questions</h3>
+  <div id="editor"></div>
+  <button onclick="addQuestion()">+ Add Question</button>
+  <button onclick="saveQuestions()">Save All</button>
+</div>
+
+<div class="card">
+  <h3>Submissions</h3>
+  <pre id="subs"></pre>
 </div>
 
 <script type="module">
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-const SUPABASE_URL = 'https://nkfsjyfsqoulpsnktana.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5rZnNqeWZzcW91bHBzbmt0YW5hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ5NzA0MzEsImV4cCI6MjA4MDU0NjQzMX0.Lp1wqwSVz9gYn_gA2-s_f1hbiL_Lxqn6jnIC9x0sx3o';
+const supabase = createClient(
+  "https://nkfsjyfsqoulpsnktana.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5rZnNqeWZzcW91bHBzbmt0YW5hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ5NzA0MzEsImV4cCI6MjA4MDU0NjQzMX0.Lp1wqwSVz9gYn_gA2-s_f1hbiL_Lxqn6jnIC9x0sx3o"
+);
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// ---------- SETTINGS ----------
+window.saveSettings = async () => {
+  const deadline = document.getElementById("deadline").value;
+  const published = document.getElementById("publish").value === "true";
 
-async function loadAdmin() {
-  const { data: settings } = await supabase.from('settings').select('*').eq('id',1).maybeSingle();
-  if (settings) {
-    document.getElementById('deadline').value = settings.deadline ? new Date(settings.deadline).toISOString().slice(0,16) : '';
-    document.getElementById('publishFlag').value = String(settings.published);
-  }
+  const { error } = await supabase.from("settings").upsert({
+    id: 1,
+    deadline,
+    published
+  });
 
-  const { data: questions } = await supabase.from('questions').select('*').order('id');
-  renderEditor(questions || []);
-
-  loadSubmissions();
-}
-
-document.getElementById('saveSettingsBtn').onclick = async () => {
-  const deadline = document.getElementById('deadline').value || null;
-  const published = document.getElementById('publishFlag').value === 'true';
-  await supabase.from('settings').upsert({ id:1, deadline, published });
-  alert('Settings saved');
+  if (error) alert(error.message);
+  else alert("Settings saved");
 };
 
-function renderEditor(questions) {
-  const container = document.getElementById('questionEditor');
-  container.innerHTML = '';
-  questions.forEach((q,i) => {
-    const div = document.createElement('div');
-    div.className = 'card';
-    div.innerHTML = `
-      <label>Question ${i+1}</label><br>
-      <textarea class="q-text">${q.text}</textarea><br>
-      <label>Options (one per line)</label><br>
-      <textarea class="q-options">${q.options.join('\n')}</textarea><br>
-      <label>Correct Answer</label><br>
-      <input class="q-answer" value="${q.answer}">
+// ---------- LOAD ----------
+async function loadAll() {
+  const { data: s } = await supabase.from("settings").select("*").eq("id",1).maybeSingle();
+  if (s) {
+    document.getElementById("deadline").value = s.deadline || "";
+    document.getElementById("publish").value = String(s.published);
+  }
+
+  const { data: q } = await supabase.from("questions").select("*").order("id");
+  render(q || []);
+
+  const { data: sub } = await supabase.from("submissions").select("*");
+  document.getElementById("subs").textContent = JSON.stringify(sub, null, 2);
+}
+
+function render(questions) {
+  const ed = document.getElementById("editor");
+  ed.innerHTML = "";
+  questions.forEach(q => {
+    const d = document.createElement("div");
+    d.className = "card";
+    d.innerHTML = `
+      <textarea class="q">${q.text}</textarea>
+      <textarea class="o">${q.options.join("\n")}</textarea>
+      <input class="a" value="${q.answer}">
     `;
-    container.appendChild(div);
+    ed.appendChild(d);
   });
 }
 
-document.getElementById('addQuestionBtn').onclick = () => {
-  const container = document.getElementById('questionEditor');
-  const div = document.createElement('div');
-  div.className = 'card';
-  div.innerHTML = `
-    <label>New Question</label><br>
-    <textarea class="q-text"></textarea><br>
-    <label>Options</label><br>
-    <textarea class="q-options">A\nB\nC\nD</textarea><br>
-    <label>Correct Answer</label><br>
-    <input class="q-answer">
+// ---------- ADD ----------
+window.addQuestion = () => {
+  const d = document.createElement("div");
+  d.className = "card";
+  d.innerHTML = `
+    <textarea class="q"></textarea>
+    <textarea class="o">A\nB\nC\nD</textarea>
+    <input class="a">
   `;
-  container.appendChild(div);
+  document.getElementById("editor").appendChild(d);
 };
 
-document.getElementById('saveQuestionsBtn').onclick = async () => {
-  const cards = document.querySelectorAll('.card .q-text');
-  await supabase.from('questions').delete().neq('id',0);
+// ---------- SAVE ----------
+window.saveQuestions = async () => {
+  await supabase.from("questions").delete().neq("id",0);
 
-  const all = document.querySelectorAll('.card');
-  for (let card of all) {
-    const text = card.querySelector('.q-text');
-    if (!text) continue;
+  const cards = document.querySelectorAll("#editor .card");
+  for (const c of cards) {
+    const text = c.querySelector(".q").value;
+    const options = c.querySelector(".o").value.split("\n");
+    const answer = c.querySelector(".a").value.toUpperCase();
 
-    const options = card.querySelector('.q-options').value.split('\n');
-    const answer = card.querySelector('.q-answer').value.toUpperCase();
+    const { error } = await supabase.from("questions").insert({
+      text, options, answer
+    });
 
-    await supabase.from('questions').insert({ text: text.value, options, answer });
+    if (error) {
+      alert(error.message);
+      return;
+    }
   }
 
-  alert('Questions saved');
-  loadAdmin();
+  alert("All questions saved");
+  loadAll();
 };
 
-async function loadSubmissions() {
-  const { data: subs } = await supabase.from('submissions').select('*');
-  const { data: qs } = await supabase.from('questions').select('*');
-
-  let html = `<table><tr><th>Name</th><th>Score</th></tr>`;
-  subs.forEach(s => {
-    let score = 0;
-    s.answers.forEach((a,i)=>{
-      if (a === qs[i]?.answer) score++;
-    });
-    html += `<tr><td>${s.name}</td><td>${score}/${qs.length}</td></tr>`;
-  });
-  html += `</table>`;
-  document.getElementById('submissionTable').innerHTML = html;
-}
-
-loadAdmin();
+loadAll();
 </script>
 </body>
 </html>
