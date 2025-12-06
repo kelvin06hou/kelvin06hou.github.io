@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>MCQ System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; line-height: 1.5; }
+    h1, h2 { margin-top: 0; }
+    .container { max-width: 900px; margin: 0 auto; }
+    .card { border: 1px solid #ccc; padding: 16px; border-radius: 12px; margin-bottom: 16px; }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; }
+    label { font-weight: bold; }
+    input, textarea, select, button { padding: 8px; }
+    textarea { width: 100%; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    .hidden { display: none; }
+    .danger { background: #a00; color: white; }
+    .success { background: #0a7; color: white; }
+    .muted { color: #666; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div id="adminPage" class="hidden">
+    <h1>Admin Page</h1>
+
+    <div class="card">
+      <h2>Exam Settings</h2>
+      <div class="row">
+        <div>
+          <label>Deadline</label><br />
+          <input type="datetime-local" id="deadline" />
+        </div>
+        <div>
+          <label>Publish Results</label><br />
+          <select id="publishFlag">
+            <option value="false">Not Published</option>
+            <option value="true">Published</option>
+          </select>
+        </div>
+      </div>
+      <br />
+      <button onclick="saveSettings()">Save Settings</button>
+    </div>
+
+    <div class="card">
+      <h2>Question Bank</h2>
+      <div id="questionEditor"></div>
+      <button onclick="addQuestion()">Add Question</button>
+      <button onclick="saveQuestions()">Save All Questions</button>
+    </div>
+
+    <div class="card">
+      <h2>Submissions & Marking</h2>
+      <div id="submissionTable"></div>
+      <button onclick="exportCSV()">Export CSV</button>
+    </div>
+  </div>
+
+  <div id="studentPage" class="hidden">
+    <h1>MCQ Result Page</h1>
+
+    <div class="card">
+      <strong>Deadline:</strong> <span id="deadlineDisplay"></span><br />
+      <strong>Status:</strong> <span id="statusDisplay"></span>
+    </div>
+
+    <div class="card">
+      <label>Your Name</label><br />
+      <input type="text" id="studentName" />
+    </div>
+
+    <div id="questionList"></div>
+
+    <button id="submitBtn" onclick="submitAnswers()">Submit</button>
+
+    <div id="resultSection" class="card hidden"></div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEYS = {
+  SETTINGS: 'mcq_settings',
+  QUESTIONS: 'mcq_questions',
+  SUBMISSIONS: 'mcq_submissions'
+};
+
+function isAdmin() {
+  return new URLSearchParams(window.location.search).get('admin') === '1';
+}
+
+function init() {
+  if (isAdmin()) {
+    document.getElementById('adminPage').classList.remove('hidden');
+    loadAdmin();
+  } else {
+    document.getElementById('studentPage').classList.remove('hidden');
+    loadStudent();
+  }
+}
+
+// ---------------- ADMIN ----------------
+function loadAdmin() {
+  const settings = JSON.parse(localStorage.getItem(STORAGE_KEYS.SETTINGS) || '{}');
+  document.getElementById('deadline').value = settings.deadline || '';
+  document.getElementById('publishFlag').value = String(settings.published || false);
+
+  const questions = JSON.parse(localStorage.getItem(STORAGE_KEYS.QUESTIONS) || '[]');
+  renderQuestionEditor(questions);
+  renderSubmissions();
+}
+
+function saveSettings() {
+  const settings = {
+    deadline: document.getElementById('deadline').value,
+    published: document.getElementById('publishFlag').value === 'true'
+  };
+  localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+  alert('Settings saved');
+}
+
+function renderQuestionEditor(questions) {
+  const container = document.getElementById('questionEditor');
+  container.innerHTML = '';
+
+  questions.forEach((q, i) => {
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.innerHTML = `
+      <label>Question ${i + 1}</label><br />
+      <textarea class="q-text">${q.text}</textarea><br />
+      <label>Options (A–E)</label><br />
+      <textarea class="q-options">${q.options.join('\n')}</textarea><br />
+      <label>Correct Answer (A–E)</label><br />
+      <input class="q-answer" value="${q.answer}" />
+      <button onclick="removeQuestion(${i})" class="danger">Remove</button>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function addQuestion() {
+  const questions = JSON.parse(localStorage.getItem(STORAGE_KEYS.QUESTIONS) || '[]');
+  questions.push({ text: '', options: ['A', 'B', 'C', 'D'], answer: '' });
+  renderQuestionEditor(questions);
+}
+
+function removeQuestion(index) {
+  const questions = JSON.parse(localStorage.getItem(STORAGE_KEYS.QUESTIONS) || '[]');
+  questions.splice(index, 1);
+  renderQuestionEditor(questions);
+}
+
+function saveQuestions() {
+  const cards = document.querySelectorAll('#questionEditor .card');
+  const questions = Array.from(cards).map(card => ({
+    text: card.querySelector('.q-text').value,
+    options: card.querySelector('.q-options').value.split('\n'),
+    answer: card.querySelector('.q-answer').value.trim().toUpperCase()
+  }));
+
+  localStorage.setItem(STORAGE_KEYS.QUESTIONS, JSON.stringify(questions));
+  alert('Questions saved');
+}
+
+function renderSubmissions() {
+  const submissions = JSON.parse(localStorage.getItem(STORAGE_KEYS.SUBMISSIONS) || '[]');
+  const questions = JSON.parse(localStorage.getItem(STORAGE_KEYS.QUESTIONS) || '[]');
+
+  let html = '<table><tr><th>Name</th><th>Score</th><th>Action</th></tr>';
+
+  submissions.forEach((s, i) => {
+    let score = 0;
+    s.answers.forEach((a, idx) => {
+      if (a === questions[idx]?.answer) score++;
+    });
+
+    s.score = score;
+
+    html += `<tr>
+      <td>${s.name}</td>
+      <td>${score}/${questions.length}</td>
+      <td><button onclick="markSubmission(${i})">Recalculate</button></td>
+    </tr>`;
+  });
+
+  html += '</table>';
+  document.getElementById('submissionTable').innerHTML = html;
+
+  localStorage.setItem(STORAGE_KEYS.SUBMISSIONS, JSON.stringify(submissions));
+}
+
+function markSubmission(i) {
+  renderSubmissions();
+  alert('Marks recalculated');
+}
+
+function exportCSV() {
+  const submissions = JSON.parse(localStorage.getItem(STORAGE_KEYS.SUBMISSIONS) || '[]');
+  let csv = 'Name,Score\n';
+  submissions.forEach(s => {
+    csv += `${s.name},${s.score}\n`;
+  });
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'submissions.csv';
+  a.click();
+}
+
+// ---------------- STUDENT ----------------
+function loadStudent() {
+  const settings = JSON.parse(localStorage.getItem(STORAGE_KEYS.SETTINGS) || '{}');
+  const questions = JSON.parse(localStorage.getItem(STORAGE_KEYS.QUESTIONS) || '[]');
+
+  document.getElementById('deadlineDisplay').textContent = settings.deadline || 'Not Set';
+
+  const now = new Date();
+  if (settings.deadline && now > new Date(settings.deadline)) {
+    document.getElementById('submitBtn').disabled = true;
+    document.getElementById('statusDisplay').textContent = 'Closed';
+  } else {
+    document.getElementById('statusDisplay').textContent = 'Open';
+  }
+
+  const container = document.getElementById('questionList');
+  container.innerHTML = '';
+
+  questions.forEach((q, i) => {
+    const div = document.createElement('div');
+    div.className = 'card';
+    let optionsHTML = '';
+
+    q.options.forEach(opt => {
+      optionsHTML += `<label><input type="radio" name="q${i}" value="${opt[0]}" /> ${opt}</label><br />`;
+    });
+
+    div.innerHTML = `<strong>Q${i + 1}:</strong> ${q.text}<br />${optionsHTML}`;
+    container.appendChild(div);
+  });
+}
+
+function submitAnswers() {
+  const name = document.getElementById('studentName').value.trim();
+  if (!name) return alert('Please enter your name');
+
+  const questions = JSON.parse(localStorage.getItem(STORAGE_KEYS.QUESTIONS) || '[]');
+  const answers = questions.map((_, i) => {
+    const checked = document.querySelector(`input[name="q${i}"]:checked`);
+    return checked ? checked.value : '';
+  });
+
+  const submissions = JSON.parse(localStorage.getItem(STORAGE_KEYS.SUBMISSIONS) || '[]');
+  submissions.push({ name, answers, score: 0 });
+  localStorage.setItem(STORAGE_KEYS.SUBMISSIONS, JSON.stringify(submissions));
+
+  showResult(name, answers);
+}
+
+function showResult(name, answers) {
+  const settings = JSON.parse(localStorage.getItem(STORAGE_KEYS.SETTINGS) || '{}');
+  const questions = JSON.parse(localStorage.getItem(STORAGE_KEYS.QUESTIONS) || '[]');
+
+  const resultDiv = document.getElementById('resultSection');
+  resultDiv.classList.remove('hidden');
+
+  if (!settings.published) {
+    resultDiv.innerHTML = '<strong>Submission received. Results not published yet.</strong>';
+    return;
+  }
+
+  let score = 0;
+  let html = `<h2>Result for ${name}</h2>`;
+
+  questions.forEach((q, i) => {
+    const correct = q.answer === answers[i];
+    if (correct) score++;
+    html += `<div>Q${i + 1}: Your Answer = ${answers[i] || '-'} | Correct = ${q.answer} | ${correct ? 'Correct' : 'Wrong'}</div>`;
+  });
+
+  html += `<h3>Total Score: ${score}/${questions.length}</h3>`;
+  resultDiv.innerHTML = html;
+}
+
+init();
+</script>
+</body>
+</html>
