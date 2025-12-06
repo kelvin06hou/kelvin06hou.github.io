@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>MCQ Student (Firebase)</title>
+  <meta charset="utf-8" />
+  <title>MCQ Student (Supabase)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body { font-family: Arial, sans-serif; margin: 24px; line-height: 1.5; }
@@ -14,7 +14,7 @@
 </head>
 <body>
 <div class="container">
-  <h1>MCQ Result Page (Firebase)</h1>
+  <h1>MCQ — Student (Supabase)</h1>
 
   <div class="card">
     <strong>Deadline:</strong> <span id="deadlineDisplay"></span><br />
@@ -28,118 +28,74 @@
 
   <div id="questionList"></div>
 
-  <button id="submitBtn" onclick="submitAnswers()">Submit</button>
+  <button id="submitBtn">Submit</button>
 
   <div id="resultSection" class="card hidden"></div>
 </div>
 
 <script type="module">
-  // ================= FIREBASE CONFIG (YOUR PROJECT) =================
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-  import { getDatabase, ref, get, push } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyC-IaeYoBz6CiJAs8tusAt-dxU8B4lwi_0",
-    authDomain: "kelvin06hou-id.firebaseapp.com",
-    databaseURL: "https://kelvin06hou-id-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "kelvin06hou-id",
-    storageBucket: "kelvin06hou-id.firebasestorage.app",
-    messagingSenderId: "163838748410",
-    appId: "1:163838748410:web:ff81a549ab6bc44f84cb43",
-    measurementId: "G-YQ5RH9HLM4"
-  };
+const SUPABASE_URL = 'https://nkfsjyfsqoulpsnktana.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5rZnNqeWZzcW91bHBzbmt0YW5hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ5NzA0MzEsImV4cCI6MjA4MDU0NjQzMX0.Lp1wqwSVz9gYn_gA2-s_f1hbiL_Lxqn6jnIC9x0sx3o';
 
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  const settingsRef = ref(db, 'settings');
-  const questionsRef = ref(db, 'questions');
-  const submissionsRef = ref(db, 'submissions');
+async function loadStudent() {
+  const { data: settings } = await supabase.from('settings').select('*').eq('id',1).maybeSingle();
+  const { data: questions } = await supabase.from('questions').select('*').order('id', {ascending:true});
 
-  async function loadStudent() {
-    const settingsSnap = await get(settingsRef);
-    const questionsSnap = await get(questionsRef);
+  document.getElementById('deadlineDisplay').textContent = settings?.deadline || 'Not Set';
 
-    const settings = settingsSnap.val() || {};
-    const questions = questionsSnap.val() || [];
-
-    document.getElementById('deadlineDisplay').textContent = settings.deadline || 'Not Set';
-
-    const now = new Date();
-    if (settings.deadline && now > new Date(settings.deadline)) {
-      document.getElementById('submitBtn').disabled = true;
-      document.getElementById('statusDisplay').textContent = 'Closed';
-    } else {
-      document.getElementById('statusDisplay').textContent = 'Open';
-    }
-
-    const container = document.getElementById('questionList');
-    container.innerHTML = '';
-
-    questions.forEach((q, i) => {
-      const div = document.createElement('div');
-      div.className = 'card';
-      let optionsHTML = '';
-
-      q.options.forEach(opt => {
-        optionsHTML += `<label><input type="radio" name="q${i}" value="${opt[0]}" /> ${opt}</label><br />`;
-      });
-
-      div.innerHTML = `<strong>Q${i + 1}:</strong> ${q.text}<br />${optionsHTML}`;
-      container.appendChild(div);
-    });
+  const now = new Date();
+  if (settings?.deadline && now > new Date(settings.deadline)) {
+    document.getElementById('submitBtn').disabled = true;
+    document.getElementById('statusDisplay').textContent = 'Closed';
+  } else {
+    document.getElementById('statusDisplay').textContent = 'Open';
   }
 
-  window.submitAnswers = async function () {
-    const name = document.getElementById('studentName').value.trim();
-    if (!name) return alert('Please enter your name');
+  const container = document.getElementById('questionList'); container.innerHTML = '';
+  (questions||[]).forEach((q, i) => {
+    const div = document.createElement('div'); div.className = 'card';
+    let optionsHTML = '';
+    (q.options||[]).forEach(opt => { optionsHTML += `<label><input type="radio" name="q${i}" value="${opt[0]}" /> ${opt}</label><br>`; });
+    div.innerHTML = `<strong>Q${i+1}:</strong> ${q.text}<br>${optionsHTML}`;
+    container.appendChild(div);
+  });
+}
 
-    const questionsSnap = await get(questionsRef);
-    const questions = questionsSnap.val() || [];
+// submit
+document.getElementById('submitBtn').addEventListener('click', async ()=>{
+  const name = document.getElementById('studentName').value.trim();
+  if (!name) return alert('Please enter your name');
 
-    const answers = questions.map((_, i) => {
-      const checked = document.querySelector(`input[name="q${i}"]:checked`);
-      return checked ? checked.value : '';
-    });
+  const { data: questions } = await supabase.from('questions').select('*').order('id', {ascending:true});
+  const answers = questions.map((_, i) => { const checked = document.querySelector(`input[name="q${i}"]:checked`); return checked ? checked.value : ''; });
 
-    await push(submissionsRef, {
-      name,
-      answers,
-      timestamp: Date.now()
-    });
+  const { error } = await supabase.from('submissions').insert({ name, answers });
+  if (error) return alert('Submit failed: '+error.message);
 
-    showResult(name, answers);
-  };
+  showResult(name, answers);
+});
 
-  async function showResult(name, answers) {
-    const settingsSnap = await get(settingsRef);
-    const questionsSnap = await get(questionsRef);
+async function showResult(name, answers) {
+  const { data: settings } = await supabase.from('settings').select('*').eq('id',1).maybeSingle();
+  const { data: questions } = await supabase.from('questions').select('*').order('id', {ascending:true});
 
-    const settings = settingsSnap.val() || {};
-    const questions = questionsSnap.val() || [];
-
-    const resultDiv = document.getElementById('resultSection');
-    resultDiv.classList.remove('hidden');
-
-    if (!settings.published) {
-      resultDiv.innerHTML = '<strong>Submission received. Results not published yet.</strong>';
-      return;
-    }
-
-    let score = 0;
-    let html = `<h2>Result for ${name}</h2>`;
-
-    questions.forEach((q, i) => {
-      const correct = q.answer === answers[i];
-      if (correct) score++;
-      html += `<div>Q${i + 1}: Your Answer = ${answers[i] || '-'} | Correct = ${q.answer} | ${correct ? 'Correct' : 'Wrong'}</div>`;
-    });
-
-    html += `<h3>Total Score: ${score}/${questions.length}</h3>`;
-    resultDiv.innerHTML = html;
+  const resultDiv = document.getElementById('resultSection'); resultDiv.classList.remove('hidden');
+  if (!settings?.published) {
+    resultDiv.innerHTML = '<strong>Submission received. Results not published yet.</strong>';
+    return;
   }
 
-  loadStudent();
+  let score = 0; let html = `<h2>Result for ${name}</h2>`;
+  (questions||[]).forEach((q, i) => { const correct = q.answer === answers[i]; if (correct) score++; html += `<div>Q${i+1}: Your Answer = ${answers[i] || '-'} | Correct = ${q.answer} | ${correct ? 'Correct':'Wrong'}</div>`; });
+  html += `<h3>Total Score: ${score}/${questions.length}</h3>`;
+  resultDiv.innerHTML = html;
+}
+
+loadStudent();
 </script>
 </body>
 </html>

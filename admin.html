@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>MCQ Admin (Firebase)</title>
+  <meta charset="utf-8" />
+  <title>MCQ Admin (Supabase)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body { font-family: Arial, sans-serif; margin: 24px; line-height: 1.5; }
@@ -19,7 +19,7 @@
 </head>
 <body>
 <div class="container">
-  <h1>Admin Page (Firebase)</h1>
+  <h1>Admin — MCQ (Supabase)</h1>
 
   <div class="card">
     <h2>Exam Settings</h2>
@@ -37,135 +37,119 @@
       </div>
     </div>
     <br />
-    <button onclick="saveSettings()">Save Settings</button>
+    <button id="saveSettingsBtn">Save Settings</button>
   </div>
 
   <div class="card">
     <h2>Question Bank</h2>
     <div id="questionEditor"></div>
-    <button onclick="addQuestion()">Add Question</button>
-    <button onclick="saveQuestions()">Save All Questions</button>
+    <button id="addQuestionBtn">Add Question</button>
+    <button id="saveQuestionsBtn">Save All Questions</button>
   </div>
 
   <div class="card">
-    <h2>Submissions & Live Marking</h2>
+    <h2>Submissions & Auto-Marking</h2>
     <div id="submissionTable"></div>
   </div>
 </div>
 
 <script type="module">
-  // ================= FIREBASE CONFIG (LIVE) =================
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-  import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyC-IaeYoBz6CiJAs8tusAt-dxU8B4lwi_0",
-    authDomain: "kelvin06hou-id.firebaseapp.com",
-    databaseURL: "https://kelvin06hou-id-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "kelvin06hou-id",
-    storageBucket: "kelvin06hou-id.firebasestorage.app",
-    messagingSenderId: "163838748410",
-    appId: "1:163838748410:web:ff81a549ab6bc44f84cb43",
-    measurementId: "G-YQ5RH9HLM4"
-  };
+const SUPABASE_URL = 'https://nkfsjyfsqoulpsnktana.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5rZnNqeWZzcW91bHBzbmt0YW5hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ5NzA0MzEsImV4cCI6MjA4MDU0NjQzMX0.Lp1wqwSVz9gYn_gA2-s_f1hbiL_Lxqn6jnIC9x0sx3o';
 
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  const settingsRef = ref(db, 'settings');
-  const questionsRef = ref(db, 'questions');
-  const submissionsRef = ref(db, 'submissions');
-
-  function loadAdmin() {
-    onValue(settingsRef, (snapshot) => {
-      const settings = snapshot.val() || {};
-      document.getElementById('deadline').value = settings.deadline || '';
-      document.getElementById('publishFlag').value = String(settings.published || false);
-    });
-
-    onValue(questionsRef, (snapshot) => {
-      const questions = snapshot.val() || [];
-      renderQuestionEditor(questions);
-    });
-
-    onValue(submissionsRef, async (snapshot) => {
-      const submissionsData = snapshot.val() || {};
-      const submissions = Object.values(submissionsData);
-
-      const qSnap = await get(questionsRef);
-      const questions = qSnap.val() || [];
-
-      let html = '<table><tr><th>Name</th><th>Score</th></tr>';
-
-      submissions.forEach((s) => {
-        let score = 0;
-        s.answers.forEach((a, idx) => {
-          if (a === questions[idx]?.answer) score++;
-        });
-        html += `<tr><td>${s.name}</td><td>${score}/${questions.length}</td></tr>`;
-      });
-
-      html += '</table>';
-      document.getElementById('submissionTable').innerHTML = html;
-    });
+async function loadAdmin() {
+  const { data: settings } = await supabase.from('settings').select('*').eq('id',1).maybeSingle();
+  if (settings) {
+    document.getElementById('deadline').value = settings.deadline ? new Date(settings.deadline).toISOString().slice(0,16) : '';
+    document.getElementById('publishFlag').value = String(settings.published);
   }
 
-  window.saveSettings = async function () {
-    const settings = {
-      deadline: document.getElementById('deadline').value,
-      published: document.getElementById('publishFlag').value === 'true'
-    };
-    await set(settingsRef, settings);
-    alert('Settings saved to Firebase');
-  };
+  const { data: questions } = await supabase.from('questions').select('*').order('id');
+  renderEditor(questions || []);
 
-  function renderQuestionEditor(questions) {
-    const container = document.getElementById('questionEditor');
-    container.innerHTML = '';
+  loadSubmissions();
+}
 
-    questions.forEach((q, i) => {
-      const div = document.createElement('div');
-      div.className = 'card';
-      div.innerHTML = `
-        <label>Question ${i + 1}</label><br />
-        <textarea class="q-text">${q.text}</textarea><br />
-        <label>Options (A–E)</label><br />
-        <textarea class="q-options">${q.options.join('\n')}</textarea><br />
-        <label>Correct Answer (A–E)</label><br />
-        <input class="q-answer" value="${q.answer}" />
-        <button onclick="removeQuestion(${i})" class="danger">Remove</button>
-      `;
-      container.appendChild(div);
-    });
+document.getElementById('saveSettingsBtn').onclick = async () => {
+  const deadline = document.getElementById('deadline').value || null;
+  const published = document.getElementById('publishFlag').value === 'true';
+  await supabase.from('settings').upsert({ id:1, deadline, published });
+  alert('Settings saved');
+};
+
+function renderEditor(questions) {
+  const container = document.getElementById('questionEditor');
+  container.innerHTML = '';
+  questions.forEach((q,i) => {
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.innerHTML = `
+      <label>Question ${i+1}</label><br>
+      <textarea class="q-text">${q.text}</textarea><br>
+      <label>Options (one per line)</label><br>
+      <textarea class="q-options">${q.options.join('\n')}</textarea><br>
+      <label>Correct Answer</label><br>
+      <input class="q-answer" value="${q.answer}">
+    `;
+    container.appendChild(div);
+  });
+}
+
+document.getElementById('addQuestionBtn').onclick = () => {
+  const container = document.getElementById('questionEditor');
+  const div = document.createElement('div');
+  div.className = 'card';
+  div.innerHTML = `
+    <label>New Question</label><br>
+    <textarea class="q-text"></textarea><br>
+    <label>Options</label><br>
+    <textarea class="q-options">A\nB\nC\nD</textarea><br>
+    <label>Correct Answer</label><br>
+    <input class="q-answer">
+  `;
+  container.appendChild(div);
+};
+
+document.getElementById('saveQuestionsBtn').onclick = async () => {
+  const cards = document.querySelectorAll('.card .q-text');
+  await supabase.from('questions').delete().neq('id',0);
+
+  const all = document.querySelectorAll('.card');
+  for (let card of all) {
+    const text = card.querySelector('.q-text');
+    if (!text) continue;
+
+    const options = card.querySelector('.q-options').value.split('\n');
+    const answer = card.querySelector('.q-answer').value.toUpperCase();
+
+    await supabase.from('questions').insert({ text: text.value, options, answer });
   }
 
-  window.addQuestion = async function () {
-    const snapshot = await get(questionsRef);
-    const questions = snapshot.val() || [];
-    questions.push({ text: '', options: ['A', 'B', 'C', 'D'], answer: '' });
-    await set(questionsRef, questions);
-  };
-
-  window.removeQuestion = async function (index) {
-    const snapshot = await get(questionsRef);
-    const questions = snapshot.val() || [];
-    questions.splice(index, 1);
-    await set(questionsRef, questions);
-  };
-
-  window.saveQuestions = async function () {
-    const cards = document.querySelectorAll('#questionEditor .card');
-    const questions = Array.from(cards).map(card => ({
-      text: card.querySelector('.q-text').value,
-      options: card.querySelector('.q-options').value.split('\n'),
-      answer: card.querySelector('.q-answer').value.trim().toUpperCase()
-    }));
-
-    await set(questionsRef, questions);
-    alert('Questions saved to Firebase');
-  };
-
+  alert('Questions saved');
   loadAdmin();
+};
+
+async function loadSubmissions() {
+  const { data: subs } = await supabase.from('submissions').select('*');
+  const { data: qs } = await supabase.from('questions').select('*');
+
+  let html = `<table><tr><th>Name</th><th>Score</th></tr>`;
+  subs.forEach(s => {
+    let score = 0;
+    s.answers.forEach((a,i)=>{
+      if (a === qs[i]?.answer) score++;
+    });
+    html += `<tr><td>${s.name}</td><td>${score}/${qs.length}</td></tr>`;
+  });
+  html += `</table>`;
+  document.getElementById('submissionTable').innerHTML = html;
+}
+
+loadAdmin();
 </script>
 </body>
 </html>
