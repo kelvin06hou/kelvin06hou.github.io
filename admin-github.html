@@ -2,16 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>GitHub Blog Publisher</title>
+  <title>Blog Publisher (GitHub API)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 30px; }
     .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
     h1 { margin-bottom: 10px; }
-    .warning { background: #fff3cd; border: 1px solid #ffeeba; padding: 12px; margin-bottom: 20px; border-radius: 6px; }
-    label { display: block; margin-top: 15px; font-weight: bold; }
+    .note { background: #eef2ff; border: 1px solid #c7d2fe; padding: 12px; margin-bottom: 20px; border-radius: 6px; }
+    label { display: block; margin-top: 16px; font-weight: bold; }
     input, textarea { width: 100%; padding: 10px; margin-top: 6px; font-size: 16px; }
-    textarea { height: 200px; }
+    textarea { height: 220px; }
     button { margin-top: 20px; padding: 12px 20px; font-size: 16px; cursor: pointer; }
     .status { margin-top: 20px; font-weight: bold; }
   </style>
@@ -19,44 +19,44 @@
 <body>
 
 <div class="container">
-  <h1>GitHub API Blog Publisher</h1>
-  <div class="warning">
-    This editor publishes directly to GitHub using the GitHub API. You must use a Personal Access Token with <b>repo</b> permission.
+  <h1>Blog Publisher (GitHub API)</h1>
+  <div class="note">
+    This page publishes your blog directly to GitHub using a Personal Access Token (repo permission required).
   </div>
 
   <label>GitHub Username</label>
-  <input type="text" id="username" placeholder="your-github-name" />
+  <input type="text" id="username" placeholder="your-github-username" />
 
   <label>Repository Name</label>
   <input type="text" id="repo" placeholder="your-blog-repo" />
 
-  <label>GitHub Token</label>
-  <input type="password" id="token" placeholder="ghp_..." />
+  <label>GitHub Personal Access Token</label>
+  <input type="password" id="token" placeholder="ghp_XXXXXXXXXXXXXXXX" />
 
   <hr>
 
-  <label>Post Title</label>
+  <label>Blog Title</label>
   <input type="text" id="title" />
 
-  <label>Date</label>
+  <label>Publish Date</label>
   <input type="date" id="date" />
 
-  <label>Post Content (HTML allowed)</label>
+  <label>Blog Content (HTML Allowed)</label>
   <textarea id="content"></textarea>
 
-  <button onclick="publishPost()">Publish to GitHub</button>
+  <button onclick="publishPost()">Publish Blog</button>
 
   <div class="status" id="status"></div>
 </div>
 
 <script>
 async function publishPost() {
-  const username = document.getElementById('username').value;
-  const repo = document.getElementById('repo').value;
-  const token = document.getElementById('token').value;
-  const title = document.getElementById('title').value;
+  const username = document.getElementById('username').value.trim();
+  const repo = document.getElementById('repo').value.trim();
+  const token = document.getElementById('token').value.trim();
+  const title = document.getElementById('title').value.trim();
   const date = document.getElementById('date').value;
-  const content = document.getElementById('content').value;
+  const content = document.getElementById('content').value.trim();
   const status = document.getElementById('status');
 
   if (!username || !repo || !token || !title || !date || !content) {
@@ -67,9 +67,9 @@ async function publishPost() {
   const filename = 'posts/posts.json';
   const apiUrl = `https://api.github.com/repos/${username}/${repo}/contents/${filename}`;
 
-  status.innerText = 'Fetching existing posts...';
+  status.innerText = 'Loading existing posts...';
 
-  let existingData = [];
+  let existingPosts = [];
   let sha = null;
 
   try {
@@ -80,16 +80,16 @@ async function publishPost() {
     if (getRes.ok) {
       const fileData = await getRes.json();
       sha = fileData.sha;
-      const decoded = atob(fileData.content);
-      existingData = JSON.parse(decoded);
+      const decoded = atob(fileData.content.replace(/\n/g, ''));
+      existingPosts = JSON.parse(decoded);
     }
-  } catch (err) {
-    console.error(err);
+  } catch (e) {
+    console.error(e);
   }
 
-  existingData.push({ title, date, content });
+  existingPosts.push({ title, date, content });
 
-  const updatedContent = btoa(JSON.stringify(existingData, null, 2));
+  const updatedFile = btoa(JSON.stringify(existingPosts, null, 2));
 
   status.innerText = 'Publishing to GitHub...';
 
@@ -100,20 +100,20 @@ async function publishPost() {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      message: `New blog post: ${title}`,
-      content: updatedContent,
+      message: `Publish blog: ${title}`,
+      content: updatedFile,
       sha: sha
     })
   });
 
   if (putRes.ok) {
-    status.innerText = '✅ Blog published successfully! GitHub Pages will update shortly.';
+    status.innerText = '✅ Blog published successfully. GitHub Pages will update shortly.';
     document.getElementById('title').value = '';
     document.getElementById('date').value = '';
     document.getElementById('content').value = '';
   } else {
     const err = await putRes.json();
-    status.innerText = '❌ Publish failed: ' + err.message;
+    status.innerText = '❌ Failed: ' + err.message;
   }
 }
 </script>
