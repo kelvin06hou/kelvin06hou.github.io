@@ -65,7 +65,7 @@ async function publishPost() {
   }
 
   const filename = 'posts/posts.json';
-  const apiUrl = `https://api.github.com/kelvin06hou/${username}/${repo}/contents/${filename}`;
+  const apiUrl = `https://api.github.com/repo/${username}/${repo}/contents/${filename}`;
 
   status.innerText = 'Loading existing posts...';
 
