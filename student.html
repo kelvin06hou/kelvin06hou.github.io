@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>MCQ Student</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; line-height: 1.5; }
+    .container { max-width: 900px; margin: 0 auto; }
+    .card { border: 1px solid #ccc; padding: 16px; border-radius: 12px; margin-bottom: 16px; }
+    button { padding: 8px; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>MCQ Result Page</h1>
+
+  <div class="card">
+    <strong>Deadline:</strong> <span id="deadlineDisplay"></span><br />
+    <strong>Status:</strong> <span id="statusDisplay"></span>
+  </div>
+
+  <div class="card">
+    <label>Your Name</label><br />
+    <input type="text" id="studentName" />
+  </div>
+
+  <div id="questionList"></div>
+
+  <button id="submitBtn" onclick="submitAnswers()">Submit</button>
+
+  <div id="resultSection" class="card hidden"></div>
+</div>
+
+<script>
+const STORAGE_KEYS = {
+  SETTINGS: 'mcq_settings',
+  QUESTIONS: 'mcq_questions',
+  SUBMISSIONS: 'mcq_submissions'
+};
+
+function loadStudent() {
+  const settings = JSON.parse(localStorage.getItem(STORAGE_KEYS.SETTINGS) || '{}');
+  const questions = JSON.parse(localStorage.getItem(STORAGE_KEYS.QUESTIONS) || '[]');
+
+  document.getElementById('deadlineDisplay').textContent = settings.deadline || 'Not Set';
+
+  const now = new Date();
+  if (settings.deadline && now > new Date(settings.deadline)) {
+    document.getElementById('submitBtn').disabled = true;
+    document.getElementById('statusDisplay').textContent = 'Closed';
+  } else {
+    document.getElementById('statusDisplay').textContent = 'Open';
+  }
+
+  const container = document.getElementById('questionList');
+  container.innerHTML = '';
+
+  questions.forEach((q, i) => {
+    const div = document.createElement('div');
+    div.className = 'card';
+    let optionsHTML = '';
+
+    q.options.forEach(opt => {
+      optionsHTML += `<label><input type="radio" name="q${i}" value="${opt[0]}" /> ${opt}</label><br />`;
+    });
+
+    div.innerHTML = `<strong>Q${i + 1}:</strong> ${q.text}<br />${optionsHTML}`;
+    container.appendChild(div);
+  });
+}
+
+function submitAnswers() {
+  const name = document.getElementById('studentName').value.trim();
+  if (!name) return alert('Please enter your name');
+
+  const questions = JSON.parse(localStorage.getItem(STORAGE_KEYS.QUESTIONS) || '[]');
+  const answers = questions.map((_, i) => {
+    const checked = document.querySelector(`input[name="q${i}"]:checked`);
+    return checked ? checked.value : '';
+  });
+
+  const submissions = JSON.parse(localStorage.getItem(STORAGE_KEYS.SUBMISSIONS) || '[]');
+  submissions.push({ name, answers, score: 0 });
+  localStorage.setItem(STORAGE_KEYS.SUBMISSIONS, JSON.stringify(submissions));
+
+  showResult(name, answers);
+}
+
+function showResult(name, answers) {
+  const settings = JSON.parse(localStorage.getItem(STORAGE_KEYS.SETTINGS) || '{}');
+  const questions = JSON.parse(localStorage.getItem(STORAGE_KEYS.QUESTIONS) || '[]');
+
+  const resultDiv = document.getElementById('resultSection');
+  resultDiv.classList.remove('hidden');
+
+  if (!settings.published) {
+    resultDiv.innerHTML = '<strong>Submission received. Results not published yet.</strong>';
+    return;
+  }
+
+  let score = 0;
+  let html = `<h2>Result for ${name}</h2>`;
+
+  questions.forEach((q, i) => {
+    const correct = q.answer === answers[i];
+    if (correct) score++;
+    html += `<div>Q${i + 1}: Your Answer = ${answers[i] || '-'} | Correct = ${q.answer} | ${correct ? 'Correct' : 'Wrong'}</div>`;
+  });
+
+  html += `<h3>Total Score: ${score}/${questions.length}</h3>`;
+  resultDiv.innerHTML = html;
+}
+
+loadStudent();
+</script>
+</body>
+</html>
