@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>My GitHub Blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; background: #f6f7f9; }
+    header { background: #111; color: white; padding: 20px; text-align: center; }
+    main { max-width: 900px; margin: 40px auto; padding: 0 20px; }
+    .post-card { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); cursor: pointer; }
+    .post-title { font-size: 22px; margin-bottom: 6px; }
+    .post-date { font-size: 14px; color: #666; margin-bottom: 10px; }
+    .post-content { display: none; margin-top: 15px; }
+    footer { text-align: center; padding: 30px; color: #777; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>My Blog</h1>
+  <p>Powered by Static HTML + GitHub Pages</p>
+</header>
+
+<main id="blog-container"></main>
+
+<footer>
+  © 2025 My Blog
+</footer>
+
+<script>
+fetch("posts/posts.json")
+  .then(response => response.json())
+  .then(posts => {
+    const container = document.getElementById("blog-container");
+
+    posts.reverse().forEach(post => {
+      const card = document.createElement("div");
+      card.className = "post-card";
+
+      const title = document.createElement("div");
+      title.className = "post-title";
+      title.innerText = post.title;
+
+      const date = document.createElement("div");
+      date.className = "post-date";
+      date.innerText = post.date;
+
+      const content = document.createElement("div");
+      content.className = "post-content";
+      content.innerHTML = post.content;
+
+      card.appendChild(title);
+      card.appendChild(date);
+      card.appendChild(content);
+
+      card.addEventListener("click", () => {
+        content.style.display = content.style.display === "none" ? "block" : "none";
+      });
+
+      container.appendChild(card);
+    });
+  });
+</script>
+
+</body>
+</html>
