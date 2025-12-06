@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>MCQ Admin</title>
+  <title>MCQ Admin (Firebase)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body { font-family: Arial, sans-serif; margin: 24px; line-height: 1.5; }
@@ -19,7 +19,7 @@
 </head>
 <body>
 <div class="container">
-  <h1>Admin Page</h1>
+  <h1>Admin Page (Firebase)</h1>
 
   <div class="card">
     <h2>Exam Settings</h2>
@@ -48,115 +48,123 @@
   </div>
 
   <div class="card">
-    <h2>Submissions & Marking</h2>
+    <h2>Submissions & Live Marking</h2>
     <div id="submissionTable"></div>
-    <button onclick="exportCSV()">Export CSV</button>
   </div>
 </div>
 
-<script>
-const STORAGE_KEYS = {
-  SETTINGS: 'mcq_settings',
-  QUESTIONS: 'mcq_questions',
-  SUBMISSIONS: 'mcq_submissions'
-};
+<script type="module">
+  // ================= FIREBASE CONFIG (LIVE) =================
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+  import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
 
-function loadAdmin() {
-  const settings = JSON.parse(localStorage.getItem(STORAGE_KEYS.SETTINGS) || '{}');
-  document.getElementById('deadline').value = settings.deadline || '';
-  document.getElementById('publishFlag').value = String(settings.published || false);
-
-  const questions = JSON.parse(localStorage.getItem(STORAGE_KEYS.QUESTIONS) || '[]');
-  renderQuestionEditor(questions);
-  renderSubmissions();
-}
-
-function saveSettings() {
-  const settings = {
-    deadline: document.getElementById('deadline').value,
-    published: document.getElementById('publishFlag').value === 'true'
+  const firebaseConfig = {
+    apiKey: "AIzaSyC-IaeYoBz6CiJAs8tusAt-dxU8B4lwi_0",
+    authDomain: "kelvin06hou-id.firebaseapp.com",
+    projectId: "kelvin06hou-id",
+    storageBucket: "kelvin06hou-id.firebasestorage.app",
+    messagingSenderId: "163838748410",
+    appId: "1:163838748410:web:ff81a549ab6bc44f84cb43",
+    measurementId: "G-YQ5RH9HLM4"
   };
-  localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
-  alert('Settings saved');
-}
 
-function renderQuestionEditor(questions) {
-  const container = document.getElementById('questionEditor');
-  container.innerHTML = '';
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
 
-  questions.forEach((q, i) => {
-    const div = document.createElement('div');
-    div.className = 'card';
-    div.innerHTML = `
-      <label>Question ${i + 1}</label><br />
-      <textarea class="q-text">${q.text}</textarea><br />
-      <label>Options (A–E)</label><br />
-      <textarea class="q-options">${q.options.join('\n')}</textarea><br />
-      <label>Correct Answer (A–E)</label><br />
-      <input class="q-answer" value="${q.answer}" />
-      <button onclick="removeQuestion(${i})" class="danger">Remove</button>
-    `;
-    container.appendChild(div);
-  });
-}
+  const settingsRef = ref(db, 'settings');
+  const questionsRef = ref(db, 'questions');
+  const submissionsRef = ref(db, 'submissions');
 
-function addQuestion() {
-  const questions = JSON.parse(localStorage.getItem(STORAGE_KEYS.QUESTIONS) || '[]');
-  questions.push({ text: '', options: ['A', 'B', 'C', 'D'], answer: '' });
-  renderQuestionEditor(questions);
-}
-
-function removeQuestion(index) {
-  const questions = JSON.parse(localStorage.getItem(STORAGE_KEYS.QUESTIONS) || '[]');
-  questions.splice(index, 1);
-  renderQuestionEditor(questions);
-}
-
-function saveQuestions() {
-  const cards = document.querySelectorAll('#questionEditor .card');
-  const questions = Array.from(cards).map(card => ({
-    text: card.querySelector('.q-text').value,
-    options: card.querySelector('.q-options').value.split('\n'),
-    answer: card.querySelector('.q-answer').value.trim().toUpperCase()
-  }));
-
-  localStorage.setItem(STORAGE_KEYS.QUESTIONS, JSON.stringify(questions));
-  alert('Questions saved');
-}
-
-function renderSubmissions() {
-  const submissions = JSON.parse(localStorage.getItem(STORAGE_KEYS.SUBMISSIONS) || '[]');
-  const questions = JSON.parse(localStorage.getItem(STORAGE_KEYS.QUESTIONS) || '[]');
-
-  let html = '<table><tr><th>Name</th><th>Score</th></tr>';
-
-  submissions.forEach((s) => {
-    let score = 0;
-    s.answers.forEach((a, idx) => {
-      if (a === questions[idx]?.answer) score++;
+  function loadAdmin() {
+    onValue(settingsRef, (snapshot) => {
+      const settings = snapshot.val() || {};
+      document.getElementById('deadline').value = settings.deadline || '';
+      document.getElementById('publishFlag').value = String(settings.published || false);
     });
-    s.score = score;
 
-    html += `<tr><td>${s.name}</td><td>${score}/${questions.length}</td></tr>`;
-  });
+    onValue(questionsRef, (snapshot) => {
+      const questions = snapshot.val() || [];
+      renderQuestionEditor(questions);
+    });
 
-  html += '</table>';
-  document.getElementById('submissionTable').innerHTML = html;
-  localStorage.setItem(STORAGE_KEYS.SUBMISSIONS, JSON.stringify(submissions));
-}
+    onValue(submissionsRef, async (snapshot) => {
+      const submissionsData = snapshot.val() || {};
+      const submissions = Object.values(submissionsData);
 
-function exportCSV() {
-  const submissions = JSON.parse(localStorage.getItem(STORAGE_KEYS.SUBMISSIONS) || '[]');
-  let csv = 'Name,Score\n';
-  submissions.forEach(s => { csv += `${s.name},${s.score}\n`; });
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'submissions.csv';
-  a.click();
-}
+      const qSnap = await get(questionsRef);
+      const questions = qSnap.val() || [];
 
-loadAdmin();
+      let html = '<table><tr><th>Name</th><th>Score</th></tr>';
+
+      submissions.forEach((s) => {
+        let score = 0;
+        s.answers.forEach((a, idx) => {
+          if (a === questions[idx]?.answer) score++;
+        });
+        html += `<tr><td>${s.name}</td><td>${score}/${questions.length}</td></tr>`;
+      });
+
+      html += '</table>';
+      document.getElementById('submissionTable').innerHTML = html;
+    });
+  }
+
+  window.saveSettings = async function () {
+    const settings = {
+      deadline: document.getElementById('deadline').value,
+      published: document.getElementById('publishFlag').value === 'true'
+    };
+    await set(settingsRef, settings);
+    alert('Settings saved to Firebase');
+  };
+
+  function renderQuestionEditor(questions) {
+    const container = document.getElementById('questionEditor');
+    container.innerHTML = '';
+
+    questions.forEach((q, i) => {
+      const div = document.createElement('div');
+      div.className = 'card';
+      div.innerHTML = `
+        <label>Question ${i + 1}</label><br />
+        <textarea class="q-text">${q.text}</textarea><br />
+        <label>Options (A–E)</label><br />
+        <textarea class="q-options">${q.options.join('\n')}</textarea><br />
+        <label>Correct Answer (A–E)</label><br />
+        <input class="q-answer" value="${q.answer}" />
+        <button onclick="removeQuestion(${i})" class="danger">Remove</button>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  window.addQuestion = async function () {
+    const snapshot = await get(questionsRef);
+    const questions = snapshot.val() || [];
+    questions.push({ text: '', options: ['A', 'B', 'C', 'D'], answer: '' });
+    await set(questionsRef, questions);
+  };
+
+  window.removeQuestion = async function (index) {
+    const snapshot = await get(questionsRef);
+    const questions = snapshot.val() || [];
+    questions.splice(index, 1);
+    await set(questionsRef, questions);
+  };
+
+  window.saveQuestions = async function () {
+    const cards = document.querySelectorAll('#questionEditor .card');
+    const questions = Array.from(cards).map(card => ({
+      text: card.querySelector('.q-text').value,
+      options: card.querySelector('.q-options').value.split('\n'),
+      answer: card.querySelector('.q-answer').value.trim().toUpperCase()
+    }));
+
+    await set(questionsRef, questions);
+    alert('Questions saved to Firebase');
+  };
+
+  loadAdmin();
 </script>
 </body>
 </html>
