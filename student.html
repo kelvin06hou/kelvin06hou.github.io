@@ -1,101 +1,55 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="utf-8" />
-  <title>MCQ Student (Supabase)</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    body { font-family: Arial, sans-serif; margin: 24px; line-height: 1.5; }
-    .container { max-width: 900px; margin: 0 auto; }
-    .card { border: 1px solid #ccc; padding: 16px; border-radius: 12px; margin-bottom: 16px; }
-    button { padding: 8px; }
-    .hidden { display: none; }
-  </style>
+  <title>Student Exam System</title>
 </head>
 <body>
-<div class="container">
-  <h1>MCQ — Student (Supabase)</h1>
+<h2>Student Exam</h2>
 
-  <div class="card">
-    <strong>Deadline:</strong> <span id="deadlineDisplay"></span><br />
-    <strong>Status:</strong> <span id="statusDisplay"></span>
-  </div>
+<input id="gistId" placeholder="Enter Gist ID">
+<button onclick="loadExam()">Load Exam</button>
 
-  <div class="card">
-    <label>Your Name</label><br />
-    <input type="text" id="studentName" />
-  </div>
+<div id="exam"></div>
+<button onclick="submit()">Submit</button>
 
-  <div id="questionList"></div>
+<script>
+let examData = {};
+let answers = {};
 
-  <button id="submitBtn">Submit</button>
+async function loadExam() {
+  const id = document.getElementById("gistId").value;
+  const res = await fetch(`https://api.github.com/gists/${id}`);
+  const data = await res.json();
 
-  <div id="resultSection" class="card hidden"></div>
-</div>
+  const file = Object.values(data.files)[0];
+  examData = JSON.parse(file.content);
 
-<script type="module">
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  let html = `<h3>${examData.title}</h3>`;
 
-const SUPABASE_URL = 'https://nkfsjyfsqoulpsnktana.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5rZnNqeWZzcW91bHBzbmt0YW5hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ5NzA0MzEsImV4cCI6MjA4MDU0NjQzMX0.Lp1wqwSVz9gYn_gA2-s_f1hbiL_Lxqn6jnIC9x0sx3o';
+  examData.questions.forEach(q => {
+    html += `<p>${q.qnum}. ${q.question}</p>`;
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    if (q.type === "SINGLE") {
+      q.options.forEach(opt => {
+        html += `<input type="radio" name="${q.qnum}" onclick="answers[${q.qnum}]='${opt}'"> ${opt}<br>`;
+      });
+    }
 
-async function loadStudent() {
-  const { data: settings } = await supabase.from('settings').select('*').eq('id',1).maybeSingle();
-  const { data: questions } = await supabase.from('questions').select('*').order('id', {ascending:true});
+    if (q.type === "FILL") {
+      html += `<input oninput="answers[${q.qnum}]=this.value"><br>`;
+    }
 
-  document.getElementById('deadlineDisplay').textContent = settings?.deadline || 'Not Set';
-
-  const now = new Date();
-  if (settings?.deadline && now > new Date(settings.deadline)) {
-    document.getElementById('submitBtn').disabled = true;
-    document.getElementById('statusDisplay').textContent = 'Closed';
-  } else {
-    document.getElementById('statusDisplay').textContent = 'Open';
-  }
-
-  const container = document.getElementById('questionList'); container.innerHTML = '';
-  (questions||[]).forEach((q, i) => {
-    const div = document.createElement('div'); div.className = 'card';
-    let optionsHTML = '';
-    (q.options||[]).forEach(opt => { optionsHTML += `<label><input type="radio" name="q${i}" value="${opt[0]}" /> ${opt}</label><br>`; });
-    div.innerHTML = `<strong>Q${i+1}:</strong> ${q.text}<br>${optionsHTML}`;
-    container.appendChild(div);
+    if (q.type === "ESSAY") {
+      html += `<textarea oninput="answers[${q.qnum}]=this.value"></textarea><br>`;
+    }
   });
+
+  document.getElementById("exam").innerHTML = html;
 }
 
-// submit
-document.getElementById('submitBtn').addEventListener('click', async ()=>{
-  const name = document.getElementById('studentName').value.trim();
-  if (!name) return alert('Please enter your name');
-
-  const { data: questions } = await supabase.from('questions').select('*').order('id', {ascending:true});
-  const answers = questions.map((_, i) => { const checked = document.querySelector(`input[name="q${i}"]:checked`); return checked ? checked.value : ''; });
-
-  const { error } = await supabase.from('submissions').insert({ name, answers });
-  if (error) return alert('Submit failed: '+error.message);
-
-  showResult(name, answers);
-});
-
-async function showResult(name, answers) {
-  const { data: settings } = await supabase.from('settings').select('*').eq('id',1).maybeSingle();
-  const { data: questions } = await supabase.from('questions').select('*').order('id', {ascending:true});
-
-  const resultDiv = document.getElementById('resultSection'); resultDiv.classList.remove('hidden');
-  if (!settings?.published) {
-    resultDiv.innerHTML = '<strong>Submission received. Results not published yet.</strong>';
-    return;
-  }
-
-  let score = 0; let html = `<h2>Result for ${name}</h2>`;
-  (questions||[]).forEach((q, i) => { const correct = q.answer === answers[i]; if (correct) score++; html += `<div>Q${i+1}: Your Answer = ${answers[i] || '-'} | Correct = ${q.answer} | ${correct ? 'Correct':'Wrong'}</div>`; });
-  html += `<h3>Total Score: ${score}/${questions.length}</h3>`;
-  resultDiv.innerHTML = html;
+function submit() {
+  alert(JSON.stringify(answers, null, 2));
 }
-
-loadStudent();
 </script>
 </body>
 </html>

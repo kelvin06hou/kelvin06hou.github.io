@@ -1,133 +1,63 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>MCQ Admin (Supabase)</title>
-  <style>
-    body { font-family: Arial; padding: 20px; }
-    .card { border: 1px solid #ccc; padding: 12px; margin-bottom: 12px; border-radius: 8px; }
-    textarea, input, select, button { width: 100%; padding: 6px; margin-top: 6px; }
-    button { cursor: pointer; }
-  </style>
+  <title>Admin Setting System</title>
 </head>
 <body>
+<h2>Admin Exam Builder</h2>
 
-<h1>Admin Panel</h1>
+<input id="title" placeholder="Exam Title"><br><br>
+<textarea id="question" placeholder="Question"></textarea><br>
 
-<div class="card">
-  <h3>Settings</h3>
-  Deadline:
-  <input id="deadline" type="datetime-local">
-  Publish:
-  <select id="publish">
-    <option value="false">No</option>
-    <option value="true">Yes</option>
-  </select>
-  <button onclick="saveSettings()">Save Settings</button>
-</div>
+<select id="type">
+  <option value="SINGLE">Single Choice</option>
+  <option value="FILL">Fill in the Blanks</option>
+  <option value="ESSAY">Essay</option>
+</select><br>
 
-<div class="card">
-  <h3>Questions</h3>
-  <div id="editor"></div>
-  <button onclick="addQuestion()">+ Add Question</button>
-  <button onclick="saveQuestions()">Save All</button>
-</div>
+<textarea id="options" placeholder="Options (comma separated)"></textarea><br>
+<button onclick="addQuestion()">Add Question</button><br><br>
 
-<div class="card">
-  <h3>Submissions</h3>
-  <pre id="subs"></pre>
-</div>
+<button onclick="publish()">Publish to GitHub</button>
 
-<script type="module">
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+<pre id="output"></pre>
 
-const supabase = createClient(
-  "https://nkfsjyfsqoulpsnktana.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5rZnNqeWZzcW91bHBzbmt0YW5hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ5NzA0MzEsImV4cCI6MjA4MDU0NjQzMX0.Lp1wqwSVz9gYn_gA2-s_f1hbiL_Lxqn6jnIC9x0sx3o"
-);
+<script>
+let questions = [];
 
-// ---------- SETTINGS ----------
-window.saveSettings = async () => {
-  const deadline = document.getElementById("deadline").value;
-  const published = document.getElementById("publish").value === "true";
-
-  const { error } = await supabase.from("settings").upsert({
-    id: 1,
-    deadline,
-    published
+function addQuestion() {
+  questions.push({
+    qnum: questions.length + 1,
+    question: document.getElementById("question").value,
+    type: document.getElementById("type").value,
+    options: document.getElementById("options").value.split(',')
   });
-
-  if (error) alert(error.message);
-  else alert("Settings saved");
-};
-
-// ---------- LOAD ----------
-async function loadAll() {
-  const { data: s } = await supabase.from("settings").select("*").eq("id",1).maybeSingle();
-  if (s) {
-    document.getElementById("deadline").value = s.deadline || "";
-    document.getElementById("publish").value = String(s.published);
-  }
-
-  const { data: q } = await supabase.from("questions").select("*").order("id");
-  render(q || []);
-
-  const { data: sub } = await supabase.from("submissions").select("*");
-  document.getElementById("subs").textContent = JSON.stringify(sub, null, 2);
+  document.getElementById("output").innerText = JSON.stringify(questions, null, 2);
 }
 
-function render(questions) {
-  const ed = document.getElementById("editor");
-  ed.innerHTML = "";
-  questions.forEach(q => {
-    const d = document.createElement("div");
-    d.className = "card";
-    d.innerHTML = `
-      <textarea class="q">${q.text}</textarea>
-      <textarea class="o">${q.options.join("\n")}</textarea>
-      <input class="a" value="${q.answer}">
-    `;
-    ed.appendChild(d);
-  });
-}
-
-// ---------- ADD ----------
-window.addQuestion = () => {
-  const d = document.createElement("div");
-  d.className = "card";
-  d.innerHTML = `
-    <textarea class="q"></textarea>
-    <textarea class="o">A\nB\nC\nD</textarea>
-    <input class="a">
-  `;
-  document.getElementById("editor").appendChild(d);
-};
-
-// ---------- SAVE ----------
-window.saveQuestions = async () => {
-  await supabase.from("questions").delete().neq("id",0);
-
-  const cards = document.querySelectorAll("#editor .card");
-  for (const c of cards) {
-    const text = c.querySelector(".q").value;
-    const options = c.querySelector(".o").value.split("\n");
-    const answer = c.querySelector(".a").value.toUpperCase();
-
-    const { error } = await supabase.from("questions").insert({
-      text, options, answer
-    });
-
-    if (error) {
-      alert(error.message);
-      return;
+async function publish() {
+  const token = prompt("Enter GitHub Token");
+  const body = {
+    public: true,
+    files: {
+      "exam.json": {
+        content: JSON.stringify({ title: title.value, questions }, null, 2)
+      }
     }
-  }
+  };
 
-  alert("All questions saved");
-  loadAll();
-};
+  const res = await fetch("https://api.github.com/gists", {
+    method: "POST",
+    headers: {
+      "Authorization": "token " + token,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(body)
+  });
 
-loadAll();
+  const data = await res.json();
+  alert("Published! Gist ID: " + data.id);
+}
 </script>
 </body>
 </html>
