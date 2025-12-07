@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Student Exam System</title>
+  <title>Student Exam</title>
 </head>
 <body>
-<h2>Student Exam</h2>
 
-<input id="gistId" placeholder="Enter Gist ID">
+<h2>Student Exam System</h2>
+
+<input id="assignmentId" placeholder="Assignment ID"><br><br>
+<input id="studentName" placeholder="Student Name"><br><br>
+
 <button onclick="loadExam()">Load Exam</button>
 
 <div id="exam"></div>
@@ -17,11 +20,11 @@ let examData = {};
 let answers = {};
 
 async function loadExam() {
-  const id = document.getElementById("gistId").value;
+  const id = assignmentId.value;
   const res = await fetch(`https://api.github.com/gists/${id}`);
   const data = await res.json();
+  const file = data.files["exam.json"];
 
-  const file = Object.values(data.files)[0];
   examData = JSON.parse(file.content);
 
   let html = `<h3>${examData.title}</h3>`;
@@ -31,7 +34,7 @@ async function loadExam() {
 
     if (q.type === "SINGLE") {
       q.options.forEach(opt => {
-        html += `<input type="radio" name="${q.qnum}" onclick="answers[${q.qnum}]='${opt}'"> ${opt}<br>`;
+        html += `<input type="radio" name="${q.qnum}" onclick="answers[${q.qnum}]='${opt}'">${opt}<br>`;
       });
     }
 
@@ -44,11 +47,44 @@ async function loadExam() {
     }
   });
 
-  document.getElementById("exam").innerHTML = html;
+  exam.innerHTML = html;
 }
 
-function submit() {
-  alert(JSON.stringify(answers, null, 2));
+async function submit() {
+  const token = prompt("GitHub Token:");
+  const id = assignmentId.value;
+
+  const submission = {
+    name: studentName.value,
+    time: new Date().toISOString(),
+    answers
+  };
+
+  const res = await fetch(`https://api.github.com/gists/${id}`);
+  const gist = await res.json();
+
+  let oldData = gist.files["submissions.json"]
+    ? JSON.parse(gist.files["submissions.json"].content)
+    : [];
+
+  oldData.push(submission);
+
+  await fetch(`https://api.github.com/gists/${id}`, {
+    method: "PATCH",
+    headers: {
+      "Authorization": "token " + token,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      files: {
+        "submissions.json": {
+          content: JSON.stringify(oldData, null, 2)
+        }
+      }
+    })
+  });
+
+  alert("Submission recorded successfully.");
 }
 </script>
 </body>

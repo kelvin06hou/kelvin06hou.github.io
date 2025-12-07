@@ -1,24 +1,30 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Admin Setting System</title>
+  <title>Admin System</title>
 </head>
 <body>
-<h2>Admin Exam Builder</h2>
 
+<h2>Admin Exam System</h2>
+
+<input id="assignmentId" placeholder="Assignment ID"><br><br>
 <input id="title" placeholder="Exam Title"><br><br>
+
 <textarea id="question" placeholder="Question"></textarea><br>
 
 <select id="type">
   <option value="SINGLE">Single Choice</option>
-  <option value="FILL">Fill in the Blanks</option>
+  <option value="FILL">Fill in the Blank</option>
   <option value="ESSAY">Essay</option>
 </select><br>
 
 <textarea id="options" placeholder="Options (comma separated)"></textarea><br>
-<button onclick="addQuestion()">Add Question</button><br><br>
+<textarea id="answer" placeholder="Model Answer"></textarea><br>
 
-<button onclick="publish()">Publish to GitHub</button>
+<button onclick="addQuestion()">Add Question</button>
+<button onclick="publishExam()">Publish Exam</button>
+<button onclick="publishAnswer()">Publish Answer</button>
+<button onclick="viewSubmissions()">View Submissions</button>
 
 <pre id="output"></pre>
 
@@ -28,36 +34,63 @@ let questions = [];
 function addQuestion() {
   questions.push({
     qnum: questions.length + 1,
-    question: document.getElementById("question").value,
-    type: document.getElementById("type").value,
-    options: document.getElementById("options").value.split(',')
+    question: question.value,
+    type: type.value,
+    options: options.value.split(','),
+    answer: answer.value
   });
-  document.getElementById("output").innerText = JSON.stringify(questions, null, 2);
+  output.innerText = JSON.stringify(questions, null, 2);
 }
 
-async function publish() {
-  const token = prompt("Enter GitHub Token");
+async function publishExam() {
+  saveToGist("exam.json", { title: title.value, questions });
+}
+
+async function publishAnswer() {
+  saveToGist("answers.json", { answers: questions.map(q => q.answer) });
+}
+
+async function viewSubmissions() {
+  const id = assignmentId.value;
+  const res = await fetch(`https://api.github.com/gists/${id}`);
+  const data = await res.json();
+  const file = data.files["submissions.json"];
+  alert(file ? file.content : "No submissions");
+}
+
+async function saveToGist(filename, content) {
+  const token = prompt("GitHub Token:");
+  const id = assignmentId.value;
+
   const body = {
-    public: true,
     files: {
-      "exam.json": {
-        content: JSON.stringify({ title: title.value, questions }, null, 2)
-      }
+      [filename]: { content: JSON.stringify(content, null, 2) }
     }
   };
 
-  const res = await fetch("https://api.github.com/gists", {
-    method: "POST",
+  const url = id
+    ? `https://api.github.com/gists/${id}`
+    : `https://api.github.com/gists`;
+
+  const method = id ? "PATCH" : "POST";
+
+  const res = await fetch(url, {
+    method,
     headers: {
       "Authorization": "token " + token,
       "Content-Type": "application/json"
     },
-    body: JSON.stringify(body)
+    body: JSON.stringify({
+      public: true,
+      ...body
+    })
   });
 
   const data = await res.json();
-  alert("Published! Gist ID: " + data.id);
+  if (!assignmentId.value) assignmentId.value = data.id;
+  alert("Published. Assignment ID: " + data.id);
 }
 </script>
+
 </body>
 </html>
