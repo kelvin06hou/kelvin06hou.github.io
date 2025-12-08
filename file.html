@@ -99,7 +99,10 @@
         ? files.filter(f => (f.tags || []).includes(activeTag))
         : files;
 
-      visibleFiles.forEach((file, index) => {
+      // A -> Z with numeric ordering
+      visibleFiles.sort((a, b) => a.filename.localeCompare(b.filename, undefined, { numeric: true, sensitivity: 'base' }));
+
+      visibleFiles.forEach((file) => {
         const tr = document.createElement('tr');
 
         const filenameTd = document.createElement('td');
@@ -183,18 +186,24 @@
 
       tagList.innerHTML = '';
 
-      Object.entries(tagMap).forEach(([tag, count]) => {
-        const div = document.createElement('div');
-        div.className = 'tag-item' + (activeTag === tag ? ' active' : '');
-        div.innerHTML = `<span>${tag}</span><span class="tag-count">${count}</span>`;
-        div.onclick = () => {
-          activeTag = tag;
-          clearFilter.classList.remove('hidden');
-          renderTags();
-          renderFiles();
-        };
-        tagList.appendChild(div);
-      });
+      // A -> Z ordering for tags
+      Object.keys(tagMap)
+        .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }))
+        .forEach(tag => {
+          if (activeTag === tag) return; // hide active tag from sidebar
+
+          const div = document.createElement('div');
+          div.className = 'tag-item';
+          div.innerHTML = `<span>${tag}</span><span class=\"tag-count\">${tagMap[tag]}</span>`;
+          div.onclick = () => {
+            activeTag = tag;
+            clearFilter.classList.remove('hidden');
+            renderTags();
+            renderFiles();
+          };
+          tagList.appendChild(div);
+        });
+    }
     }
 
     clearFilter.onclick = () => {
