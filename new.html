@@ -1,0 +1,598 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>File Manager (client-side)</title>
+  <style>
+    :root{
+      --bg:#f8fafc; --panel:#ffffff; --muted:#6b7280; --accent:#111827; --btn:#111827;
+      --border:#e5e7eb; --danger:#dc2626;
+      font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    html,body{height:100%;margin:0;background:var(--bg);color:#0f172a}
+    .container{max-width:1400px;margin:20px auto;padding:18px}
+    header h1{margin:0;font-size:20px}
+    .layout{display:flex;gap:16px}
+    aside.controls{width:320px;background:var(--panel);border-radius:8px;padding:14px;box-shadow:0 1px 2px rgba(0,0,0,0.04)}
+    main.area{flex:1;display:grid;grid-template-columns:2fr 1fr;gap:16px}
+    .panel{background:var(--panel);border-radius:8px;padding:12px;box-shadow:0 1px 2px rgba(0,0,0,0.04)}
+    .pages-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+    .page-card{border:1px solid var(--border);border-radius:6px;padding:8px;background:#fafafa}
+    .small{font-size:13px;color:var(--muted)}
+    .muted{color:var(--muted)}
+    .input, textarea, select{width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:14px}
+    .row{display:flex;gap:8px;align-items:center}
+    .btn{background:var(--btn);color:white;padding:7px 10px;border-radius:6px;border:0;cursor:pointer;font-size:13px}
+    .btn.ghost{background:transparent;color:var(--btn);border:1px solid var(--border)}
+    .btn.danger{background:var(--danger)}
+    .tag{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:999px;border:1px solid var(--border);font-size:13px}
+    .tag.active{background:#eef2ff}
+    .file-row{padding:8px;border-radius:6px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+    .file-row:hover{background:#fff}
+    .file-meta{font-size:12px;color:var(--muted)}
+    .editor-text{height:340px;resize:vertical;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', monospace}
+    .footer-note{font-size:12px;color:var(--muted);margin-top:8px}
+    .small-btn{font-size:12px;padding:6px 8px;border-radius:6px}
+    input[type="file"]{display:none}
+    .flex{display:flex}
+    .flex-col{display:flex;flex-direction:column}
+    .gap-2{gap:8px}
+    .mb-2{margin-bottom:8px}
+    .mt-2{margin-top:8px}
+    .controls-group{margin-bottom:12px}
+    .danger-x{color:var(--danger);cursor:pointer;border:none;background:none}
+    @media (max-width:880px){ .layout{flex-direction:column} aside.controls{width:100%} main.area{grid-template-columns:1fr} }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>File Manager — client-side</h1>
+      <p class="small muted">Local browser storage with export/import. Use for assignments, lectures, quizzes, and notes.</p>
+    </header>
+
+    <div class="layout">
+      <!-- Controls -->
+      <aside class="controls">
+        <div class="controls-group">
+          <strong>Pages (Subjects)</strong>
+          <div id="pagesList" class="mt-2"></div>
+          <div class="row mt-2">
+            <input id="newPageName" class="input" placeholder="New page name" />
+            <button id="addPageBtn" class="btn small-btn">Add</button>
+          </div>
+        </div>
+
+        <div class="controls-group">
+          <strong>Tags</strong>
+          <div id="tagsList" class="mt-2"></div>
+          <div class="row mt-2">
+            <input id="newTagName" class="input" placeholder="New tag" />
+            <button id="addTagBtn" class="btn small-btn">Add</button>
+          </div>
+        </div>
+
+        <div class="controls-group">
+          <strong>Files</strong>
+          <div class="row mt-2">
+            <button id="newFileBtn" class="btn">New File</button>
+            <button id="toggleSortBtn" class="btn ghost">A → Z On</button>
+          </div>
+          <div class="row mt-2 gap-2">
+            <button id="exportBtn" class="btn ghost">Export JSON</button>
+            <label class="btn ghost" style="cursor:pointer">
+              Import JSON
+              <input id="importFileInput" type="file" accept="application/json" />
+            </label>
+          </div>
+        </div>
+
+        <div class="controls-group">
+          <div class="small muted">Storage: <strong>localStorage</strong></div>
+          <div class="footer-note">Tip: Export JSON to back up or share with others. For multi-device sync, integrate a backend (GitHub Gist, Firebase, etc.)</div>
+        </div>
+      </aside>
+
+      <!-- Main area -->
+      <main class="area">
+        <!-- Pages column (left: files per selected pages) -->
+        <section class="panel">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <strong>Pages</strong>
+            <div class="small muted" id="selectedPagesCount">0 selected</div>
+          </div>
+
+          <div id="pagesColumns" class="mt-2 pages-grid"></div>
+        </section>
+
+        <!-- Editor column (right) -->
+        <aside class="panel">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <strong>Editor</strong>
+            <div class="small muted" id="editorMode">Create new file</div>
+          </div>
+
+          <div class="mt-2 flex-col" style="gap:8px">
+            <input id="editorName" class="input" placeholder="Filename (e.g., notes.txt)" />
+            <div>
+              <label class="small muted">Page</label>
+              <select id="editorPage" class="input">
+                <option value="">(none)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="small muted">Tags (click to toggle)</label>
+              <div id="editorTags" class="mt-2" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+            </div>
+
+            <div>
+              <label class="small muted">Content</label>
+              <textarea id="editorContent" class="input editor-text"></textarea>
+            </div>
+
+            <div style="display:flex;gap:8px">
+              <button id="saveBtn" class="btn">Save</button>
+              <button id="downloadBtn" class="btn ghost">Download</button>
+              <button id="clearBtn" class="btn ghost">Clear</button>
+              <button id="deleteFileBtn" class="btn danger" style="display:none">Delete file</button>
+            </div>
+
+            <div class="footer-note">Note: Changes are saved into localStorage automatically when they affect the data model. Click Save to commit the editor changes to the file list.</div>
+          </div>
+        </aside>
+      </main>
+    </div>
+  </div>
+
+  <script>
+  /*
+    Single-file client-side file manager
+    - Uses localStorage key 'gfm:data:v1'
+    - Data model: { pages:[], tags:[], files:[] }
+    - files: { id,name,content,tags:[],pageId,createdAt }
+  */
+  (function(){
+    const STORAGE_KEY = 'gfm:data:v1';
+    const DEFAULT_TAGS = ['assignment','quizzes','lecture notes'];
+    const DEFAULT_PAGES = [
+      { id: 'p-default', name: 'General' },
+      { id: 'p-math', name: 'Math' },
+      { id: 'p-cs', name: 'Computer Science' }
+    ];
+
+    // DOM handles
+    const pagesListEl = document.getElementById('pagesList');
+    const tagsListEl = document.getElementById('tagsList');
+    const pagesColumnsEl = document.getElementById('pagesColumns');
+    const selectedPagesCountEl = document.getElementById('selectedPagesCount');
+    const editorModeEl = document.getElementById('editorMode');
+
+    const newPageNameEl = document.getElementById('newPageName');
+    const addPageBtn = document.getElementById('addPageBtn');
+    const newTagNameEl = document.getElementById('newTagName');
+    const addTagBtn = document.getElementById('addTagBtn');
+    const newFileBtn = document.getElementById('newFileBtn');
+    const toggleSortBtn = document.getElementById('toggleSortBtn');
+    const exportBtn = document.getElementById('exportBtn');
+    const importFileInput = document.getElementById('importFileInput');
+
+    const editorNameEl = document.getElementById('editorName');
+    const editorPageEl = document.getElementById('editorPage');
+    const editorTagsEl = document.getElementById('editorTags');
+    const editorContentEl = document.getElementById('editorContent');
+    const saveBtn = document.getElementById('saveBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const deleteFileBtn = document.getElementById('deleteFileBtn');
+
+    // State
+    let state = {
+      pages: JSON.parse(JSON.stringify(DEFAULT_PAGES)),
+      tags: Array.from(DEFAULT_TAGS),
+      files: [],
+      savedAt: null
+    };
+
+    // UI state
+    let selectedPageIds = [DEFAULT_PAGES[0].id];
+    let filterTags = []; // tags to filter by (AND)
+    let sortAZ = true;
+    let activeFileId = null;
+
+    // Utilities
+    function uid(){ return Math.random().toString(36).slice(2,9); }
+    function nowISO(){ return new Date().toISOString(); }
+    function saveState(){ state.savedAt = nowISO(); try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){ console.error('save failed',e);} }
+    function loadState(){
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if(raw){
+          const parsed = JSON.parse(String(raw));
+          if(parsed.pages) state.pages = parsed.pages;
+          if(parsed.tags) state.tags = parsed.tags;
+          if(parsed.files) state.files = parsed.files;
+          if(parsed.savedAt) state.savedAt = parsed.savedAt;
+        } else {
+          // seed file example
+          state.files = [{
+            id: uid(),
+            name: 'Welcome.txt',
+            content: 'Welcome to the File Manager\\nCreate files, tags, pages, and edit here.',
+            tags: ['lecture notes'],
+            pageId: 'p-default',
+            createdAt: nowISO()
+          }];
+          saveState();
+        }
+      }catch(e){
+        console.error('failed to load state',e);
+      }
+    }
+
+    // Derived: files by page, with filtering + sorting
+    function filesByPage(){
+      const map = {};
+      state.pages.forEach(p => map[p.id] = []);
+      state.files.forEach(f => {
+        if(!map[f.pageId]) map[f.pageId] = [];
+        map[f.pageId].push(f);
+      });
+      Object.keys(map).forEach(pid => {
+        let arr = map[pid];
+        if(filterTags.length){
+          arr = arr.filter(f => filterTags.every(t => (f.tags||[]).includes(t)));
+        }
+        if(sortAZ){
+          arr.sort((a,b) => (a.name||'').toLowerCase().localeCompare((b.name||'').toLowerCase()));
+        }
+        map[pid] = arr;
+      });
+      return map;
+    }
+
+    // Rendering functions
+    function renderPagesList(){
+      pagesListEl.innerHTML = '';
+      state.pages.forEach(p => {
+        const wrapper = document.createElement('div');
+        wrapper.style.display = 'flex';
+        wrapper.style.justifyContent = 'space-between';
+        wrapper.style.alignItems = 'center';
+        wrapper.style.marginBottom = '6px';
+
+        const left = document.createElement('label');
+        left.style.display = 'flex';
+        left.style.alignItems = 'center';
+        left.style.gap = '8px';
+        const chk = document.createElement('input'); chk.type='checkbox';
+        chk.checked = selectedPageIds.includes(p.id);
+        chk.addEventListener('change', ()=>{ toggleSelectedPage(p.id); });
+        const name = document.createElement('span'); name.textContent = p.name;
+        left.appendChild(chk); left.appendChild(name);
+
+        const right = document.createElement('div');
+        right.style.display='flex'; right.style.gap='8px';
+        const renameBtn = document.createElement('button'); renameBtn.className='small-btn btn ghost'; renameBtn.textContent='Rename';
+        renameBtn.onclick = ()=>{
+          const newName = prompt('Rename page', p.name);
+          if(newName && newName.trim()){
+            state.pages = state.pages.map(x => x.id===p.id? {...x, name: newName.trim()} : x);
+            saveState(); renderAll();
+          }
+        };
+        const removeBtn = document.createElement('button'); removeBtn.className='small-btn'; removeBtn.textContent='Remove';
+        removeBtn.style.background='transparent'; removeBtn.style.color='var(--danger)';
+        removeBtn.onclick = ()=>{
+          if(!window.confirm('Remove this page? Files will be moved to a fallback page.')) return;
+          const remaining = state.pages.filter(x => x.id !== p.id);
+          const fallback = remaining[0]?.id ?? null;
+          state.files = state.files.map(f => f.pageId === p.id ? {...f, pageId: fallback} : f);
+          state.pages = remaining;
+          selectedPageIds = selectedPageIds.filter(id => id !== p.id);
+          saveState(); renderAll();
+        };
+        right.appendChild(renameBtn); right.appendChild(removeBtn);
+
+        wrapper.appendChild(left); wrapper.appendChild(right);
+        pagesListEl.appendChild(wrapper);
+      });
+      // add quick control: show/hide select all
+      const selAll = document.createElement('div'); selAll.className='mt-2';
+      const saBtn = document.createElement('button'); saBtn.className='btn ghost small-btn'; saBtn.textContent='Select all pages';
+      saBtn.onclick = ()=>{ selectedPageIds = state.pages.map(p=>p.id); renderAll(); };
+      const clearBtn = document.createElement('button'); clearBtn.className='btn ghost small-btn'; clearBtn.textContent='Clear selection';
+      clearBtn.onclick = ()=>{ selectedPageIds = []; renderAll(); };
+      selAll.appendChild(saBtn); selAll.appendChild(clearBtn);
+      pagesListEl.appendChild(selAll);
+
+      selectedPagesCountEl.textContent = selectedPageIds.length + ' selected';
+    }
+
+    function renderTagsList(){
+      tagsListEl.innerHTML = '';
+      state.tags.forEach(t => {
+        const item = document.createElement('div');
+        item.className = 'tag';
+        const chk = document.createElement('input'); chk.type='checkbox'; chk.checked = filterTags.includes(t);
+        chk.onclick = (e)=>{ e.stopPropagation(); toggleFilterTag(t); };
+        const span = document.createElement('span'); span.textContent = t;
+        const remove = document.createElement('button'); remove.className='danger-x'; remove.textContent='✕';
+        remove.onclick = (e)=>{ e.stopPropagation(); if(!window.confirm('Remove tag from system?')) return; removeTag(t); };
+        item.appendChild(chk); item.appendChild(span); item.appendChild(remove);
+        tagsListEl.appendChild(item);
+      });
+    }
+
+    function renderPagesColumns(){
+      pagesColumnsEl.innerHTML = '';
+      const map = filesByPage();
+      if(selectedPageIds.length === 0){
+        const no = document.createElement('div'); no.className='page-card'; no.textContent = 'No pages selected — pick pages from the left to display them here.';
+        pagesColumnsEl.appendChild(no); return;
+      }
+      selectedPageIds.forEach(pid => {
+        const page = state.pages.find(p=>p.id===pid) || { id: pid, name: '(unknown)' };
+        const list = map[pid] || [];
+        const col = document.createElement('div'); col.className='page-card';
+        const header = document.createElement('div'); header.style.display='flex'; header.style.justifyContent='space-between'; header.style.alignItems='center';
+        const title = document.createElement('strong'); title.textContent = page.name;
+        const meta = document.createElement('div'); meta.className='small muted'; meta.textContent = list.length + ' files';
+        header.appendChild(title); header.appendChild(meta);
+        col.appendChild(header);
+
+        const filesWrap = document.createElement('div'); filesWrap.style.marginTop='8px'; filesWrap.style.maxHeight='320px'; filesWrap.style.overflow='auto';
+        if(list.length===0){
+          const none = document.createElement('div'); none.className='small muted'; none.textContent='No files in this page.';
+          filesWrap.appendChild(none);
+        } else {
+          list.forEach(f => {
+            const row = document.createElement('div'); row.className = 'file-row';
+            if(activeFileId === f.id) row.style.background = '#fff';
+            const left = document.createElement('div');
+            left.style.display='flex'; left.style.flexDirection='column';
+            const name = document.createElement('div'); name.style.fontWeight='600'; name.textContent = f.name;
+            const fm = document.createElement('div'); fm.className='file-meta'; fm.textContent = (f.tags||[]).join(', ');
+            left.appendChild(name); left.appendChild(fm);
+            const right = document.createElement('div'); right.style.display='flex'; right.style.flexDirection='column'; right.style.alignItems='flex-end'; right.style.gap='6px';
+
+            const dl = document.createElement('button'); dl.className='small-btn btn ghost'; dl.textContent='Download';
+            dl.onclick = (e)=>{ e.stopPropagation(); downloadFile(f); };
+
+            const del = document.createElement('button'); del.className='small-btn'; del.textContent='Delete'; del.style.color='var(--danger)'; del.style.background='transparent';
+            del.onclick = (e)=>{ e.stopPropagation(); if(!window.confirm('Delete file?')) return; deleteFile(f.id); };
+
+            right.appendChild(dl); right.appendChild(del);
+
+            row.appendChild(left); row.appendChild(right);
+            row.onclick = ()=>{ openFileInEditor(f.id); };
+            filesWrap.appendChild(row);
+          });
+        }
+        col.appendChild(filesWrap);
+        pagesColumnsEl.appendChild(col);
+      });
+    }
+
+    function renderEditorTags(){
+      editorTagsEl.innerHTML = '';
+      state.tags.forEach(t=>{
+        const btn = document.createElement('button');
+        btn.className = 'tag' + (getEditorTags().includes(t) ? ' active' : '');
+        btn.textContent = t;
+        btn.onclick = ()=> {
+          toggleEditorTag(t);
+          renderEditorTags();
+        };
+        editorTagsEl.appendChild(btn);
+      });
+      // quick-add input
+      const quickWrap = document.createElement('div'); quickWrap.style.display='flex'; quickWrap.style.alignItems='center'; quickWrap.style.gap='6px';
+      const input = document.createElement('input'); input.placeholder='+ tag'; input.className='input'; input.style.width='120px';
+      const add = document.createElement('button'); add.className='btn small-btn'; add.textContent='Add';
+      add.onclick = ()=>{ const v = input.value.trim(); if(!v) return; addTag(v); addEditorTag(v); input.value=''; renderAll(); };
+      quickWrap.appendChild(input); quickWrap.appendChild(add);
+      editorTagsEl.appendChild(quickWrap);
+    }
+
+    function renderEditorPageOptions(){
+      editorPageEl.innerHTML = '<option value="">(none)</option>';
+      state.pages.forEach(p=>{
+        const opt = document.createElement('option'); opt.value = p.id; opt.textContent = p.name;
+        editorPageEl.appendChild(opt);
+      });
+    }
+
+    function renderAll(){
+      renderPagesList();
+      renderTagsList();
+      renderPagesColumns();
+      renderEditorTags();
+      renderEditorPageOptions();
+      updateEditorUI();
+      // update sort button label
+      toggleSortBtn.textContent = sortAZ ? 'A → Z On' : 'A → Z Off';
+    }
+
+    // Data mutation functions
+    function addPage(name){
+      if(!name || !name.trim()) return;
+      const id = 'p-'+uid();
+      state.pages.push({ id, name: name.trim() });
+      if(!selectedPageIds.includes(id)) selectedPageIds.push(id);
+      saveState(); renderAll();
+    }
+    function addTag(name){
+      if(!name || !name.trim()) return;
+      const t = name.trim();
+      if(!state.tags.includes(t)) state.tags.push(t);
+      saveState();
+    }
+    function removeTag(name){
+      state.tags = state.tags.filter(t => t !== name);
+      state.files = state.files.map(f => ({ ...f, tags: (f.tags||[]).filter(x=>x!==name) }));
+      filterTags = filterTags.filter(t => t !== name);
+      saveState(); renderAll();
+    }
+
+    function createFile(name, pageId){
+      const f = {
+        id: uid(),
+        name: name||'untitled.txt',
+        content: '',
+        tags: [],
+        pageId: pageId || selectedPageIds[0] || state.pages[0]?.id || null,
+        createdAt: nowISO()
+      };
+      state.files.push(f);
+      saveState();
+      openFileInEditor(f.id);
+      renderAll();
+    }
+
+    function saveEditorToFile(){
+      const name = editorNameEl.value.trim();
+      if(!name){ alert('File must have a name'); return; }
+      if(!activeFileId){
+        // create new
+        const f = {
+          id: uid(),
+          name,
+          content: editorContentEl.value,
+          tags: getEditorTags(),
+          pageId: editorPageEl.value || null,
+          createdAt: nowISO()
+        };
+        state.files.push(f);
+        activeFileId = f.id;
+      } else {
+        state.files = state.files.map(f => f.id === activeFileId ? { ...f, name, content: editorContentEl.value, tags: getEditorTags(), pageId: editorPageEl.value || null } : f);
+      }
+      saveState();
+      renderAll();
+    }
+
+    function deleteFile(id){
+      state.files = state.files.filter(f => f.id !== id);
+      if(activeFileId === id) activeFileId = null;
+      saveState(); renderAll();
+    }
+
+    function exportJSON(){
+      const payload = { pages: state.pages, tags: state.tags, files: state.files, exportedAt: nowISO() };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'gfm-export.json'; a.click(); URL.revokeObjectURL(url);
+    }
+    function importJSON(file){
+      const r = new FileReader();
+      r.onload = ()=>{
+        try{
+          const parsed = JSON.parse(String(r.result));
+          if(parsed.pages) state.pages = parsed.pages;
+          if(parsed.tags) state.tags = parsed.tags;
+          if(parsed.files) state.files = parsed.files;
+          saveState(); renderAll(); alert('Import complete.');
+        }catch(e){ alert('Invalid JSON import'); }
+      };
+      r.readAsText(file);
+    }
+
+    function downloadFile(f){
+      const blob = new Blob([f.content || ''], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = f.name || 'file.txt'; a.click(); URL.revokeObjectURL(url);
+    }
+
+    // Editor helpers
+    function openFileInEditor(id){
+      const f = state.files.find(x=>x.id===id);
+      if(!f) return;
+      activeFileId = id;
+      editorNameEl.value = f.name || '';
+      editorContentEl.value = f.content || '';
+      // set tags in a transient place (we won't mutate state until save)
+      editorTagState = Array.isArray(f.tags) ? [...f.tags] : [];
+      editorPageEl.value = f.pageId || '';
+      editorModeEl.textContent = 'Editing file';
+      deleteFileBtn.style.display = 'inline-block';
+      renderEditorTags();
+    }
+    function clearEditor(){
+      activeFileId = null;
+      editorNameEl.value = '';
+      editorContentEl.value = '';
+      editorPageEl.value = '';
+      editorTagState = [];
+      editorModeEl.textContent = 'Create new file';
+      deleteFileBtn.style.display = 'none';
+      renderEditorTags();
+    }
+
+    // transient editor tag state (separate from global tags)
+    let editorTagState = [];
+
+    function getEditorTags(){ return Array.from(new Set(editorTagState)); }
+    function toggleEditorTag(t){
+      if(editorTagState.includes(t)) editorTagState = editorTagState.filter(x=>x!==t);
+      else editorTagState.push(t);
+    }
+    function addEditorTag(t){ if(!editorTagState.includes(t)) editorTagState.push(t); }
+
+    function addEditorTagFromGlobal(t){
+      addTag(t); addEditorTag(t); renderEditorTags();
+    }
+
+    function toggleSelectedPage(id){
+      if(selectedPageIds.includes(id)) selectedPageIds = selectedPageIds.filter(x=>x!==id);
+      else selectedPageIds.push(id);
+      renderAll();
+    }
+
+    function toggleFilterTag(t){
+      if(filterTags.includes(t)) filterTags = filterTags.filter(x=>x!==t);
+      else filterTags.push(t);
+      renderAll();
+    }
+
+    // bootstrap and wire events
+    loadState();
+    renderAll();
+
+    addPageBtn.onclick = ()=>{ const v = newPageNameEl.value.trim(); if(!v) return; addPage(v); newPageNameEl.value=''; };
+    addTagBtn.onclick = ()=>{ const v = newTagNameEl.value.trim(); if(!v) return; addTag(v); newTagNameEl.value=''; renderAll(); };
+    newFileBtn.onclick = ()=> createFile('untitled.txt');
+    toggleSortBtn.onclick = ()=>{ sortAZ = !sortAZ; renderAll(); };
+
+    exportBtn.onclick = ()=> exportJSON();
+    importFileInput.onchange = (e)=>{ const f = e.target.files?.[0]; if(f) importJSON(f); e.target.value=''; };
+
+    saveBtn.onclick = ()=> saveEditorToFile();
+    downloadBtn.onclick = ()=>{
+      if(!activeFileId){ alert('Open or save a file first'); return; }
+      const f = state.files.find(x=>x.id===activeFileId);
+      if(f) downloadFile(f);
+    };
+    clearBtn.onclick = ()=> clearEditor();
+    deleteFileBtn.onclick = ()=>{
+      if(!activeFileId) return;
+      if(!window.confirm('Delete file?')) return;
+      deleteFile(activeFileId);
+    };
+
+    // expose some convenience functions for tag creation from editor UI
+    window._gfm = {
+      addTag: (t)=>{ addTag(t); renderAll(); }
+    };
+
+    // Save on model-changing events (already saved where we mutate). Also save on unload as a safety.
+    window.addEventListener('beforeunload', ()=> saveState());
+
+    // initial UI default: ensure editor tag state is empty
+    clearEditor();
+
+  })();
+  </script>
+</body>
+</html>
