@@ -1,7 +1,7 @@
 {
   "assignmentId": "assignment2",
   "title": "Sample Assignment 2",
-  "instructions": "Answer all questions. MCQs: choose the single best answer. Fill in the blanks: type the answer (not case-sensitive). You may submit multiple times; each submission is recorded.",
+  "instructions": "Answer all questions. MCQs: choose the single best answer. Fill in the blanks: type the answer. You may submit multiple times; each submission is recorded.",
   "questions": [
     {
       "id": "q1",
@@ -9,15 +9,17 @@
       "text": "Which planet is known as the Red Planet?",
       "options": ["Earth", "Mars", "Jupiter", "Venus"],
       "answer": 1,
-      "credits": 2
+      "credits": 2,
+      "explanation": "Mars is known as the Red Planet due to its iron oxide surface."
     },
     {
       "id": "q2",
       "type": "fill",
       "text": "The capital of Japan is _____.",
       "options": [],
-      "answer": ["Tokyo","tokyo"],
-      "credits": 3
+      "answer": "Tokyo",
+      "credits": 3,
+      "explanation": "Tokyo has been Japan's capital since 1868."
     },
     {
       "id": "q3",
@@ -25,7 +27,8 @@
       "text": "Select the primary language used for styling web pages.",
       "options": ["HTML", "Python", "CSS", "JavaScript"],
       "answer": 2,
-      "credits": 1
+      "credits": 1,
+      "explanation": "CSS is specifically used to style web pages."
     }
   ]
 }
