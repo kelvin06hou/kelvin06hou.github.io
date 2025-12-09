@@ -18,11 +18,12 @@
 <body>
 
 <h1>Assessment</h1>
-<p id="instructions">Please answer all questions. Type your responses for fill-in items or select one option for MCQs.</p>
+<p id="instructions">Please answer all questions. Type your responses for fill‑in items or select one option for MCQs.</p>
 <p>This page automatically loads questions from <strong>MyQuestion.json</strong> located on the server.</p>
 
 <div id="question-container">Loading questions...</div>
 <button id="submit-btn">Submit Answers</button>
+<div id="final-score" style="margin-top:20px; font-weight:bold;"></div>">Submit Answers</button>
 
 <script>
   const qContainer = document.getElementById('question-container');
@@ -33,6 +34,8 @@
     try {
       const res = await fetch('MyQuestion.json');
       questions = await res.json();
+      // Pre-calc total credits
+      window.totalCredits = questions.reduce((a,q)=>a + (q.credit || 0), 0);();
       renderQuestions();
     } catch (e) {
       qContainer.textContent = 'Failed to load MyQuestion.json. Ensure the file exists on your server.';
@@ -106,7 +109,24 @@
     });
   }
 
-  submitBtn.addEventListener('click', revealAnswers);
+  // Score calculation
+  function calculateScore() {
+    let earned = 0;
+    questions.forEach((q, index) => {
+      let userAnswer;
+      if (q.type === 'mcq') {
+        const selected = document.querySelector(`input[name="q${index}"]:checked`);
+        if (selected && parseInt(selected.value) === q.correct) earned += (q.credit || 0);
+      } else if (q.type === 'fill') {
+        const inp = document.querySelector(`input[name="q${index}"]`);
+        if (inp && q.blanks.some(b=>b.toLowerCase().trim() === inp.value.toLowerCase().trim())) earned += (q.credit || 0);
+      }
+    });
+    const percent = window.totalCredits ? ((earned / window.totalCredits) * 100).toFixed(2) : '0.00';
+    document.getElementById('final-score').textContent = `Final Score: ${percent}%`;
+  }
+
+  submitBtn.addEventListener('click', () => { revealAnswers(); calculateScore(); });('click', revealAnswers);
   loadQuestions();
 </script>
 
