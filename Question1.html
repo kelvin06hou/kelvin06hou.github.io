@@ -31,7 +31,7 @@
 
   async function loadQuestions() {
     try {
-      const res = await fetch('MyQuestion.json');
+      const res = await fetch('./MyQuestion.json');
       questions = await res.json();
 
       if (!Array.isArray(questions)) {
@@ -47,7 +47,6 @@
     }
   }
 
-  
   function autosaveInputs() {
     const data = {};
     questions.forEach((q, index) => {
@@ -219,7 +218,8 @@
     const box = document.getElementById('submission-log');
     const log = JSON.parse(localStorage.getItem('submission_history') || '[]');
     if (log.length === 0) box.textContent = 'No submissions yet.';
-    else box.textContent = log.map(r => `Submission ID-${r.submissionID} | ${r.time} | ${r.score}%`).join('\n');
+    else box.textContent = log.map(r => `Submission ID-${r.submissionID} | ${r.time} | ${r.score}%`).join('
+');
   }
 
   loadQuestions();
