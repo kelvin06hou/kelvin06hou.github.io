@@ -1,121 +1,276 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>Platform1</title>
-<style>
-body { font-family: Arial; margin: 20px; }
-.question-box { border: 1px solid #ccc; padding: 15px; margin-top: 20px; }
-.feedback { margin-top: 10px; padding: 8px; border-left: 3px solid #0044aa; }
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Assignment Platform</title>
+
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 24px; background: #f3f4f6; color:#111827; }
+    .container { max-width: 900px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
+    .instruction { border-left: 4px solid #2563eb; padding: 12px; background: #eef4ff; border-radius: 6px; margin-bottom: 20px; }
+    .question { padding: 14px; background: #f8fafc; border-radius: 8px; margin-bottom: 18px; border: 1px solid #e2e8f0; position: relative; }
+    .q-sep { height: 5px; background: linear-gradient(90deg, #2563eb, transparent); border-radius: 6px; margin-bottom: 12px; }
+    .q-title { font-weight: bold; margin-bottom: 8px; }
+    .bar-right { position: absolute; right: 10px; top: 10px; font-size: 12px; color: #6b7280; }
+    .options { display: flex; flex-direction: column; gap: 8px; }
+    .option { display: flex; gap: 8px; align-items: center; cursor: pointer; }
+    input[type="text"] { width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; }
+    button { background: #2563eb; color: white; padding: 8px 14px; border: 0; border-radius: 6px; cursor: pointer; }
+    button.secondary { background: #374151; }
+    .controls { display: flex; gap: 10px; align-items: center; margin-top: 18px; }
+    .result { margin-top: 20px; padding: 12px; background: #ecfeff; border: 1px solid #bae6fd; border-radius: 6px; }
+    .small { font-size: 13px; color: #6b7280; }
+    .correct-answer { color: #2563eb; margin-top: 4px; }
+  </style>
 </head>
+
 <body>
-<h2 id="title"></h2>
-<div id="instructionText" style="border:1px solid #aaa; padding:15px; margin-bottom:20px;"></div>
-<div id="questions"></div>
-<button onclick="submitAssignment()">Submit</button>
-<button onclick="showSubmissionRecord()">Show Submission Record</button>
+  <div class="container">
+    <h1 id="title">Assignment</h1>
+
+    <div class="instruction">
+      <strong>Instructions</strong>
+      <p id="instructionText" class="small"></p>
+    </div>
+
+    <p class="small">Questions: <span id="qcount">0</span></p>
+
+    <form id="quizForm" onsubmit="return false;">
+      <div id="questionsArea"></div>
+
+      <div class="controls">
+        <button id="submitBtn" type="button">Submit</button>
+        <button id="recordsBtn" type="button" class="secondary">View Submission Records</button>
+        <div style="margin-left:auto;" class="small">Autosave enabled</div>
+      </div>
+
+      <div id="feedbackArea"></div>
+    </form>
+  </div>
 
 <script>
-const JSON_URL = "assignment1.json";
+const JSON_URL = "assignment1.json";  
 let assignmentData = null;
 
+/* ================= Load JSON ================= */
 async function loadAssignment() {
   try {
     const res = await fetch(JSON_URL, { cache: "no-store" });
     if (!res.ok) throw new Error("JSON load failed");
     assignmentData = await res.json();
-    renderInstructions();
-    renderQuestions();
   } catch (err) {
     document.getElementById("instructionText").innerText =
-      "Failed to load assignment JSON.";
+      "Failed to load assignment2.json. Ensure the JSON file is in the same GitHub directory.";
   }
 }
 
+/* ================= Render Instructions ================= */
 function renderInstructions() {
-  const box = document.getElementById("instructionText");
-  box.innerHTML = assignmentData.instructions.replace(/
-/g, "<br>");
-  document.getElementById("title").innerText = assignmentData.title;
+  if (!assignmentData || !assignmentData.instructions) return;
+  document.getElementById("instructionText").innerHTML =
+    assignmentData.instructions.replace(/\n/g, "<br>");
 }
 
+/* ================= Storage Keys ================= */
+function storageKey() { return "answers_" + (assignmentData?.assignmentId || "default"); }
+function submissionKey() { return "submissions_" + (assignmentData?.assignmentId || "default"); }
+
+function loadSaved() {
+  try { return JSON.parse(localStorage.getItem(storageKey())) || {}; }
+  catch { return {}; }
+}
+
+function saveAnswers() {
+  localStorage.setItem(storageKey(), JSON.stringify(collectAnswers()));
+}
+
+/* ================= Render Questions ================= */
 function renderQuestions() {
-  const container = document.getElementById("questions");
+  const container = document.getElementById("questionsArea");
   container.innerHTML = "";
+  const saved = loadSaved();
 
-  assignmentData.questions.forEach(q => {
-    let html = `<div class='question-box'>
-      <div><strong>${q.text}</strong></div>`;
+  document.getElementById("title").innerText = assignmentData.title;
+  renderInstructions();
+  document.getElementById("qcount").innerText = assignmentData.questions.length;
+
+  assignmentData.questions.forEach((q, idx) => {
+    const wrap = document.createElement("div");
+    wrap.className = "question";
+
+    wrap.innerHTML += `
+      <div class="q-sep"></div>
+      <div class="q-title">${idx + 1}. ${q.text}</div>
+      <div class="bar-right">${q.credits} pts</div>`;
 
     if (q.type === "mcq") {
-      q.options.forEach((opt, idx) => {
-        html += `<div>
-          <input type='radio' name='${q.id}' value='${idx}' onchange='saveAnswer("${q.id}", ${idx})'>
-          ${String.fromCharCode(65 + idx)}. ${opt}
-        </div>`;
+      const optWrap = document.createElement("div");
+      optWrap.className = "options";
+      q.options.forEach((opt, i) => {
+        optWrap.innerHTML += `
+          <label class="option">
+            <input type="radio" name="${q.id}" value="${i}"> ${opt}
+          </label>`;
       });
+      wrap.appendChild(optWrap);
     } else if (q.type === "fill") {
-      html += `<input type='text' id='${q.id}' oninput='saveAnswer("${q.id}", this.value)' />`;
+      const input = document.createElement("input");
+      input.type = "text";
+      input.name = q.id;
+      wrap.appendChild(input);
     }
 
-    html += `<div id='feedback-${q.id}' class='feedback'></div>`;
-    html += `</div>`;
-    container.innerHTML += html;
+    if (saved[q.id] !== undefined) {
+      if (q.type === "mcq") {
+        wrap.querySelectorAll(`input[name='${q.id}']`).forEach(r => {
+          if (Number(r.value) === Number(saved[q.id])) r.checked = true;
+        });
+      } else {
+        wrap.querySelector("input").value = saved[q.id];
+      }
+    }
+
+    const fb = document.createElement("div");
+    fb.id = "fb_" + q.id;
+    fb.className = "small";
+    wrap.appendChild(fb);
+
+    wrap.addEventListener("input", saveAnswers);
+    wrap.addEventListener("change", saveAnswers);
+
+    container.appendChild(wrap);
   });
 }
 
-function saveAnswer(id, value) {
-  localStorage.setItem("ans_" + id, value);
-}
-
-function getOptionLetter(index) {
-  return String.fromCharCode(65 + index);
-}
-
-function submitAssignment() {
-  let record = { timestamp: new Date().toLocaleString(), score: 0 };
-  let totalScore = 0;
-
+/* ================= Collect Answers ================= */
+function collectAnswers() {
+  const out = {};
   assignmentData.questions.forEach(q => {
-    const feedbackBox = document.getElementById(`feedback-${q.id}`);
-    let userAnswer = localStorage.getItem(`ans_${q.id}`);
+    if (q.type === "mcq") {
+      const sel = document.querySelector(`input[name='${q.id}']:checked`);
+      out[q.id] = sel ? Number(sel.value) : null;
+    } else {
+      const inp = document.querySelector(`input[name='${q.id}']`);
+      out[q.id] = inp ? inp.value.trim() : "";
+    }
+  });
+  return out;
+}
+
+/* ================= Grading Logic ================= */
+function grade(answers) {
+  let earned = 0;
+  let total = 0;
+
+  const detail = assignmentData.questions.map(q => {
+    total += q.credits;
     let correct = false;
-    let correctAnsText = "";
 
     if (q.type === "mcq") {
-      const correctIndex = q.answer;
-      correctAnsText = `Answer: ${getOptionLetter(correctIndex)} (${q.options[correctIndex]})`;
-      if (userAnswer != null && Number(userAnswer) === correctIndex) correct = true;
+      correct = answers[q.id] === q.answer;
     } else {
-      correct = (userAnswer || "").trim().toLowerCase() === q.answer.trim().toLowerCase();
-      correctAnsText = `Answer: \"${q.answer}\"`;
+      correct = answers[q.id].toLowerCase() === q.answer.toString().toLowerCase();
     }
 
-    const marks = correct ? q.credits : 0;
-    totalScore += marks;
+    if (correct) earned += q.credits;
 
-    feedbackBox.innerHTML = `${marks}/${q.credits}<br>${correctAnsText}<br>${q.explanation}`;
+    return {
+      id: q.id,
+      correct,
+      credits: q.credits,
+      earned: correct ? q.credits : 0,
+      correctAnswer: q.answer,
+      explanation: q.explanation || "",
+      type: q.type,
+      options: q.options || []
+    };
   });
 
-  record.score = totalScore;
-  saveSubmissionRecord(record);
+  return { earned, total, detail };
 }
 
-function saveSubmissionRecord(rec) {
-  let logs = JSON.parse(localStorage.getItem("submission_logs") || "[]");
-  logs.push(rec);
-  localStorage.setItem("submission_logs", JSON.stringify(logs));
+/* ================= Show Per-Question Feedback ================= */
+function renderPerQuestionFeedback(result) {
+  result.detail.forEach(d => {
+    const fb = document.getElementById("fb_" + d.id);
+    if (!fb) return;
+
+    let formattedCorrect = "";
+
+    if (d.type === "mcq") {
+      const letter = String.fromCharCode(65 + Number(d.correctAnswer));
+      const text = assignmentData.questions.find(q => q.id === d.id).options[d.correctAnswer];
+      formattedCorrect = `Answer: ${letter}; "${text}"`;
+    } else {
+      formattedCorrect = `Answer: "${d.correctAnswer}"`;
+    }
+
+    fb.innerHTML =
+      `Marks: ${d.earned}/${d.credits}<br>
+       <span class="correct-answer">${formattedCorrect}</span>` +
+      (d.explanation ? `<br>Explanation: ${d.explanation}` : "");
+  });
 }
 
-function showSubmissionRecord() {
-  let logs = JSON.parse(localStorage.getItem("submission_logs") || "[]");
-  let msg = logs.map((l, i) => `${i+1}. ${l.timestamp} — Score: ${l.score}`).join("
-");
-  alert(msg || "No submissions yet.");
+/* ================= Save Submission Record ================= */
+function saveSubmission(result, answers) {
+  const key = submissionKey();
+  const list = JSON.parse(localStorage.getItem(key)) || [];
+  list.push({
+    time: new Date().toISOString(),
+    earned: result.earned,
+    total: result.total,
+    detail: result.detail,
+    answers
+  });
+  localStorage.setItem(key, JSON.stringify(list));
 }
 
-window.onload = loadAssignment;
+/* ================= Show Records ================= */
+function showRecords() {
+  const key = submissionKey();
+  const list = JSON.parse(localStorage.getItem(key)) || [];
+  const win = window.open("", "records", "width=800,height=600");
+  if (!win) return alert("Popup blocked.");
+
+  win.document.write("<h2>Submission Records</h2>");
+  if (!list.length) return win.document.write("<p>No submissions yet.</p>");
+
+  win.document.write("<ol>");
+  list.forEach(r => {
+    win.document.write(`<li>${new Date(r.time).toLocaleString()} — ${r.earned}/${r.total}</li>`);
+  });
+  win.document.write("</ol>");
+}
+
+/* ================= Score Summary ================= */
+function renderResults(result) {
+  document.getElementById("feedbackArea").innerHTML = `
+    <div class="result">
+      <strong>Score: ${result.earned} / ${result.total}</strong><br>
+      <span class="small">Submitted: ${new Date().toLocaleString()}</span>
+    </div>`;
+}
+
+/* ================= Initialize ================= */
+async function initialize() {
+  await loadAssignment();
+  if (assignmentData) renderQuestions();
+
+  document.getElementById("submitBtn").onclick = function () {
+    const answers = collectAnswers();
+    saveAnswers();
+    const result = grade(answers);
+    saveSubmission(result, answers);
+    renderPerQuestionFeedback(result);
+    renderResults(result);
+  };
+
+  document.getElementById("recordsBtn").onclick = showRecords;
+}
+
+initialize();
 </script>
 </body>
 </html>
