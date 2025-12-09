@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Platform1 — Assignment</title>
+  <style>
+    :root{--accent:#2563eb;--muted:#6b7280;--card:#f8fafc}
+    body{font-family:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; margin:0; padding:24px; background:#f3f4f6; color:#111827}
+    .container{max-width:900px;margin:0 auto;background:white;padding:20px;border-radius:10px;box-shadow:0 6px 20px rgba(16,24,40,0.06)}
+    h1{margin:0 0 8px;font-size:20px}
+    .instruction{border-left:4px solid var(--accent);background:linear-gradient(180deg, rgba(37,99,235,0.04), transparent);padding:12px;margin-bottom:18px;border-radius:6px}
+    .meta{font-size:13px;color:var(--muted);margin-bottom:12px}
+    .question{padding:14px 12px;border-radius:8px;margin-bottom:14px;background:var(--card);position:relative}
+    .q-sep{height:6px;background:linear-gradient(90deg,var(--accent),transparent);border-radius:6px;margin:10px 0}
+    .q-title{font-weight:600;margin-bottom:8px}
+    .options{display:flex;flex-direction:column;gap:8px}
+    .option label{display:flex;gap:10px;align-items:center;padding:8px;border-radius:6px;cursor:pointer}
+    input[type="text"], textarea{width:100%;padding:8px;border-radius:6px;border:1px solid #e6edf3}
+    .controls{display:flex;gap:8px;align-items:center;margin-top:16px}
+    button{background:var(--accent);color:white;padding:8px 12px;border-radius:8px;border:0;cursor:pointer}
+    button.secondary{background:#111827;color:white}
+    .result{margin-top:12px;padding:10px;border-radius:6px;background:#ecfeff;border:1px solid #c7f9f3}
+    .correct{color:green;font-weight:600}
+    .incorrect{color:#b91c1c;font-weight:600}
+    .small{font-size:13px;color:var(--muted)}
+    .bar-right{position:absolute;right:12px;top:12px;font-size:12px;color:var(--muted)}
+    details summary{cursor:pointer;padding:8px;background:#fff;border-radius:6px}
+    @media (max-width:600px){.container{padding:12px}}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 id="title">Assignment</h1>
+
+    <div class="instruction" id="instructionBox">
+      <strong>Instructions</strong>
+      <p id="instructionText" class="small">Loading instructions...</p>
+    </div>
+
+    <div class="meta" id="metaInfo">Question count: <span id="qcount">0</span></div>
+
+    <form id="quizForm" onsubmit="return false;">
+      <div id="questionsArea"></div>
+
+      <div class="controls">
+        <button type="button" id="submitBtn">Submit</button>
+        <button type="button" id="showRecordsBtn" class="secondary">View Submission Records</button>
+        <div style="margin-left:auto;color:var(--muted);font-size:13px">Autosave: <span id="autosaveStatus">On</span></div>
+      </div>
+
+      <div id="feedbackArea"></div>
+    </form>
+  </div>
+
+  <script>
+  (function(){
+    const assignmentUrl = 'assignment1.json'; // external JSON file (must be in same folder)
+    let assignment = null;
+
+    function qs(s){ return document.querySelector(s); }
+    function nowISO(){return new Date().toISOString();}
+
+    async function loadAssignment(){
+      try{
+        const resp = await fetch(assignmentUrl, {cache:'no-store'});
+        if(!resp.ok) throw new Error('assignment file not found');
+        assignment = await resp.json();
+      }catch(e){
+        assignment = null;
+        qs('#instructionText').textContent = 'Failed to load ' + assignmentUrl + '. Please ensure assignment1.json is in the same folder as this HTML file.';
+      }
+    }
+
+    function getStorageKey(){ return 'platform1_answers_' + (assignment && assignment.assignmentId ? assignment.assignmentId : 'default'); }
+    function getSubmissionsKey(){ return 'platform1_submissions_' + (assignment && assignment.assignmentId ? assignment.assignmentId : 'default'); }
+
+    function loadSavedAnswers(){
+      try{ const raw = localStorage.getItem(getStorageKey()); return raw ? JSON.parse(raw) : {}; }catch(e){ return {}; }
+    }
+    function saveAnswers(obj){ try{ localStorage.setItem(getStorageKey(), JSON.stringify(obj)); }catch(e){ console.error(e); } }
+
+    function render(){
+      if(!assignment){ return; }
+      qs('#title').textContent = assignment.title || 'Assignment';
+      qs('#instructionText').textContent = assignment.instructions || '';
+      qs('#qcount').textContent = (assignment.questions||[]).length;
+
+      const area = qs('#questionsArea'); area.innerHTML = '';
+      const saved = loadSavedAnswers();
+
+      (assignment.questions || []).forEach((q, idx)=>{
+        const wrap = document.createElement('div'); wrap.className = 'question';
+        const sep = document.createElement('div'); sep.className='q-sep';
+        const title = document.createElement('div'); title.className='q-title';
+        title.textContent = (idx+1) + '. ' + q.text;
+        const credits = document.createElement('div'); credits.className='bar-right small';
+        credits.textContent = (q.credits||0) + ' pts';
+        wrap.appendChild(sep); wrap.appendChild(title); wrap.appendChild(credits);
+
+        if(q.type === 'mcq'){
+          const opts = document.createElement('div'); opts.className='options';
+          q.options.forEach((opt,i)=>{
+            const id = `opt_${q.id}_${i}`;
+            const label = document.createElement('label');
+            label.setAttribute('for', id);
+            label.innerHTML = `<input type="radio" name="${q.id}" id="${id}" value="${i}"> <span>${opt}</span>`;
+            opts.appendChild(label);
+          });
+          wrap.appendChild(opts);
+        } else if (q.type === 'fill'){
+          const inp = document.createElement('input'); inp.type='text'; inp.name=q.id; inp.placeholder='Type your answer here';
+          wrap.appendChild(inp);
+        }
+
+        // restore saved
+        const savedAns = saved[q.id];
+        if(savedAns!==undefined && savedAns!==null){
+          if(q.type==='mcq'){
+            const radio = wrap.querySelector(`input[type=radio][value='${savedAns}']`);
+            if(radio) radio.checked = true;
+          } else {
+            const inp = wrap.querySelector('input[type=text], textarea');
+            if(inp) inp.value = savedAns;
+          }
+        }
+
+        // autosave listeners
+        wrap.addEventListener('change', autosave);
+        wrap.addEventListener('input', autosave);
+
+        area.appendChild(wrap);
+      });
+    }
+
+    function collectAnswers(){
+      const out = {};
+      (assignment.questions||[]).forEach(q=>{
+        if(q.type==='mcq'){
+          const sel = document.querySelector(`input[name="${q.id}"]:checked`);
+          out[q.id] = sel ? Number(sel.value) : null;
+        } else {
+          const inp = document.querySelector(`[name="${q.id}"]`);
+          out[q.id] = inp ? inp.value.trim() : '';
+        }
+      });
+      return out;
+    }
+
+    let autosaveTimer = null;
+    function autosave(){
+      if(autosaveTimer) clearTimeout(autosaveTimer);
+      autosaveTimer = setTimeout(()=>{
+        const answers = collectAnswers();
+        saveAnswers(answers);
+        qs('#autosaveStatus').textContent = 'Last saved: ' + new Date().toLocaleString();
+      }, 250);
+    }
+
+    function grade(answers){
+      let total = 0, earned = 0;
+      const perQuestion = [];
+      (assignment.questions||[]).forEach(q=>{
+        total += Number(q.credits || 0);
+        let got = 0, correct = false;
+        if(q.type==='mcq'){
+          if(answers[q.id] !== null && answers[q.id] === q.answer){ got = q.credits; correct = true; }
+        } else {
+          const student = (answers[q.id] || '').toString().trim().toLowerCase();
+          if(Array.isArray(q.answer)){
+            for(const a of q.answer){ if(a.toString().trim().toLowerCase() === student){ got = q.credits; correct = true; break; } }
+          } else {
+            if((q.answer || '').toString().trim().toLowerCase() === student){ got = q.credits; correct = true; }
+          }
+        }
+        earned += got;
+        perQuestion.push({id:q.id, correct, earned:got, credits:q.credits, correctValue:q.answer});
+      });
+      return {total, earned, perQuestion};
+    }
+
+    function saveSubmission(record){
+      try{
+        const key = getSubmissionsKey();
+        const raw = localStorage.getItem(key);
+        const arr = raw ? JSON.parse(raw) : [];
+        arr.push(record);
+        localStorage.setItem(key, JSON.stringify(arr));
+      }catch(e){ console.error(e); }
+    }
+
+    function getSubmissions(){ try{ const raw = localStorage.getItem(getSubmissionsKey()); return raw ? JSON.parse(raw) : []; }catch(e){ return []; } }
+
+    function showSubmissionPopup(){
+      const records = getSubmissions();
+      const w = window.open('', 'submissions','width=800,height=600,scrollbars=yes');
+      if(!w){ alert('Popup blocked. Allow popups for this site to view submissions.'); return; }
+      const html = [];
+      html.push('<!doctype html><html><head><meta charset="utf-8"><title>Submission Records</title><style>body{font-family:Arial;padding:14px}h2{margin-top:0}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:8px;text-align:left}thead{background:#f3f4f6}button{padding:6px 10px;border-radius:6px;border:0;background:#2563eb;color:#fff;cursor:pointer}</style></head><body>');
+      html.push('<h2>Submission Records for ' + (assignment ? assignment.title : 'Assignment') + '</h2>');
+      if(records.length===0){ html.push('<p>No submissions yet.</p>'); }
+      else{
+        html.push('<table><thead><tr><th>#</th><th>Time</th><th>Score</th><th>Details</th></tr></thead><tbody>');
+        records.forEach((r,i)=>{
+          const detailsEsc = encodeURIComponent(JSON.stringify(r));
+          html.push('<tr>');
+          html.push('<td>' + (i+1) + '</td>');
+          html.push('<td>' + new Date(r.time).toLocaleString() + '</td>');
+          html.push('<td>' + r.earned + ' / ' + r.total + '</td>');
+          html.push('<td><button onclick="(function(){ var d = decodeURIComponent(\\'' + detailsEsc + '\\'); alert(d); })()">View JSON</button></td>');
+          html.push('</tr>');
+        });
+        html.push('</tbody></table>');
+      }
+      html.push('<p style="margin-top:12px"><button onclick="window.close()">Close</button></p>');
+      html.push('</body></html>');
+      w.document.open(); w.document.write(html.join('\\n')); w.document.close();
+    }
+
+    function revealAnswersAndMarks(result, answers){
+      const area = qs('#feedbackArea'); area.innerHTML = '';
+      const summary = document.createElement('div'); summary.className='result';
+      summary.innerHTML = `<strong>Score: ${result.earned} / ${result.total}</strong><div class="small">Submitted: ${new Date().toLocaleString()}</div>`;
+      area.appendChild(summary);
+
+      result.perQuestion.forEach(pq=>{
+        const q = assignment.questions.find(x=>x.id===pq.id);
+        const block = document.createElement('div'); block.style.marginTop='10px'; block.style.padding='10px'; block.style.border='1px solid #eef2ff'; block.style.borderRadius='6px';
+        block.innerHTML = `<div style="font-weight:600">${q.text} <span style='float:right' class='small'>${pq.earned} / ${pq.credits}</span></div>`;
+        const showCorrect = document.createElement('div'); showCorrect.style.marginTop='8px';
+        const userAns = answers[pq.id];
+        if(q.type==='mcq'){
+          const userText = (userAns===null) ? '<em>Not answered</em>' : q.options[userAns] || userAns;
+          const correctText = q.options[q.answer];
+          showCorrect.innerHTML = `<div class='small'>Your answer: ${userText}</div><div class='small'>Correct answer: <strong>${correctText}</strong></div>`;
+        } else {
+          const correctText = Array.isArray(q.answer) ? q.answer.join(' / ') : q.answer;
+          showCorrect.innerHTML = `<div class='small'>Your answer: ${userAns || '<em>Not answered</em>'}</div><div class='small'>Correct answer: <strong>${correctText}</strong></div>`;
+        }
+        block.appendChild(showCorrect);
+        area.appendChild(block);
+      });
+    }
+
+    async function init(){
+      await loadAssignment();
+      render();
+
+      // periodic autosave
+      setInterval(autosave, 10000);
+
+      qs('#submitBtn').addEventListener('click', ()=>{
+        if(!assignment){ alert('No assignment loaded.'); return; }
+        const answers = collectAnswers();
+        saveAnswers(answers);
+        const result = grade(answers);
+        revealAnswersAndMarks(result, answers);
+        const record = { time: new Date().toISOString(), total: result.total, earned: result.earned, perQuestion: result.perQuestion, answers };
+        saveSubmission(record);
+        alert('Submission recorded. Use "View Submission Records" to inspect past submissions.');
+      });
+
+      qs('#showRecordsBtn').addEventListener('click', showSubmissionPopup);
+
+      window.addEventListener('beforeunload', autosave);
+    }
+
+    init();
+  })();
+  </script>
+</body>
+</html>
