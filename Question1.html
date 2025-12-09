@@ -54,6 +54,15 @@
       const title = document.createElement('div');
       title.innerHTML = `<strong>Q${index+1}:</strong> ${q.text}`;
       wrapper.appendChild(title);
+      // Show credit bottom-right
+      if (q.credit !== undefined) {
+        const creditTag = document.createElement('div');
+        creditTag.style.textAlign = 'right';
+        creditTag.style.fontSize = '0.9em';
+        creditTag.style.color = '#555';
+        creditTag.textContent = `(${q.credit} Points)`;
+        wrapper.appendChild(creditTag);
+      }
 
       if (q.type === 'mcq') {
         q.choices.forEach((c, i) => {
@@ -111,6 +120,22 @@
     });
   }
 
+  function recordSubmission() {
+    let log = [];
+    questions.forEach((q, index) => {
+      let ans;
+      if (q.type === 'mcq') {
+        const sel = document.querySelector(`input[name="q${index}"]:checked`);
+        ans = sel ? q.choices[sel.value] : '(no answer)';
+      } else {
+        const inp = document.querySelector(`input[name="q${index}"]`);
+        ans = inp.value || '(no answer)';
+      }
+      log.push({ id: q.id, answer: ans, time: new Date().toISOString() });
+    });
+    localStorage.setItem('submission_record', JSON.stringify(log));
+  }
+
   function calculateScore() {
     let earned = 0;
 
@@ -135,6 +160,7 @@
   submitBtn.addEventListener('click', () => {
     revealAnswers();
     calculateScore();
+    recordSubmission();
   });
 
   loadQuestions();
