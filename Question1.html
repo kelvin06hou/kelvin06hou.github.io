@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Q&A Assessment</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; }
+    .question { margin-bottom: 25px; padding: 15px; border: 1px solid #ccc; border-radius: 6px; }
+    .answers { margin-top: 10px; padding: 10px; background: #f6f6f6; border-radius: 5px; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+
+<h1>Assessment</h1>
+<p>This page automatically loads questions from <strong>MyQuestion.json</strong> located on the server.</p>
+
+<div id="question-container">Loading questions...</div>
+<button id="submit-btn">Submit Answers</button>
+
+<script>
+  const qContainer = document.getElementById('question-container');
+  const submitBtn = document.getElementById('submit-btn');
+  let questions = [];
+
+  async function loadQuestions() {
+    try {
+      const res = await fetch('MyQuestion.json');
+      questions = await res.json();
+      renderQuestions();
+    } catch (e) {
+      qContainer.textContent = 'Failed to load MyQuestion.json. Ensure the file exists on your server.';
+    }
+  }
+
+  function renderQuestions() {
+    qContainer.innerHTML = '';
+
+    questions.forEach((q, index) => {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'question';
+
+      const title = document.createElement('div');
+      title.innerHTML = `<strong>Q${index+1}: </strong> ${q.text}`;
+      wrapper.appendChild(title);
+
+      if (q.type === 'mcq') {
+        q.choices.forEach((c, i) => {
+          const row = document.createElement('div');
+          row.innerHTML = `
+            <label>
+              <input type="radio" name="q${index}" value="${i}"> ${c}
+            </label>`;
+          wrapper.appendChild(row);
+        });
+      }
+
+      if (q.type === 'fill') {
+        const inp = document.createElement('input');
+        inp.type = 'text';
+        inp.name = `q${index}`;
+        inp.style.width = '300px';
+        wrapper.appendChild(inp);
+      }
+
+      const answerBox = document.createElement('div');
+      answerBox.className = 'answers hidden';
+      answerBox.id = `answer${index}`;
+      wrapper.appendChild(answerBox);
+
+      qContainer.appendChild(wrapper);
+    });
+  }
+
+  function revealAnswers() {
+    questions.forEach((q, index) => {
+      const ansBox = document.getElementById(`answer${index}`);
+
+      let userAnswer;
+      if (q.type === 'mcq') {
+        const selected = document.querySelector(`input[name="q${index}"]:checked`);
+        userAnswer = selected ? selected.value : '(no answer)';
+      } else if (q.type === 'fill') {
+        const inp = document.querySelector(`input[name="q${index}"]`);
+        userAnswer = inp.value || '(no answer)';
+      }
+
+      let correct;
+      if (q.type === 'mcq') correct = q.choices[q.correct];
+      if (q.type === 'fill') correct = q.blanks.join(', ');
+
+      ansBox.innerHTML = `
+        <div><strong>Your Answer:</strong> ${userAnswer}</div>
+        <div><strong>Correct Answer:</strong> ${correct}</div>
+      `;
+
+      ansBox.classList.remove('hidden');
+    });
+  }
+
+  submitBtn.addEventListener('click', revealAnswers);
+  loadQuestions();
+</script>
+
+</body>
+</html>
