@@ -21,6 +21,9 @@
 <button id="submit-btn">Submit Answers</button>
 <div id="final-score" style="margin-top:20px; font-weight:bold;"></div>
 
+<h2>Submission Records</h2>
+<div id="submission-log" style="margin-top:10px; white-space:pre-line; font-size:0.95em;"></div>
+
 <script>
   const qContainer = document.getElementById('question-container');
   const submitBtn = document.getElementById('submit-btn');
@@ -42,6 +45,35 @@
     } catch (e) {
       qContainer.textContent = 'Unable to load MyQuestion.json. Ensure it exists on your server and is valid JSON.';
     }
+  }
+
+  function autosaveInputs() {
+    const data = {};
+    questions.forEach((q, index) => {
+      if (q.type === 'mcq') {
+        const sel = document.querySelector(`input[name="q${index}"]:checked`);
+        data[q.id] = sel ? sel.value : '';
+      } else {
+        const inp = document.querySelector(`input[name="q${index}"]`);
+        data[q.id] = inp ? inp.value : '';
+      }
+    });
+    localStorage.setItem('autosave_answers', JSON.stringify(data));
+  }
+
+  function loadAutosave() {
+    const saved = JSON.parse(localStorage.getItem('autosave_answers') || '{}');
+    questions.forEach((q, index) => {
+      if (q.type === 'mcq') {
+        if (saved[q.id]) {
+          const radio = document.querySelector(`input[name="q${index}"][value="${saved[q.id]}"]`);
+          if (radio) radio.checked = true;
+        }
+      } else {
+        const inp = document.querySelector(`input[name="q${index}"]`);
+        if (inp && saved[q.id]) inp.value = saved[q.id];
+      }
+    });
   }
 
   function renderQuestions() {
@@ -90,6 +122,14 @@
 
       qContainer.appendChild(wrapper);
 
+      // autosave listeners
+      if (q.type === 'mcq') {
+        wrapper.addEventListener('change', autosaveInputs);
+      } else {
+        const inp = wrapper.querySelector('input');
+        inp.addEventListener('input', autosaveInputs);
+      }
+
       if (index < questions.length - 1) qContainer.appendChild(document.createElement('hr'));
     });
   }
@@ -120,17 +160,22 @@
     });
   }
 
-  function recordSubmission() {
-    let log = [];
-    questions.forEach((q, index) => {
-      let ans;
-      if (q.type === 'mcq') {
-        const sel = document.querySelector(`input[name="q${index}"]:checked`);
-        ans = sel ? q.choices[sel.value] : '(no answer)';
-      } else {
-        const inp = document.querySelector(`input[name="q${index}"]`);
-        ans = inp.value || '(no answer)';
-      }
+  function recordSubmission(finalPercent) {
+    const log = JSON.parse(localStorage.getItem('submission_history') || '[]');
+    const id = String(log.length + 1).padStart(3, '0');
+    const ts = new Date();
+    const timestamp = ts.getFullYear().toString().slice(2) +
+                     String(ts.getMonth()+1).padStart(2,'0') +
+                     String(ts.getDate()).padStart(2,'0') + '-' +
+                     String(ts.getHours()).padStart(2,'0') + ':' +
+                     String(ts.getMinutes()).padStart(2,'0') + ':' +
+                     String(ts.getSeconds()).padStart(2,'0');
+
+    log.push({ submissionID: id, time: timestamp, score: finalPercent });
+    localStorage.setItem('submission_history', JSON.stringify(log));
+
+    renderSubmissionLog();
+  }
       log.push({ id: q.id, answer: ans, time: new Date().toISOString() });
     });
     localStorage.setItem('submission_record', JSON.stringify(log));
@@ -138,14 +183,20 @@
 
   function calculateScore() {
     let earned = 0;
-
     questions.forEach((q, index) => {
-      if (q.credit === undefined) return;
-
       if (q.type === 'mcq') {
-        const selected = document.querySelector(`input[name="q${index}"]:checked`);
-        if (selected && parseInt(selected.value) === q.correct) earned += q.credit;
+        const sel = document.querySelector(`input[name="q${index}"]:checked`);
+        if (sel && parseInt(sel.value) === q.correct) earned += q.credit || 0;
       }
+      if (q.type === 'fill') {
+        const inp = document.querySelector(`input[name="q${index}"]`);
+        if (inp && q.blanks.some(b => b.toLowerCase().trim() === inp.value.toLowerCase().trim())) earned += q.credit || 0;
+      }
+    });
+    const percent = window.totalCredits ? ((earned / window.totalCredits) * 100).toFixed(2) : '0.00';
+    document.getElementById('final-score').textContent = `Final Score: ${percent}%`;
+    return percent;
+  }
 
       if (q.type === 'fill') {
         const inp = document.querySelector(`input[name="q${index}"]`);
@@ -159,11 +210,20 @@
 
   submitBtn.addEventListener('click', () => {
     revealAnswers();
-    calculateScore();
-    recordSubmission();
+    const percent = calculateScore();
+    recordSubmission(percent);
   });
 
+  function renderSubmissionLog() {
+    const box = document.getElementById('submission-log');
+    const log = JSON.parse(localStorage.getItem('submission_history') || '[]');
+    if (log.length === 0) box.textContent = 'No submissions yet.';
+    else box.textContent = log.map(r => `Submission ID-${r.submissionID} | ${r.time} | ${r.score}%`).join('\n');
+  }
+
   loadQuestions();
+  setTimeout(loadAutosave, 500);
+  renderSubmissionLog();
 </script>
 
 </body>
