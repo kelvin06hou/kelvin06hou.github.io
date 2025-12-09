@@ -1,34 +1,34 @@
 {
   "assignmentId": "assignment2",
-  "title": "Sample Assignment 2",
+  "title": "String-related Question",
   "instructions": "Answer all questions.\nMCQs: choose the single best answer.\nFill in the blanks: type the answer.\nYou may submit multiple times; each submission is recorded.",
   "questions": [
     {
       "id": "q1",
       "type": "mcq",
-      "text": "Which planet is known as the Red Planet?",
-      "options": ["Earth", "Mars", "Jupiter", "Venus"],
+      "text": "In python, Assumed that str = '4567890', what is str[1:5:2]?",
+      "options": ["579", "57", "5678", "4689"],
       "answer": 1,
       "credits": 2,
-      "explanation": "Mars is known as the Red Planet due to its iron oxide surface."
+      "explanation": "Easy Question"
     },
     {
       "id": "q2",
       "type": "fill",
-      "text": "The capital of Japan is _____.",
+      "text": "Assumed that we create the C string: char str[12] = 'Hello World!',\nwhat is the string length of str and byte storage?\n(Enter in this format: A,B.",
       "options": [],
-      "answer": "Tokyo",
+      "answer": "12,13",
       "credits": 3,
-      "explanation": "Tokyo has been Japan's capital since 1868."
+      "explanation": "Easy!!!!"
     },
     {
       "id": "q3",
       "type": "mcq",
-      "text": "Select the primary language used for styling web pages.",
-      "options": ["HTML", "Python", "CSS", "JavaScript"],
+      "text": "Which of the following is NOT about the argument of python function?",
+      "options": ["Positional", "Default", "Object", "Keyword"],
       "answer": 2,
       "credits": 1,
-      "explanation": "CSS is specifically used to style web pages."
+      "explanation": "Easy la~"
     }
   ]
 }
