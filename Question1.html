@@ -6,11 +6,8 @@
   <title>Q&A Assessment</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 40px; }
-    .question {
-      margin-bottom: 25px;
-      padding: 5px 0;
-      border: none;
-    }
+    .question { margin-bottom: 30px; padding: 0; border: none; }
+    hr { margin: 20px 0; border: 0; border-top: 1px solid #ccc; }
     .answers { margin-top: 10px; padding: 10px; background: #f6f6f6; border-radius: 5px; }
     .hidden { display: none; }
   </style>
@@ -18,12 +15,11 @@
 <body>
 
 <h1>Assessment</h1>
-<p id="instructions">Please answer all questions. Type your responses for fill‑in items or select one option for MCQs.</p>
-<p>This page automatically loads questions from <strong>MyQuestion.json</strong> located on the server.</p>
+<p id="instructions">Please answer all questions below.</p>
 
 <div id="question-container">Loading questions...</div>
 <button id="submit-btn">Submit Answers</button>
-<div id="final-score" style="margin-top:20px; font-weight:bold;"></div>">Submit Answers</button>
+<div id="final-score" style="margin-top:20px; font-weight:bold;"></div>
 
 <script>
   const qContainer = document.getElementById('question-container');
@@ -34,11 +30,17 @@
     try {
       const res = await fetch('MyQuestion.json');
       questions = await res.json();
-      // Pre-calc total credits
-      window.totalCredits = questions.reduce((a,q)=>a + (q.credit || 0), 0);();
+
+      if (!Array.isArray(questions)) {
+        qContainer.textContent = 'MyQuestion.json format error: must be a JSON array.';
+        return;
+      }
+
+      window.totalCredits = questions.reduce((a,q)=>a + (q.credit || 0), 0);
+
       renderQuestions();
     } catch (e) {
-      qContainer.textContent = 'Failed to load MyQuestion.json. Ensure the file exists on your server.';
+      qContainer.textContent = 'Unable to load MyQuestion.json. Ensure it exists on your server and is valid JSON.';
     }
   }
 
@@ -48,11 +50,9 @@
     questions.forEach((q, index) => {
       const wrapper = document.createElement('div');
       wrapper.className = 'question';
-      const separator = document.createElement('hr');
-      wrapper.appendChild(separator);
 
       const title = document.createElement('div');
-      title.innerHTML = `<strong>Q${index+1}: </strong> ${q.text}`;
+      title.innerHTML = `<strong>Q${index+1}:</strong> ${q.text}`;
       wrapper.appendChild(title);
 
       if (q.type === 'mcq') {
@@ -80,6 +80,8 @@
       wrapper.appendChild(answerBox);
 
       qContainer.appendChild(wrapper);
+
+      if (index < questions.length - 1) qContainer.appendChild(document.createElement('hr'));
     });
   }
 
@@ -90,7 +92,7 @@
       let userAnswer;
       if (q.type === 'mcq') {
         const selected = document.querySelector(`input[name="q${index}"]:checked`);
-        userAnswer = selected ? selected.value : '(no answer)';
+        userAnswer = selected ? q.choices[selected.value] : '(no answer)';
       } else if (q.type === 'fill') {
         const inp = document.querySelector(`input[name="q${index}"]`);
         userAnswer = inp.value || '(no answer)';
@@ -109,24 +111,32 @@
     });
   }
 
-  // Score calculation
   function calculateScore() {
     let earned = 0;
+
     questions.forEach((q, index) => {
-      let userAnswer;
+      if (q.credit === undefined) return;
+
       if (q.type === 'mcq') {
         const selected = document.querySelector(`input[name="q${index}"]:checked`);
-        if (selected && parseInt(selected.value) === q.correct) earned += (q.credit || 0);
-      } else if (q.type === 'fill') {
+        if (selected && parseInt(selected.value) === q.correct) earned += q.credit;
+      }
+
+      if (q.type === 'fill') {
         const inp = document.querySelector(`input[name="q${index}"]`);
-        if (inp && q.blanks.some(b=>b.toLowerCase().trim() === inp.value.toLowerCase().trim())) earned += (q.credit || 0);
+        if (inp && q.blanks.some(b => b.toLowerCase().trim() === inp.value.toLowerCase().trim())) earned += q.credit;
       }
     });
+
     const percent = window.totalCredits ? ((earned / window.totalCredits) * 100).toFixed(2) : '0.00';
     document.getElementById('final-score').textContent = `Final Score: ${percent}%`;
   }
 
-  submitBtn.addEventListener('click', () => { revealAnswers(); calculateScore(); });('click', revealAnswers);
+  submitBtn.addEventListener('click', () => {
+    revealAnswers();
+    calculateScore();
+  });
+
   loadQuestions();
 </script>
 
