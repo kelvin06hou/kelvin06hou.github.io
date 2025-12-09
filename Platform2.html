@@ -59,6 +59,15 @@ async function loadAssignment() {
   }
 }
 
+function renderInstructions() {
+  if (!assignmentData || !assignmentData.instructions) return;
+
+  // Convert \n to HTML <br> so multi-line text displays correctly
+  const formatted = assignmentData.instructions.replace(/\n/g, "<br>");
+
+  document.getElementById("instructionText").innerHTML = formatted;
+}
+
 function storageKey() { return "answers_" + (assignmentData?.assignmentId || "default"); }
 function submissionKey() { return "submissions_" + (assignmentData?.assignmentId || "default"); }
 

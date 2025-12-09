@@ -1,7 +1,7 @@
 {
   "assignmentId": "assignment2",
   "title": "Sample Assignment 2",
-  "instructions": "Answer all questions. MCQs: choose the single best answer. Fill in the blanks: type the answer. You may submit multiple times; each submission is recorded.",
+  "instructions": "Answer all questions.\nMCQs: choose the single best answer.\nFill in the blanks: type the answer.\nYou may submit multiple times; each submission is recorded.",
   "questions": [
     {
       "id": "q1",
