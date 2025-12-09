@@ -1,31 +1,36 @@
 {
-  "assignmentId": "assignment1",
-  "title": "Sample Assignment 1",
-  "instructions": "Answer all questions. MCQs: choose the single best answer. Fill in the blanks: type the answer (not case-sensitive). You may submit multiple times; each submission is recorded.",
-  "questions": [
-    {
-      "id": "q1",
-      "type": "mcq",
-      "text": "Which planet is known as the Red Planet?",
-      "options": ["Earth", "Mars", "Jupiter", "Venus"],
-      "answer": 1,
-      "credits": 2
-    },
-    {
-      "id": "q2",
-      "type": "fill",
-      "text": "The capital of Japan is _____.",
-      "options": [],
-      "answer": "Tokyo",
-      "credits": 3
-    },
-    {
-      "id": "q3",
-      "type": "mcq",
-      "text": "Select the primary language used for styling web pages.",
-      "options": ["HTML", "Python", "CSS", "JavaScript"],
-      "answer": 2,
-      "credits": 1
-    }
-  ]
+"assignmentId": "assignment1",
+"title": "Sample Assignment 1",
+"instructions": "Answer all questions.
+MCQ: choose one correct option.
+Fill-in: type the exact answer.
+You may submit multiple times.",
+"questions": [
+{
+"id": "q1",
+"type": "mcq",
+"text": "Which planet is known as the Red Planet?",
+"options": ["Earth", "Mars", "Jupiter", "Venus"],
+"answer": 1,
+"credits": 2,
+"explanation": "Mars is red because of iron oxide dust on its surface."
+},
+{
+"id": "q2",
+"type": "fill",
+"text": "The capital of Japan is _____.",
+"answer": "Tokyo",
+"credits": 3,
+"explanation": "Tokyo has been the capital of Japan since 1868."
+},
+{
+"id": "q3",
+"type": "mcq",
+"text": "Which language is primarily used to style web pages?",
+"options": ["HTML", "Python", "CSS", "JavaScript"],
+"answer": 2,
+"credits": 1,
+"explanation": "CSS controls layout, colors, spacing, and visual design of web pages."
+}
+]
 }
