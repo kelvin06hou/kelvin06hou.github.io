@@ -30,9 +30,47 @@
   let questions = [];
 
   async function loadQuestions() {
+    const msg = (t) => { qContainer.textContent = t; console.log(t); };
     try {
-      const res = await fetch('./MyQuestion.json');
-      questions = await res.json();
+      // try multiple relative paths commonly used on static hosting
+      const candidates = ['./MyQuestion.json','MyQuestion.json','./data/MyQuestion.json','data/MyQuestion.json'];
+      let res = null; let lastError = null; let usedPath = null;
+      for (const p of candidates) {
+        try {
+          // fetch with no-cache to avoid stale responses
+          res = await fetch(p, {cache: 'no-store'});
+          if (!res.ok) {
+            lastError = `Fetch ${p} returned HTTP ${res.status} ${res.statusText}`;
+            res = null; // continue to next candidate
+            continue;
+          }
+          usedPath = p;
+          break;
+        } catch (err) {
+          lastError = err;
+          res = null;
+        }
+      }
+
+      if (!res) {
+        msg('Unable to fetch MyQuestion.json. Tried common paths. See console for details.');
+        console.error('Fetch attempts failed:', lastError);
+        qContainer.innerHTML = `<div style="color:#a00">Unable to fetch MyQuestion.json. Possible causes:\n- File not found in the same folder as this HTML\n- CORS blocking if hosted on a different origin\n- Running the page via file:// (use an HTTP server)\nSee console for fetch errors and tried paths.</div>`;
+        return;
+      }
+
+      // show which path succeeded
+      console.log('Loaded MyQuestion.json from', usedPath);
+
+      // attempt to parse JSON and provide diagnostic if parsing fails
+      let txt = await res.text();
+      try {
+        questions = JSON.parse(txt);
+      } catch (parseErr) {
+        qContainer.innerHTML = `<div style="color:#a00">MyQuestion.json was fetched from <strong>${usedPath}</strong> but contains invalid JSON. Error: ${parseErr.message}</div>`;
+        console.error('JSON parse error. Raw response:', txt);
+        return;
+      }
 
       if (!Array.isArray(questions)) {
         qContainer.textContent = 'MyQuestion.json format error: must be a JSON array.';
@@ -43,7 +81,8 @@
 
       renderQuestions();
     } catch (e) {
-      qContainer.textContent = 'Unable to load MyQuestion.json. Ensure it exists on your server and is valid JSON.';
+      qContainer.textContent = 'Unexpected error while loading MyQuestion.json. See console for details.';
+      console.error(e);
     }
   }
 
