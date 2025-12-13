@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Private-CV</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    body {
+      font-family: "Times New Roman", "Noto Serif CJK SC", serif;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 20px;
+    }
+
+    button {
+      padding: 6px 12px;
+      margin-right: 6px;
+      cursor: pointer;
+    }
+
+    textarea, input {
+      width: 100%;
+      box-sizing: border-box;
+      font-family: inherit;
+      margin-bottom: 8px;
+    }
+
+    .container {
+      display: flex;
+      gap: 20px;
+    }
+
+    .editor {
+      width: 40%;
+    }
+
+    .preview-wrapper {
+      width: 60%;
+      background: #fff;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+    }
+
+    .a4 {
+      width: 210mm;
+      padding: 20mm;
+      margin: auto;
+      box-sizing: border-box;
+    }
+
+    @media print {
+      .editor, .controls {
+        display: none;
+      }
+    }
+
+    .cv-header {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    .cv-header .name {
+      font-size: 20pt;
+      font-weight: bold;
+    }
+
+    .cv-header .affiliation {
+      font-size: 12pt;
+      margin-top: 6px;
+    }
+
+    .section {
+      margin-top: 16px;
+    }
+
+    .section-title {
+      font-size: 14pt;
+      font-weight: bold;
+      border-bottom: 1px solid #000;
+      margin-bottom: 8px;
+    }
+
+    ul {
+      padding-left: 18px;
+      margin: 0;
+    }
+
+    li {
+      font-size: 11pt;
+      margin-bottom: 8px;
+    }
+    .task-title {
+  font-size: 12.5pt;
+  font-weight: bold;
+}
+
+.task-duration {
+  font-size: 11.5pt;
+  white-space: nowrap;
+  text-align: right;
+}
+
+
+    .task-line {
+  display: flex;
+  align-items: baseline;
+  font-weight: bold;
+}
+
+.task-title {
+  flex-shrink: 0;
+}
+
+.task-spacer {
+  flex: 1;
+}
+
+.task-duration {
+  flex-shrink: 0;
+  text-align: right;
+  white-space: nowrap;
+}
+
+  </style>
+</head>
+<body>
+
+<div class="controls">
+  <button onclick="saveLocal()">Save</button>
+  <button onclick="exportCSV()">Export CSV</button>
+  <button onclick="savePDF()">Save as PDF</button>
+</div>
+
+<div class="container">
+
+  <div class="editor">
+    <h3>Header</h3>
+    <input id="name" placeholder="Name (Chinese + English)" />
+    <input id="university" placeholder="University (Chinese + English)" />
+    <input id="faculty" placeholder="Faculty (Chinese + English)" />
+    
+
+<h3>Sections</h3>
+<div id="sections-editor"></div>
+
+<button onclick="addSection()">+ Add Section</button>
+
+
+  <div class="preview-wrapper">
+    <div class="a4" id="preview"></div>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script>
+let sections = [];
+function addSection(title = "New Section") {
+  sections.push({
+    id: Date.now(),
+    title,
+    content: ""
+  });
+  saveSections();
+  renderSectionsEditor();
+  render();
+}
+
+function deleteSection(id) {
+  sections = sections.filter(s => s.id !== id);
+  saveSections();
+  renderSectionsEditor();
+  render();
+}
+
+function renderSectionsEditor() {
+  const container = document.getElementById("sections-editor");
+  container.innerHTML = "";
+
+  sections.forEach(section => {
+    const div = document.createElement("div");
+    div.style.marginBottom = "16px";
+
+    div.innerHTML = `
+      <input
+        value="${section.title}"
+        oninput="updateSectionTitle(${section.id}, this.value)"
+        placeholder="Section Title"
+      />
+
+      <textarea rows="8"
+        oninput="updateSectionContent(${section.id}, this.value)"
+        placeholder="Task {Duration}
+Organization
+- Description"
+      >${section.content}</textarea>
+
+      <button onclick="deleteSection(${section.id})">Delete Section</button>
+    `;
+
+    container.appendChild(div);
+  });
+}
+function updateSectionTitle(id, value) {
+  const s = sections.find(s => s.id === id);
+  if (s) s.title = value;
+  saveSections();
+  render();
+}
+
+function updateSectionContent(id, value) {
+  const s = sections.find(s => s.id === id);
+  if (s) s.content = value;
+  saveSections();
+  render();
+}
+
+
+
+  const fields = ["name", "university", "faculty", "academic", "competition", "work"];
+
+  function parseEntries(text) {
+    const blocks = text.split(/\n\s*\n/);
+
+    return blocks.map(block => {
+      const lines = block.split("\n").map(l => l.trim()).filter(Boolean);
+      if (lines.length === 0) return null;
+
+      const [taskLine, orgLine, ...desc] = lines;
+      let task = taskLine;
+let duration = "";
+
+    // ✅ NEW RULE: extract duration from { }
+    const match = taskLine.match(/^(.*?)(?:\{(.+?)\})$/);
+    if (match) {
+    task = match[1].trim();
+    duration = match[2].trim();
+    }
+
+      return {
+        task,
+        duration,
+        organization: orgLine || "",
+        descriptions: desc.map(d => d.replace(/^[-*]\s*/, ""))
+      };
+    }).filter(Boolean);
+  }
+
+  function renderList(text) {
+    return parseEntries(text).map(e => `
+      <li>
+        <div class="task-line">
+            <span class="task-title">${e.task}</span>
+            <span class="task-spacer"></span>
+            <span class="task-duration">${e.duration}</span>
+        </div>
+
+        <div style="font-style:italic; margin-bottom:4px;">
+          ${e.organization}
+        </div>
+        <ul>
+          ${e.descriptions.map(d => `<li>${d}</li>`).join("")}
+        </ul>
+      </li>
+    `).join("");
+  }
+
+function render() {
+  const nameEl = document.getElementById("name");
+  const universityEl = document.getElementById("university");
+  const facultyEl = document.getElementById("faculty");
+
+  document.title = nameEl.value ? `${nameEl.value} – CV` : "CV";
+
+const sectionsHTML = sections.map(s => `
+  <div class="section">
+    <div class="section-title">${s.title}</div>
+    <ul>${renderList(s.content)}</ul>
+  </div>
+`).join("");
+
+    preview.innerHTML = `
+    <div class="cv-header">
+      <div class="name">${nameEl.value}</div>
+      <div class="affiliation">${universityEl.value} · ${facultyEl.value}</div>
+    </div>
+
+    ${sectionsHTML}
+  `;
+}
+
+function saveSections() {
+  localStorage.setItem("sections", JSON.stringify(sections));
+}
+
+function loadSections() {
+  const data = localStorage.getItem("sections");
+  if (data) {
+    sections = JSON.parse(data);
+  } else {
+    sections = [
+      { id: 1, title: "Academic (學術)", content: "" },
+      { id: 2, title: "Competition / Scientific Research Training (比賽或暑假培訓經驗)", content: "" },
+      { id: 3, title: "Working Experiences / Social Services (工作 / 社會實踐)", content: "" }
+    ];
+  }
+}
+
+
+
+
+  fields.forEach(id =>
+    document.getElementById(id).addEventListener("input", render)
+  );
+
+  function saveLocal() {
+    fields.forEach(id =>
+      localStorage.setItem(id, document.getElementById(id).value)
+    );
+  }
+
+  function loadLocal() {
+    fields.forEach(id => {
+      const v = localStorage.getItem(id);
+      if (v !== null) document.getElementById(id).value = v;
+    });
+  }
+
+  
+
+  function exportCSV() {
+    const rows = fields.map(id => [id, document.getElementById(id).value]);
+    const csv = rows.map(r =>
+      r.map(v => `"${v.replace(/"/g, '""')}"`).join(",")
+    ).join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "cv_data.csv";
+    a.click();
+  }
+
+  function savePDF() {
+    html2pdf().set({
+      filename: `${document.getElementById("name").value || "CV"}.pdf`,
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+      margin: 0,
+    }).from(preview).save();
+  }
+
+  window.addEventListener("DOMContentLoaded", () => {
+    loadLocal();
+    render();
+  });
+</script>
+
+</body>
+</html>
