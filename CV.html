@@ -363,7 +363,6 @@ function exportCSV() {
   ];
 
   sections.forEach(s => {
-    // Ensure multi-line content is properly quoted
     const content = s.content.replace(/"/g, '""'); 
     rows.push([s.title, content]);
   });
@@ -376,6 +375,7 @@ function exportCSV() {
   a.download = "cv_data.csv";
   a.click();
 }
+
 
 
   function savePDF() {
@@ -430,9 +430,26 @@ function handleCSV(event) {
   reader.readAsText(file, "UTF-8");
 }
 
+function parseCSV(csvText) {
+  const pattern = /(?:^|,)(?:"((?:[^"]|"")*)"|([^",\r\n]*))/g;
+  const rows = [];
+  let currentRow = [];
+  let match;
+
+  csvText.split(/\r?\n/).forEach(line => {
+    currentRow = [];
+    while ((match = pattern.exec(line)) !== null) {
+      let value = match[1] ? match[1].replace(/""/g, '"') : match[2];
+      currentRow.push(value);
+    }
+    if (currentRow.length) rows.push(currentRow);
+  });
+
+  return rows;
+}
+
 function parseCSVAndUpdate(csvText) {
-  const rows = csvText.split("\n").map(r => r.trim()).filter(Boolean);
-  const data = rows.map(r => r.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim()));
+  const data = parseCSV(csvText);
 
   // Update header fields
   const headerMap = {};
@@ -448,8 +465,13 @@ function parseCSVAndUpdate(csvText) {
   const importedSections = [];
   data.forEach(r => {
     const [title, content] = r;
-    if (!title || title.toLowerCase() === "name" || title.toLowerCase() === "university" || title.toLowerCase() === "faculty") return;
-    importedSections.push({ id: Date.now() + Math.random(), title: title, content: content || "" });
+    if (!title || ["name", "university", "faculty"].includes(title.toLowerCase())) return;
+
+    importedSections.push({
+      id: Date.now() + Math.random(),
+      title: title,
+      content: content || ""
+    });
   });
 
   if (importedSections.length) {
@@ -459,6 +481,7 @@ function parseCSVAndUpdate(csvText) {
 
   render();
 }
+
 
 
 </script>
