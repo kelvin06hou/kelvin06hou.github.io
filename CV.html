@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>CV – Edit & Preview</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    /* ====== General ====== */
+    body {
+      font-family: "Times New Roman", "Noto Serif CJK SC", serif;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1, h2, h3 {
+      margin: 0;
+      font-weight: normal;
+    }
+
+    button {
+      padding: 6px 12px;
+      margin-right: 6px;
+      cursor: pointer;
+    }
+
+    textarea, input {
+      width: 100%;
+      box-sizing: border-box;
+      font-family: inherit;
+      margin-bottom: 6px;
+    }
+
+    /* ====== Layout ====== */
+    .container {
+      display: flex;
+      gap: 20px;
+    }
+
+    .editor {
+      width: 40%;
+    }
+
+    .preview-wrapper {
+      width: 60%;
+      background: #fff;
+      padding: 0;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+    }
+
+    /* ====== A4 Preview ====== */
+    .a4 {
+      width: 210mm;
+      min-height: 297mm;
+      padding: 20mm;
+      margin: auto;
+      box-sizing: border-box;
+    }
+
+    @media print {
+      body {
+        background: #fff;
+        padding: 0;
+      }
+      .editor, .controls {
+        display: none;
+      }
+      .preview-wrapper {
+        box-shadow: none;
+      }
+    }
+
+    /* ====== CV Styles ====== */
+    .cv-header {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    .cv-header .name {
+      font-size: 20pt;
+      font-weight: bold;
+    }
+
+    .cv-header .affiliation {
+      font-size: 12pt;
+      margin-top: 6px;
+    }
+
+    .section {
+      margin-top: 16px;
+    }
+
+    .section-title {
+      font-size: 14pt;
+      border-bottom: 1px solid #000;
+      margin-bottom: 8px;
+    }
+
+    ul {
+      padding-left: 18px;
+      margin: 0;
+    }
+
+    li {
+      margin-bottom: 6px;
+      font-size: 11pt;
+    }
+  </style>
+</head>
+<body>
+
+<div class="controls">
+  <button onclick="saveLocal()">Save</button>
+  <button onclick="exportCSV()">Export CSV</button>
+  <button onclick="savePDF()">Save as PDF</button>
+</div>
+
+<div class="container">
+
+  <!-- ====== Editor ====== -->
+  <div class="editor">
+    <h3>Header</h3>
+    <input id="name" placeholder="Name (Chinese + English)" value="張三 Zhang San" />
+    <input id="university" placeholder="University (Chinese + English)" value="某某大學 Some University" />
+    <input id="faculty" placeholder="Faculty (Chinese + English)" value="工程學院 Faculty of Engineering" />
+
+    <h3>Academic (學術)</h3>
+    <<textarea id="academic" rows="8">Achievement / Performance Title 1
+- Description 1
+- Description 2
+
+Achievement / Performance Title 2
+- Description 1
+- Description 2</textarea>
+
+    <h3>Competition / Scientific Research Training (比賽或暑假培訓經驗)</h3>
+    <<textarea id="competition" rows="8">Achievement / Performance Title 1
+- Description 1
+- Description 2
+
+Achievement / Performance Title 2
+- Description 1
+- Description 2</textarea>
+
+    <h3>Working Experiences / Social Services (工作 / 社會實踐)</h3>
+    <<textarea id="work" rows="8">Achievement / Performance Title 1
+- Description 1
+- Description 2
+
+Achievement / Performance Title 2
+- Description 1
+- Description 2</textarea>
+  </div>
+
+  <!-- ====== Preview ====== -->
+  <div class="preview-wrapper">
+    <div class="a4" id="preview"></div>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script>
+  const fields = ["name", "university", "faculty", "academic", "competition", "work"];
+
+  fields.forEach(id => {
+    document.getElementById(id).addEventListener("input", render);
+  });
+
+  function linesToList(text) {
+    return text
+      .split("\n")
+      .filter(l => l.trim() !== "")
+      .map(l => `<li>${l}</li>`)
+      .join("");
+  }
+
+  function render() {
+    const name = document.getElementById("name").value;
+    const university = document.getElementById("university").value;
+    const faculty = document.getElementById("faculty").value;
+
+    const academic = document.getElementById("academic").value;
+    const competition = document.getElementById("competition").value;
+    const work = document.getElementById("work").value;
+
+    document.getElementById("preview").innerHTML = `
+      <div class="cv-header">
+        <div class="name">${name}</div>
+        <div class="affiliation">${university} · ${faculty}</div>
+      </div>
+
+      <div class="section">
+        <div class="section-title"><strong>Academic (學術)</strong></div>
+        <ul>${linesToList(academic)}</ul>
+      </div>
+
+      <div class="section">
+        <div class="section-title"><strong>Competition / Scientific Research Training (比賽或暑假培訓經驗)</strong></div>
+        <ul>${linesToList(competition)}</ul>
+      </div>
+
+      <div class="section">
+        <div class="section-title"><strong>Working Experiences / Social Services (工作 / 社會實踐)</strong></div>
+        <ul>${linesToList(work)}</ul>
+      </div>
+    `;
+  }
+
+  function savePDF() {
+    const element = document.getElementById("preview");
+    const opt = {
+      margin: 0,
+      filename: 'CV.pdf',
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    html2pdf().set(opt).from(element).save();
+  }
+
+  function exportCSV() {
+    const rows = [
+      ["Field", "Content"],
+      ["Name", document.getElementById("name").value],
+      ["University", document.getElementById("university").value],
+      ["Faculty", document.getElementById("faculty").value],
+      ["Academic", document.getElementById("academic").value],
+      ["Competition / Research", document.getElementById("competition").value],
+      ["Work / Social", document.getElementById("work").value]
+    ];
+
+    const csv = rows.map(r => r.map(v => `"${v.replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "cv_data.csv";
+    a.click();
+
+    URL.revokeObjectURL(url);
+  }
+
+  render();
+
+  function saveLocal() {
+    fields.forEach(id => {
+      localStorage.setItem(id, document.getElementById(id).value);
+    });
+    alert('Saved locally in this browser.');
+  }
+
+  function loadLocal() {
+    fields.forEach(id => {
+      const v = localStorage.getItem(id);
+      if (v !== null) document.getElementById(id).value = v;
+    });
+  }
+
+  loadLocal();
+</script>
+
+</body>
+</html>
