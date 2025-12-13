@@ -3,18 +3,19 @@
 // Test cases: 11 cases total
 // Case 0: Execution test (checks if program runs without crashing, output not strictly checked)
 // Cases 1-10: Input-output tests (exact output match required)
+// Inputs are provided on separate lines to match common input formats (e.g., for Python's line-by-line input or C++'s whitespace handling)
 const testCases = [
-    { input: "1 2", expected: "3", isExecution: true }, // Case 0: Execution test
-    { input: "1 2", expected: "3" }, // Case 1
-    { input: "-1 -2", expected: "-3" }, // Case 2
-    { input: "0 0", expected: "0" }, // Case 3
-    { input: "1000000000 1000000000", expected: "2000000000" }, // Case 4
-    { input: "-1000000000 -1000000000", expected: "-2000000000" }, // Case 5
-    { input: "2000000000 0", expected: "2000000000" }, // Case 6
-    { input: "-2000000000 0", expected: "-2000000000" }, // Case 7
-    { input: "1 -1", expected: "0" }, // Case 8
-    { input: "123456789 987654321", expected: "1111111110" }, // Case 9
-    { input: "-123456789 987654321", expected: "864197532" } // Case 10
+    { input: "1\n2", expected: "3", isExecution: true }, // Case 0: Execution test
+    { input: "1\n2", expected: "3" }, // Case 1
+    { input: "-1\n-2", expected: "-3" }, // Case 2
+    { input: "0\n0", expected: "0" }, // Case 3
+    { input: "1000000000\n1000000000", expected: "2000000000" }, // Case 4
+    { input: "-1000000000\n-1000000000", expected: "-2000000000" }, // Case 5
+    { input: "2000000000\n0", expected: "2000000000" }, // Case 6
+    { input: "-2000000000\n0", expected: "-2000000000" }, // Case 7
+    { input: "1\n-1", expected: "0" }, // Case 8
+    { input: "123456789\n987654321", expected: "1111111110" }, // Case 9
+    { input: "-123456789\n987654321", expected: "864197532" } // Case 10
 ];
 
 // Tab switching function
@@ -59,13 +60,17 @@ sys.stdout = captured_output = StringIO()
             pyodide.runPython('sys.stdout = old_stdout');
             const trimmedOutput = output.trim();
             if (test.isExecution) {
-                results.push(`Case ${i}: Executed successfully (output: ${trimmedOutput})`);
+                results.push(`Case ${i}: PASS`);
             } else {
                 const passed = trimmedOutput === test.expected;
                 results.push(`Case ${i}: ${passed ? 'PASS' : 'FAIL'} (expected: ${test.expected}, got: ${trimmedOutput})`);
             }
         } catch (e) {
-            results.push(`Case ${i}: ERROR - ${e.message}`);
+            if (test.isExecution) {
+                results.push(`Case ${i}: FAIL`);
+            } else {
+                results.push(`Case ${i}: ERROR - ${e.message}`);
+            }
         }
     }
     resultDiv.innerHTML = results.join('<br>');
@@ -92,13 +97,17 @@ async function runCpp() {
             const result = await Clang.run(code, { stdin: test.input });
             const trimmedOutput = result.stdout.trim();
             if (test.isExecution) {
-                results.push(`Case ${i}: Executed successfully (output: ${trimmedOutput})`);
+                results.push(`Case ${i}: PASS`);
             } else {
                 const passed = trimmedOutput === test.expected;
                 results.push(`Case ${i}: ${passed ? 'PASS' : 'FAIL'} (expected: ${test.expected}, got: ${trimmedOutput})`);
             }
         } catch (e) {
-            results.push(`Case ${i}: ERROR - ${e.message}`);
+            if (test.isExecution) {
+                results.push(`Case ${i}: FAIL`);
+            } else {
+                results.push(`Case ${i}: ERROR - ${e.message}`);
+            }
         }
     }
     resultDiv.innerHTML = results.join('<br>');
