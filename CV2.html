@@ -168,30 +168,36 @@ Organization / Location
     `).join("");
   }
 
-  function render() {
-    document.title = name.value ? `${name.value} – CV` : "CV";
-    preview.innerHTML = `
-      <div class="cv-header">
-        <div class="name">${name.value}</div>
-        <div class="affiliation">${university.value} · ${faculty.value}</div>
-      </div>
+function render() {
+  const nameEl = document.getElementById("name");
+  const universityEl = document.getElementById("university");
+  const facultyEl = document.getElementById("faculty");
 
-      <div class="section">
-        <div class="section-title">Academic (學術)</div>
-        <ul>${renderList(academic.value)}</ul>
-      </div>
+  document.title = nameEl.value ? `${nameEl.value} – CV` : "CV";
 
-      <div class="section">
-        <div class="section-title">Competition / Scientific Research Training (比賽或暑假培訓經驗)</div>
-        <ul>${renderList(competition.value)}</ul>
-      </div>
+  preview.innerHTML = `
+    <div class="cv-header">
+      <div class="name">${nameEl.value}</div>
+      <div class="affiliation">${universityEl.value} · ${facultyEl.value}</div>
+    </div>
 
-      <div class="section">
-        <div class="section-title">Working Experiences / Social Services (工作 / 社會實踐)</div>
-        <ul>${renderList(work.value)}</ul>
-      </div>
-    `;
-  }
+    <div class="section">
+      <div class="section-title">Academic (學術)</div>
+      <ul>${renderList(academic.value)}</ul>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Competition / Scientific Research Training (比賽或暑假培訓經驗)</div>
+      <ul>${renderList(competition.value)}</ul>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Working Experiences / Social Services (工作 / 社會實踐)</div>
+      <ul>${renderList(work.value)}</ul>
+    </div>
+  `;
+}
+
 
   fields.forEach(id =>
     document.getElementById(id).addEventListener("input", render)
@@ -225,7 +231,7 @@ Organization / Location
 
   function savePDF() {
     html2pdf().set({
-      filename: `${name.value || "CV"}.pdf`,
+      filename: `${document.getElementById("name").value || "CV"}.pdf`,
       jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
       margin: 0,
     }).from(preview).save();
