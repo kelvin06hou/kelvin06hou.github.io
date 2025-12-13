@@ -89,6 +89,27 @@
       font-size: 11pt;
       margin-bottom: 8px;
     }
+
+    .task-line {
+  display: flex;
+  align-items: baseline;
+  font-weight: bold;
+}
+
+.task-title {
+  flex-shrink: 0;
+}
+
+.task-spacer {
+  flex: 1;
+}
+
+.task-duration {
+  flex-shrink: 0;
+  text-align: right;
+  white-space: nowrap;
+}
+
   </style>
 </head>
 <body>
@@ -154,10 +175,12 @@ Organization / Location
   function renderList(text) {
     return parseEntries(text).map(e => `
       <li>
-        <div style="display:flex; justify-content:space-between; font-weight:bold;">
-          <span>${e.task}</span>
-          <span>${e.duration}</span>
+        <div class="task-line">
+            <span class="task-title">${e.task}</span>
+            <span class="task-spacer"></span>
+            <span class="task-duration">${e.duration}</span>
         </div>
+
         <div style="font-style:italic; margin-bottom:4px;">
           ${e.organization}
         </div>
