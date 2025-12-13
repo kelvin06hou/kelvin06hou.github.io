@@ -348,7 +348,8 @@ Organization {Location}
     html2pdf().set({
       filename: `${document.getElementById("name").value || "CV"}.pdf`,
       jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-      margin: 0
+      margin: 0,
+      html2canvas: { scale: 2, useCORS: true, logging: true }
     }).from(preview).save();
   }
 
