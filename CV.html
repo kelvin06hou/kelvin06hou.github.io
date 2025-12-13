@@ -154,6 +154,9 @@
   <button onclick="exportCSV()">Export CSV</button>
   <button onclick="savePDF()">Save as PDF</button>
   <button onclick="saveJPG()">Save as JPG</button>
+  <button onclick="importCSV()">Import CSV</button>
+<input type="file" id="csvFile" style="display:none" accept=".csv" onchange="handleCSV(event)">
+
 </div>
 
 <div class="container">
@@ -407,6 +410,53 @@ Organization {Location}
     }, "image/jpeg", 1.0); // 1.0 = highest quality
   });
 }
+
+function importCSV() {
+  document.getElementById('csvFile').click();
+}
+
+function handleCSV(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const text = e.target.result;
+    parseCSVAndUpdate(text);
+  };
+  reader.readAsText(file, "UTF-8");
+}
+
+function parseCSVAndUpdate(csvText) {
+  const rows = csvText.split("\n").map(r => r.trim()).filter(Boolean);
+  const data = rows.map(r => r.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim()));
+
+  // Update header fields
+  const headerMap = {};
+  data.forEach(r => {
+    if (r[0] && r[1]) headerMap[r[0].toLowerCase()] = r[1];
+  });
+
+  headerFields.forEach(id => {
+    if (headerMap[id]) document.getElementById(id).value = headerMap[id];
+  });
+
+  // Update sections
+  const importedSections = [];
+  data.forEach(r => {
+    const [title, content] = r;
+    if (!title || title.toLowerCase() === "name" || title.toLowerCase() === "university" || title.toLowerCase() === "faculty") return;
+    importedSections.push({ id: Date.now() + Math.random(), title: title, content: content || "" });
+  });
+
+  if (importedSections.length) {
+    sections = importedSections;
+    renderSectionsEditor();
+  }
+
+  render();
+}
+
 
 </script>
 
