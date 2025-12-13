@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>CV – Edit & Preview</title>
+  <title>Private-CV</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <style>
@@ -43,7 +43,6 @@
 
     .a4 {
       width: 210mm;
-      min-height: 297mm;
       padding: 20mm;
       margin: auto;
       box-sizing: border-box;
@@ -107,6 +106,7 @@
     <input id="name" placeholder="Name (Chinese + English)" />
     <input id="university" placeholder="University (Chinese + English)" />
     <input id="faculty" placeholder="Faculty (Chinese + English)" />
+    
 
     <h3>Academic (學術)</h3>
     <textarea id="academic" rows="10"
@@ -169,6 +169,7 @@ Organization / Location
   }
 
   function render() {
+    document.title = name.value ? `${name.value} – CV` : "CV";
     preview.innerHTML = `
       <div class="cv-header">
         <div class="name">${name.value}</div>
@@ -224,10 +225,9 @@ Organization / Location
 
   function savePDF() {
     html2pdf().set({
-      filename: "CV.pdf",
+      filename: `${name.value || "CV"}.pdf`,
       jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
       margin: 0,
-      pagebreak: { mode: ["avoid-all"] }
     }).from(preview).save();
   }
 
