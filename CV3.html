@@ -127,6 +127,7 @@
   <button onclick="saveLocal()">Save</button>
   <button onclick="exportCSV()">Export CSV</button>
   <button onclick="savePDF()">Save as PDF</button>
+  <button onclick="saveJPG()">Save as JPG</button>
 </div>
 
 <div class="container">
@@ -360,6 +361,26 @@ Organization {Location}
     renderSectionsEditor();
     render();
   });
+
+  function saveJPG() {
+  const element = document.getElementById("preview");
+
+  // Use html2canvas to render the element
+  html2canvas(element, {
+    scale: 2,        // Increase for higher resolution
+    useCORS: true,   // Ensure external fonts/images render
+    logging: true
+  }).then(canvas => {
+    // Convert canvas to JPEG
+    canvas.toBlob(blob => {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `${document.getElementById("name").value || "CV"}.jpg`;
+      a.click();
+    }, "image/jpeg", 1.0); // 1.0 = highest quality
+  });
+}
+
 </script>
 
 </body>
