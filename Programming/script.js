@@ -1,15 +1,16 @@
-let pyodide = null;
+let pyodideReady = false;
+let pyodide;
 
 /* =====================
-   Shared Utilities
+   Utilities
 ===================== */
 
 const tests = [
-    [0, 0],
     [1, 2],
     [-5, 10],
     [100, 200],
     [-100, -200],
+    [0, 0],
     [2000000000, -2000000000],
     [999999999, 1],
     [-999999999, -1],
@@ -29,16 +30,20 @@ showTab('instruction');
 ===================== */
 
 async function runPython() {
-    if (!pyodide) {
+    if (!pyodideReady) {
         pyodide = await loadPyodide();
+        pyodideReady = true;
     }
 
     const code = document.getElementById("pyCode").value;
     let output = "";
 
-    /* ---- Case 0: syntax check ONLY ---- */
+    /* ---- Case 0: syntax only ---- */
     try {
-        pyodide.runPython(`compile(${JSON.stringify(code)}, "<user>", "exec")`);
+        pyodide.runPython(`
+namespace = {}
+compile(${JSON.stringify(code)}, "<user>", "exec")
+`);
         output += "Case 0: V\n";
     } catch {
         document.getElementById("pyResult").innerText = "Case 0: X";
@@ -46,17 +51,18 @@ async function runPython() {
     }
 
     /* ---- Cases 1–10 ---- */
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < tests.length; i++) {
         const [a, b] = tests[i];
         const expected = (BigInt(a) + BigInt(b)).toString();
 
         try {
-            pyodide.globals.set("input_data", `${a} ${b}`);
-            const wrapped = `
-input = lambda: input_data
+            pyodide.runPython(`
+input_data = "${a} ${b}"
+def input():
+    return input_data
 ${code}
-`;
-            const result = pyodide.runPython(wrapped).toString().trim();
+`);
+            const result = pyodide.runPython("str(_)").trim();
             output += `Case ${i + 1}: ${result === expected ? "V" : "X"}\n`;
         } catch {
             output += `Case ${i + 1}: X\n`;
@@ -67,10 +73,10 @@ ${code}
 }
 
 /* =====================
-   C++ Judge
+   C++ Judge (ASYNC FIX)
 ===================== */
 
-function runCpp() {
+async function runCpp() {
     const code = document.getElementById("cppCode").value;
     let output = "";
 
@@ -78,7 +84,7 @@ function runCpp() {
 
     /* ---- Case 0: compilation ONLY ---- */
     try {
-        compiled = Clang.compile(code);
+        compiled = await Clang.compile(code);
         if (!compiled.success) throw "compile error";
         output += "Case 0: V\n";
     } catch {
@@ -87,7 +93,7 @@ function runCpp() {
     }
 
     /* ---- Cases 1–10 ---- */
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < tests.length; i++) {
         const [a, b] = tests[i];
         const expected = (BigInt(a) + BigInt(b)).toString();
 
