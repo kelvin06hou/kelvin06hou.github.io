@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>CV – Edit & Preview</title>
+  <title>Private-CV</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
   <style>
-    /* ====== General ====== */
     body {
       font-family: "Times New Roman", "Noto Serif CJK SC", serif;
       background: #f5f5f5;
@@ -13,14 +13,9 @@
       padding: 20px;
     }
 
-    h1, h2, h3 {
-      margin: 0;
-      font-weight: normal;
-    }
-
     button {
       padding: 6px 12px;
-      margin-right: 6px;
+      margin: 6px 6px 6px 0;
       cursor: pointer;
     }
 
@@ -28,10 +23,9 @@
       width: 100%;
       box-sizing: border-box;
       font-family: inherit;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
     }
 
-    /* ====== Layout ====== */
     .container {
       display: flex;
       gap: 20px;
@@ -44,40 +38,29 @@
     .preview-wrapper {
       width: 60%;
       background: #fff;
-      padding: 0;
       box-shadow: 0 0 8px rgba(0,0,0,0.1);
     }
 
-    /* ====== A4 Preview ====== */
     .a4 {
       width: 210mm;
-      min-height: 297mm;
       padding: 20mm;
       margin: auto;
       box-sizing: border-box;
     }
 
     @media print {
-      body {
-        background: #fff;
-        padding: 0;
-      }
       .editor, .controls {
         display: none;
       }
-      .preview-wrapper {
-        box-shadow: none;
-      }
     }
 
-    /* ====== CV Styles ====== */
     .cv-header {
       text-align: center;
       margin-bottom: 16px;
     }
 
     .cv-header .name {
-      font-size: 20pt;
+      font-size: 16pt;
       font-weight: bold;
     }
 
@@ -92,6 +75,7 @@
 
     .section-title {
       font-size: 14pt;
+      font-weight: bold;
       border-bottom: 1px solid #000;
       margin-bottom: 8px;
     }
@@ -102,57 +86,65 @@
     }
 
     li {
-      margin-bottom: 6px;
       font-size: 11pt;
+      margin-bottom: 8px;
+    }
+
+    .task-line {
+      display: flex;
+      align-items: baseline;
+      font-weight: bold;
+    }
+
+    .task-title {
+      font-size: 12.5pt;
+      flex-shrink: 0;
+    }
+
+    .task-spacer {
+      flex: 1;
+    }
+
+    .task-duration {
+      font-size: 11.5pt;
+      white-space: nowrap;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .section-editor {
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 12px;
+      background: #fafafa;
     }
   </style>
 </head>
+
 <body>
 
 <div class="controls">
   <button onclick="saveLocal()">Save</button>
   <button onclick="exportCSV()">Export CSV</button>
   <button onclick="savePDF()">Save as PDF</button>
+  <button onclick="saveJPG()">Save as JPG</button>
 </div>
 
 <div class="container">
 
-  <!-- ====== Editor ====== -->
+  <!-- ===== Editor ===== -->
   <div class="editor">
     <h3>Header</h3>
-    <input id="name" placeholder="Name (Chinese + English)" value="張三 Zhang San" />
-    <input id="university" placeholder="University (Chinese + English)" value="某某大學 Some University" />
-    <input id="faculty" placeholder="Faculty (Chinese + English)" value="工程學院 Faculty of Engineering" />
+    <input id="name" placeholder="Name (Chinese + English)" />
+    <input id="university" placeholder="University (Chinese + English)" />
+    <input id="faculty" placeholder="Faculty (Chinese + English)" />
 
-    <h3>Academic (學術)</h3>
-    <<textarea id="academic" rows="8">Achievement / Performance Title 1
-- Description 1
-- Description 2
-
-Achievement / Performance Title 2
-- Description 1
-- Description 2</textarea>
-
-    <h3>Competition / Scientific Research Training (比賽或暑假培訓經驗)</h3>
-    <<textarea id="competition" rows="8">Achievement / Performance Title 1
-- Description 1
-- Description 2
-
-Achievement / Performance Title 2
-- Description 1
-- Description 2</textarea>
-
-    <h3>Working Experiences / Social Services (工作 / 社會實踐)</h3>
-    <<textarea id="work" rows="8">Achievement / Performance Title 1
-- Description 1
-- Description 2
-
-Achievement / Performance Title 2
-- Description 1
-- Description 2</textarea>
+    <h3>Sections</h3>
+    <div id="sections-editor"></div>
+    <button onclick="addSection()">+ Add Section</button>
   </div>
 
-  <!-- ====== Preview ====== -->
+  <!-- ===== Preview ===== -->
   <div class="preview-wrapper">
     <div class="a4" id="preview"></div>
   </div>
@@ -160,105 +152,236 @@ Achievement / Performance Title 2
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
 <script>
-  const fields = ["name", "university", "faculty", "academic", "competition", "work"];
+  const headerFields = ["name", "university", "faculty"];
+  let sections = [];
 
-  fields.forEach(id => {
-    document.getElementById(id).addEventListener("input", render);
-  });
+  /* ========= Parsing ========= */
+  function parseEntries(text) {
+    const blocks = text.split(/\n\s*\n/);
 
-  function linesToList(text) {
-    return text
-      .split("\n")
-      .filter(l => l.trim() !== "")
-      .map(l => `<li>${l}</li>`)
-      .join("");
+    return blocks.map(block => {
+      const lines = block.split("\n").map(l => l.trim()).filter(Boolean);
+      if (!lines.length) return null;
+
+      const [taskLine, orgLine, ...desc] = lines;
+
+      // ---- Task metadata ----
+      let task = taskLine;
+      let duration = "";
+
+      const taskMatch = taskLine.match(/^(.*?)(?:\{(.+?)\})$/);
+      if (taskMatch) {
+        task = taskMatch[1].trim();
+        duration = taskMatch[2].trim();
+      }
+
+      // ---- Organization metadata ----
+      let organization = orgLine || "";
+      let location = "";
+
+      if (orgLine) {
+        const orgMatch = orgLine.match(/^(.*?)(?:\{(.+?)\})$/);
+        if (orgMatch) {
+          organization = orgMatch[1].trim();
+          location = orgMatch[2].trim();
+        }
+      }
+
+      return {
+        task,
+        duration,
+        organization,
+        location,
+        descriptions: desc.map(d => d.replace(/^[-*]\s*/, ""))
+      };
+    }).filter(Boolean);
   }
 
+  function renderList(text) {
+    return parseEntries(text).map(e => `
+      <li>
+        <div class="task-line">
+          <span class="task-title">${e.task}</span>
+          <span class="task-spacer"></span>
+          <span class="task-duration">${e.duration}</span>
+        </div>
+        <div class="task-line" style="font-style:italic; font-weight:normal;">
+            <span>${e.organization}</span>
+            <span class="task-spacer"></span>
+            <span class="task-duration">${e.location || ""}</span>
+        </div>
+        <ul>${e.descriptions.map(d => `<li>${d}</li>`).join("")}</ul>
+      </li>
+    `).join("");
+  }
+
+  /* ========= Sections ========= */
+  function addSection(title = "New Section") {
+    sections.push({
+      id: Date.now(),
+      title,
+      content: ""
+    });
+    persistSections();
+    renderSectionsEditor();
+    render();
+  }
+
+  function deleteSection(id) {
+    sections = sections.filter(s => s.id !== id);
+    persistSections();
+    renderSectionsEditor();
+    render();
+  }
+
+  function updateSection(id, key, value) {
+    const s = sections.find(s => s.id === id);
+    if (s) s[key] = value;
+    persistSections();
+    render();
+  }
+
+  function renderSectionsEditor() {
+    const container = document.getElementById("sections-editor");
+    container.innerHTML = "";
+
+    sections.forEach(s => {
+      const div = document.createElement("div");
+      div.className = "section-editor";
+
+      div.innerHTML = `
+        <input value="${s.title}"
+          oninput="updateSection(${s.id}, 'title', this.value)"
+          placeholder="Section Title" />
+
+        <textarea rows="8"
+          oninput="updateSection(${s.id}, 'content', this.value)"
+          placeholder="Task {Duration}
+Organization {Location}
+- Description">${s.content}</textarea>
+
+        <button onclick="deleteSection(${s.id})">Delete Section</button>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  /* ========= Render Preview ========= */
   function render() {
-    const name = document.getElementById("name").value;
-    const university = document.getElementById("university").value;
-    const faculty = document.getElementById("faculty").value;
+    const nameEl = document.getElementById("name");
+    const uniEl = document.getElementById("university");
+    const facEl = document.getElementById("faculty");
 
-    const academic = document.getElementById("academic").value;
-    const competition = document.getElementById("competition").value;
-    const work = document.getElementById("work").value;
+    document.title = nameEl.value ? `${nameEl.value} – CV` : "Private-CV";
 
-    document.getElementById("preview").innerHTML = `
+    const sectionHTML = sections.map(s => `
+      <div class="section">
+        <div class="section-title">${s.title}</div>
+        <ul>${renderList(s.content)}</ul>
+      </div>
+    `).join("");
+
+    preview.innerHTML = `
       <div class="cv-header">
-        <div class="name">${name}</div>
-        <div class="affiliation">${university} · ${faculty}</div>
+        <div class="name">${nameEl.value}</div>
+        <div class="affiliation">${uniEl.value} · ${facEl.value}</div>
       </div>
-
-      <div class="section">
-        <div class="section-title"><strong>Academic (學術)</strong></div>
-        <ul>${linesToList(academic)}</ul>
-      </div>
-
-      <div class="section">
-        <div class="section-title"><strong>Competition / Scientific Research Training (比賽或暑假培訓經驗)</strong></div>
-        <ul>${linesToList(competition)}</ul>
-      </div>
-
-      <div class="section">
-        <div class="section-title"><strong>Working Experiences / Social Services (工作 / 社會實踐)</strong></div>
-        <ul>${linesToList(work)}</ul>
-      </div>
+      ${sectionHTML}
     `;
   }
 
-  function savePDF() {
-    const element = document.getElementById("preview");
-    const opt = {
-      margin: 0,
-      filename: 'CV.pdf',
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-    html2pdf().set(opt).from(element).save();
+  /* ========= Storage ========= */
+  function persistSections() {
+    localStorage.setItem("cv_sections", JSON.stringify(sections));
   }
 
-  function exportCSV() {
-    const rows = [
-      ["Field", "Content"],
-      ["Name", document.getElementById("name").value],
-      ["University", document.getElementById("university").value],
-      ["Faculty", document.getElementById("faculty").value],
-      ["Academic", document.getElementById("academic").value],
-      ["Competition / Research", document.getElementById("competition").value],
-      ["Work / Social", document.getElementById("work").value]
-    ];
-
-    const csv = rows.map(r => r.map(v => `"${v.replace(/"/g, '""')}"`).join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "cv_data.csv";
-    a.click();
-
-    URL.revokeObjectURL(url);
+  function loadSections() {
+    const data = localStorage.getItem("cv_sections");
+    if (data) {
+      sections = JSON.parse(data);
+    } else {
+      sections = [
+        { id: 1, title: "Academic (學術)", content: "" },
+        { id: 2, title: "Competition / Scientific Research Training (比賽或暑假培訓經驗)", content: "" },
+        { id: 3, title: "Working Experiences / Social Services (工作 / 社會實踐)", content: "" }
+      ];
+    }
   }
-
-  render();
 
   function saveLocal() {
-    fields.forEach(id => {
-      localStorage.setItem(id, document.getElementById(id).value);
-    });
-    alert('Saved locally in this browser.');
+    headerFields.forEach(id =>
+      localStorage.setItem(id, document.getElementById(id).value)
+    );
+    persistSections();
   }
 
   function loadLocal() {
-    fields.forEach(id => {
+    headerFields.forEach(id => {
       const v = localStorage.getItem(id);
       if (v !== null) document.getElementById(id).value = v;
     });
   }
 
-  loadLocal();
+  /* ========= Export ========= */
+  function exportCSV() {
+    const rows = [
+      ["Name", name.value],
+      ["University", university.value],
+      ["Faculty", faculty.value]
+    ];
+
+    sections.forEach(s => rows.push([s.title, s.content]));
+
+    const csv = rows.map(r =>
+      r.map(v => `"${(v || "").replace(/"/g, '""')}"`).join(",")
+    ).join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "cv_data.csv";
+    a.click();
+  }
+
+  function savePDF() {
+    html2pdf().set({
+      filename: `${document.getElementById("name").value || "CV"}.pdf`,
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+      margin: 0,
+      html2canvas: { scale: 4, useCORS: true, logging: true }
+    }).from(preview).save();
+  }
+
+  /* ========= Initialization ========= */
+  window.addEventListener("DOMContentLoaded", () => {
+    loadLocal();
+    loadSections();
+    renderSectionsEditor();
+    render();
+  });
+
+  function saveJPG() {
+  const element = document.getElementById("preview");
+
+  // Use html2canvas to render the element
+  html2canvas(element, {
+    scale: 2,        // Increase for higher resolution
+    useCORS: true,   // Ensure external fonts/images render
+    logging: true
+  }).then(canvas => {
+    // Convert canvas to JPEG
+    canvas.toBlob(blob => {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `${document.getElementById("name").value || "CV"}.jpg`;
+      a.click();
+    }, "image/jpeg", 1.0); // 1.0 = highest quality
+  });
+}
+
 </script>
 
 </body>
