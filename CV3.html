@@ -15,7 +15,7 @@
 
     button {
       padding: 6px 12px;
-      margin-right: 6px;
+      margin: 6px 6px 6px 0;
       cursor: pointer;
     }
 
@@ -89,40 +89,38 @@
       font-size: 11pt;
       margin-bottom: 8px;
     }
-    .task-title {
-  font-size: 12.5pt;
-  font-weight: bold;
-}
-
-.task-duration {
-  font-size: 11.5pt;
-  white-space: nowrap;
-  text-align: right;
-}
-
 
     .task-line {
-  display: flex;
-  align-items: baseline;
-  font-weight: bold;
-}
+      display: flex;
+      align-items: baseline;
+      font-weight: bold;
+    }
 
-.task-title {
-  flex-shrink: 0;
-}
+    .task-title {
+      font-size: 12.5pt;
+      flex-shrink: 0;
+    }
 
-.task-spacer {
-  flex: 1;
-}
+    .task-spacer {
+      flex: 1;
+    }
 
-.task-duration {
-  flex-shrink: 0;
-  text-align: right;
-  white-space: nowrap;
-}
+    .task-duration {
+      font-size: 11.5pt;
+      white-space: nowrap;
+      text-align: right;
+      flex-shrink: 0;
+    }
 
+    .section-editor {
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 12px;
+      background: #fafafa;
+    }
   </style>
 </head>
+
 <body>
 
 <div class="controls">
@@ -133,19 +131,19 @@
 
 <div class="container">
 
+  <!-- ===== Editor ===== -->
   <div class="editor">
     <h3>Header</h3>
     <input id="name" placeholder="Name (Chinese + English)" />
     <input id="university" placeholder="University (Chinese + English)" />
     <input id="faculty" placeholder="Faculty (Chinese + English)" />
-    
 
-<h3>Sections</h3>
-<div id="sections-editor"></div>
+    <h3>Sections</h3>
+    <div id="sections-editor"></div>
+    <button onclick="addSection()">+ Add Section</button>
+  </div>
 
-<button onclick="addSection()">+ Add Section</button>
-
-
+  <!-- ===== Preview ===== -->
   <div class="preview-wrapper">
     <div class="a4" id="preview"></div>
   </div>
@@ -153,89 +151,29 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
 <script>
-let sections = [];
-function addSection(title = "New Section") {
-  sections.push({
-    id: Date.now(),
-    title,
-    content: ""
-  });
-  saveSections();
-  renderSectionsEditor();
-  render();
-}
+  const headerFields = ["name", "university", "faculty"];
+  let sections = [];
 
-function deleteSection(id) {
-  sections = sections.filter(s => s.id !== id);
-  saveSections();
-  renderSectionsEditor();
-  render();
-}
-
-function renderSectionsEditor() {
-  const container = document.getElementById("sections-editor");
-  container.innerHTML = "";
-
-  sections.forEach(section => {
-    const div = document.createElement("div");
-    div.style.marginBottom = "16px";
-
-    div.innerHTML = `
-      <input
-        value="${section.title}"
-        oninput="updateSectionTitle(${section.id}, this.value)"
-        placeholder="Section Title"
-      />
-
-      <textarea rows="8"
-        oninput="updateSectionContent(${section.id}, this.value)"
-        placeholder="Task {Duration}
-Organization
-- Description"
-      >${section.content}</textarea>
-
-      <button onclick="deleteSection(${section.id})">Delete Section</button>
-    `;
-
-    container.appendChild(div);
-  });
-}
-function updateSectionTitle(id, value) {
-  const s = sections.find(s => s.id === id);
-  if (s) s.title = value;
-  saveSections();
-  render();
-}
-
-function updateSectionContent(id, value) {
-  const s = sections.find(s => s.id === id);
-  if (s) s.content = value;
-  saveSections();
-  render();
-}
-
-
-
-  const fields = ["name", "university", "faculty", "academic", "competition", "work"];
-
+  /* ========= Parsing ========= */
   function parseEntries(text) {
     const blocks = text.split(/\n\s*\n/);
 
     return blocks.map(block => {
       const lines = block.split("\n").map(l => l.trim()).filter(Boolean);
-      if (lines.length === 0) return null;
+      if (!lines.length) return null;
 
       const [taskLine, orgLine, ...desc] = lines;
-      let task = taskLine;
-let duration = "";
 
-    // ✅ NEW RULE: extract duration from { }
-    const match = taskLine.match(/^(.*?)(?:\{(.+?)\})$/);
-    if (match) {
-    task = match[1].trim();
-    duration = match[2].trim();
-    }
+      let task = taskLine;
+      let duration = "";
+
+      const match = taskLine.match(/^(.*?)(?:\{(.+?)\})$/);
+      if (match) {
+        task = match[1].trim();
+        duration = match[2].trim();
+      }
 
       return {
         task,
@@ -250,88 +188,135 @@ let duration = "";
     return parseEntries(text).map(e => `
       <li>
         <div class="task-line">
-            <span class="task-title">${e.task}</span>
-            <span class="task-spacer"></span>
-            <span class="task-duration">${e.duration}</span>
+          <span class="task-title">${e.task}</span>
+          <span class="task-spacer"></span>
+          <span class="task-duration">${e.duration}</span>
         </div>
-
-        <div style="font-style:italic; margin-bottom:4px;">
-          ${e.organization}
-        </div>
-        <ul>
-          ${e.descriptions.map(d => `<li>${d}</li>`).join("")}
-        </ul>
+        <div style="font-style:italic; margin-bottom:4px;">${e.organization}</div>
+        <ul>${e.descriptions.map(d => `<li>${d}</li>`).join("")}</ul>
       </li>
     `).join("");
   }
 
-function render() {
-  const nameEl = document.getElementById("name");
-  const universityEl = document.getElementById("university");
-  const facultyEl = document.getElementById("faculty");
+  /* ========= Sections ========= */
+  function addSection(title = "New Section") {
+    sections.push({
+      id: Date.now(),
+      title,
+      content: ""
+    });
+    persistSections();
+    renderSectionsEditor();
+    render();
+  }
 
-  document.title = nameEl.value ? `${nameEl.value} – CV` : "CV";
+  function deleteSection(id) {
+    sections = sections.filter(s => s.id !== id);
+    persistSections();
+    renderSectionsEditor();
+    render();
+  }
 
-const sectionsHTML = sections.map(s => `
-  <div class="section">
-    <div class="section-title">${s.title}</div>
-    <ul>${renderList(s.content)}</ul>
-  </div>
-`).join("");
+  function updateSection(id, key, value) {
+    const s = sections.find(s => s.id === id);
+    if (s) s[key] = value;
+    persistSections();
+    render();
+  }
+
+  function renderSectionsEditor() {
+    const container = document.getElementById("sections-editor");
+    container.innerHTML = "";
+
+    sections.forEach(s => {
+      const div = document.createElement("div");
+      div.className = "section-editor";
+
+      div.innerHTML = `
+        <input value="${s.title}"
+          oninput="updateSection(${s.id}, 'title', this.value)"
+          placeholder="Section Title" />
+
+        <textarea rows="8"
+          oninput="updateSection(${s.id}, 'content', this.value)"
+          placeholder="Task {Duration}
+Organization
+- Description">${s.content}</textarea>
+
+        <button onclick="deleteSection(${s.id})">Delete Section</button>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  /* ========= Render Preview ========= */
+  function render() {
+    const nameEl = document.getElementById("name");
+    const uniEl = document.getElementById("university");
+    const facEl = document.getElementById("faculty");
+
+    document.title = nameEl.value ? `${nameEl.value} – CV` : "Private-CV";
+
+    const sectionHTML = sections.map(s => `
+      <div class="section">
+        <div class="section-title">${s.title}</div>
+        <ul>${renderList(s.content)}</ul>
+      </div>
+    `).join("");
 
     preview.innerHTML = `
-    <div class="cv-header">
-      <div class="name">${nameEl.value}</div>
-      <div class="affiliation">${universityEl.value} · ${facultyEl.value}</div>
-    </div>
-
-    ${sectionsHTML}
-  `;
-}
-
-function saveSections() {
-  localStorage.setItem("sections", JSON.stringify(sections));
-}
-
-function loadSections() {
-  const data = localStorage.getItem("sections");
-  if (data) {
-    sections = JSON.parse(data);
-  } else {
-    sections = [
-      { id: 1, title: "Academic (學術)", content: "" },
-      { id: 2, title: "Competition / Scientific Research Training (比賽或暑假培訓經驗)", content: "" },
-      { id: 3, title: "Working Experiences / Social Services (工作 / 社會實踐)", content: "" }
-    ];
+      <div class="cv-header">
+        <div class="name">${nameEl.value}</div>
+        <div class="affiliation">${uniEl.value} · ${facEl.value}</div>
+      </div>
+      ${sectionHTML}
+    `;
   }
-}
 
+  /* ========= Storage ========= */
+  function persistSections() {
+    localStorage.setItem("cv_sections", JSON.stringify(sections));
+  }
 
-
-
-  fields.forEach(id =>
-    document.getElementById(id).addEventListener("input", render)
-  );
+  function loadSections() {
+    const data = localStorage.getItem("cv_sections");
+    if (data) {
+      sections = JSON.parse(data);
+    } else {
+      sections = [
+        { id: 1, title: "Academic (學術)", content: "" },
+        { id: 2, title: "Competition / Scientific Research Training (比賽或暑假培訓經驗)", content: "" },
+        { id: 3, title: "Working Experiences / Social Services (工作 / 社會實踐)", content: "" }
+      ];
+    }
+  }
 
   function saveLocal() {
-    fields.forEach(id =>
+    headerFields.forEach(id =>
       localStorage.setItem(id, document.getElementById(id).value)
     );
+    persistSections();
   }
 
   function loadLocal() {
-    fields.forEach(id => {
+    headerFields.forEach(id => {
       const v = localStorage.getItem(id);
       if (v !== null) document.getElementById(id).value = v;
     });
   }
 
-  
-
+  /* ========= Export ========= */
   function exportCSV() {
-    const rows = fields.map(id => [id, document.getElementById(id).value]);
+    const rows = [
+      ["Name", name.value],
+      ["University", university.value],
+      ["Faculty", faculty.value]
+    ];
+
+    sections.forEach(s => rows.push([s.title, s.content]));
+
     const csv = rows.map(r =>
-      r.map(v => `"${v.replace(/"/g, '""')}"`).join(",")
+      r.map(v => `"${(v || "").replace(/"/g, '""')}"`).join(",")
     ).join("\n");
 
     const blob = new Blob([csv], { type: "text/csv" });
@@ -345,12 +330,14 @@ function loadSections() {
     html2pdf().set({
       filename: `${document.getElementById("name").value || "CV"}.pdf`,
       jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-      margin: 0,
+      margin: 0
     }).from(preview).save();
   }
 
   window.addEventListener("DOMContentLoaded", () => {
     loadLocal();
+    loadSections();
+    renderSectionsEditor();
     render();
   });
 </script>
