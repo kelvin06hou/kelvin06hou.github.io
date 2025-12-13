@@ -166,41 +166,37 @@
 
       const [taskLine, orgLine, ...desc] = lines;
 
+      // ---- Task metadata ----
       let task = taskLine;
       let duration = "";
 
-const [taskLine, orgLine, ...desc] = lines;
+      const taskMatch = taskLine.match(/^(.*?)(?:\{(.+?)\})$/);
+      if (taskMatch) {
+        task = taskMatch[1].trim();
+        duration = taskMatch[2].trim();
+      }
 
-// ---- Task metadata ----
-let task = taskLine;
-let duration = "";
+      // ---- Organization metadata ----
+      let organization = orgLine || "";
+      let location = "";
 
-const taskMatch = taskLine.match(/^(.*?)(?:\{(.+?)\})$/);
-if (taskMatch) {
-  task = taskMatch[1].trim();
-  duration = taskMatch[2].trim();
-}
+      if (orgLine) {
+        const orgMatch = orgLine.match(/^(.*?)(?:\{(.+?)\})$/);
+        if (orgMatch) {
+          organization = orgMatch[1].trim();
+          location = orgMatch[2].trim();
+        }
+      }
 
-// ---- Organization metadata ----
-let organization = orgLine || "";
-let location = "";
-
-if (orgLine) {
-  const orgMatch = orgLine.match(/^(.*?)(?:\{(.+?)\})$/);
-  if (orgMatch) {
-    organization = orgMatch[1].trim();
-    location = orgMatch[2].trim();
+      return {
+        task,
+        duration,
+        organization,
+        location,
+        descriptions: desc.map(d => d.replace(/^[-*]\s*/, ""))
+      };
+    }).filter(Boolean);
   }
-}
-
-
-return {
-  task,
-  duration,
-  organization,
-  location,
-  descriptions: desc.map(d => d.replace(/^[-*]\s*/, ""))
-};
 
   function renderList(text) {
     return parseEntries(text).map(e => `
@@ -262,7 +258,7 @@ return {
         <textarea rows="8"
           oninput="updateSection(${s.id}, 'content', this.value)"
           placeholder="Task {Duration}
-Organization
+Organization {Location}
 - Description">${s.content}</textarea>
 
         <button onclick="deleteSection(${s.id})">Delete Section</button>
@@ -356,6 +352,7 @@ Organization
     }).from(preview).save();
   }
 
+  /* ========= Initialization ========= */
   window.addEventListener("DOMContentLoaded", () => {
     loadLocal();
     loadSections();
