@@ -169,20 +169,38 @@
       let task = taskLine;
       let duration = "";
 
-      const match = taskLine.match(/^(.*?)(?:\{(.+?)\})$/);
-      if (match) {
-        task = match[1].trim();
-        duration = match[2].trim();
-      }
+const [taskLine, orgLine, ...desc] = lines;
 
-      return {
-        task,
-        duration,
-        organization: orgLine || "",
-        descriptions: desc.map(d => d.replace(/^[-*]\s*/, ""))
-      };
-    }).filter(Boolean);
+// ---- Task metadata ----
+let task = taskLine;
+let duration = "";
+
+const taskMatch = taskLine.match(/^(.*?)(?:\{(.+?)\})$/);
+if (taskMatch) {
+  task = taskMatch[1].trim();
+  duration = taskMatch[2].trim();
+}
+
+// ---- Organization metadata ----
+let organization = orgLine || "";
+let location = "";
+
+if (orgLine) {
+  const orgMatch = orgLine.match(/^(.*?)(?:\{(.+?)\})$/);
+  if (orgMatch) {
+    organization = orgMatch[1].trim();
+    location = orgMatch[2].trim();
   }
+}
+
+
+return {
+  task,
+  duration,
+  organization,
+  location,
+  descriptions: desc.map(d => d.replace(/^[-*]\s*/, ""))
+};
 
   function renderList(text) {
     return parseEntries(text).map(e => `
@@ -192,7 +210,11 @@
           <span class="task-spacer"></span>
           <span class="task-duration">${e.duration}</span>
         </div>
-        <div style="font-style:italic; margin-bottom:4px;">${e.organization}</div>
+        <div class="task-line" style="font-style:italic; font-weight:normal;">
+            <span>${e.organization}</span>
+            <span class="task-spacer"></span>
+            <span class="task-duration">${e.location || ""}</span>
+        </div>
         <ul>${e.descriptions.map(d => `<li>${d}</li>`).join("")}</ul>
       </li>
     `).join("");
