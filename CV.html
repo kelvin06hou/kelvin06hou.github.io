@@ -53,18 +53,25 @@
   line-height: 1.5;    /* single line spacing */
 }
 
-.a4 ul {
-  padding-left: 18px;
-  margin: 0;
+/* Main achievements */
+.a4 > .section > ul > li {
+  line-height: 1;          /* single spacing */
+  margin-top: 0;           /* no top margin for first item */
+  margin-bottom: 0;        /* remove default bottom spacing */
 }
 
-.a4 li {
-  margin-bottom: 0;  /* remove extra spacing between items */
+/* Add spacing only between achievements, not the first */
+.a4 > .section > ul > li + li {
+  margin-top: 6px;         /* spacing between achievements */
 }
 
-.a4 li + li {
-  margin-top: 6px;         /* add spacing only for items after the first */
+/* Descriptions inside each achievement */
+.a4 li ul li {
+  line-height: 1;          /* single line spacing */
+  margin: 0;               /* no extra spacing */
+  padding: 0;
 }
+
 
 
     @media print {
