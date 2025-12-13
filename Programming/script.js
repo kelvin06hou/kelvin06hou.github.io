@@ -1,8 +1,7 @@
-let pyodideReady = false;
-let pyodide;
+let pyodide = null;
 
 /* =====================
-   Utilities
+   Shared Utilities
 ===================== */
 
 const tests = [
@@ -19,50 +18,49 @@ const tests = [
 ];
 
 function showTab(id) {
-    document.querySelectorAll('.tab').forEach(t => t.style.display = 'none');
-    document.getElementById(id).style.display = 'block';
+    document.querySelectorAll(".tab").forEach(t => t.style.display = "none");
+    document.getElementById(id).style.display = "block";
 }
 
-showTab('instruction');
+showTab("instruction");
 
 /* =====================
    Python Judge
 ===================== */
 
 async function runPython() {
-    if (!pyodideReady) {
+    if (!pyodide) {
         pyodide = await loadPyodide();
-        pyodideReady = true;
     }
 
     const code = document.getElementById("pyCode").value;
     let output = "";
 
-    /* ---- Case 0: syntax only ---- */
+    /* ---- Case 0: syntax check ONLY ---- */
     try {
-        pyodide.runPython(`
-namespace = {}
-compile(${JSON.stringify(code)}, "<user>", "exec")
-`);
+        pyodide.runPython(
+            `compile(${JSON.stringify(code)}, "<user>", "exec")`
+        );
         output += "Case 0: V\n";
     } catch {
         document.getElementById("pyResult").innerText = "Case 0: X";
         return;
     }
 
-    /* ---- Cases 1–10 ---- */
+    /* ---- Cases 1–10: execution ---- */
     for (let i = 0; i < tests.length; i++) {
         const [a, b] = tests[i];
         const expected = (BigInt(a) + BigInt(b)).toString();
 
         try {
             pyodide.runPython(`
-input_data = "${a} ${b}"
-def input():
-    return input_data
+import sys
+from io import StringIO
+
+sys.stdin = StringIO("${a}\\n${b}\\n")
 ${code}
 `);
-            const result = pyodide.runPython("str(_)").trim();
+            const result = pyodide.runPython("_").toString().trim();
             output += `Case ${i + 1}: ${result === expected ? "V" : "X"}\n`;
         } catch {
             output += `Case ${i + 1}: X\n`;
@@ -73,7 +71,7 @@ ${code}
 }
 
 /* =====================
-   C++ Judge (ASYNC FIX)
+   C++ Judge
 ===================== */
 
 async function runCpp() {
@@ -92,13 +90,13 @@ async function runCpp() {
         return;
     }
 
-    /* ---- Cases 1–10 ---- */
+    /* ---- Cases 1–10: execution ---- */
     for (let i = 0; i < tests.length; i++) {
         const [a, b] = tests[i];
         const expected = (BigInt(a) + BigInt(b)).toString();
 
         try {
-            const result = compiled.run(`${a} ${b}\n`).trim();
+            const result = compiled.run(`${a}\n${b}\n`).trim();
             output += `Case ${i + 1}: ${result === expected ? "V" : "X"}\n`;
         } catch {
             output += `Case ${i + 1}: X\n`;
