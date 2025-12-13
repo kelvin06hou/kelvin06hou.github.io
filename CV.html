@@ -182,6 +182,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
 <script>
   const headerFields = ["name", "university", "faculty"];
@@ -422,35 +423,16 @@ function handleCSV(event) {
   const file = event.target.files[0];
   if (!file) return;
 
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const text = e.target.result;
-    parseCSVAndUpdate(text);
-  };
-  reader.readAsText(file, "UTF-8");
-}
-
-function parseCSV(csvText) {
-  const pattern = /(?:^|,)(?:"((?:[^"]|"")*)"|([^",\r\n]*))/g;
-  const rows = [];
-  let currentRow = [];
-  let match;
-
-  csvText.split(/\r?\n/).forEach(line => {
-    currentRow = [];
-    while ((match = pattern.exec(line)) !== null) {
-      let value = match[1] ? match[1].replace(/""/g, '"') : match[2];
-      currentRow.push(value);
+  Papa.parse(file, {
+    header: false,
+    skipEmptyLines: true,
+    complete: function(results) {
+      parseCSVAndUpdate(results.data);
     }
-    if (currentRow.length) rows.push(currentRow);
   });
-
-  return rows;
 }
 
-function parseCSVAndUpdate(csvText) {
-  const data = parseCSV(csvText);
-
+function parseCSVAndUpdate(data) {
   // Update header fields
   const headerMap = {};
   data.forEach(r => {
@@ -460,6 +442,28 @@ function parseCSVAndUpdate(csvText) {
   headerFields.forEach(id => {
     if (headerMap[id]) document.getElementById(id).value = headerMap[id];
   });
+
+  // Update sections
+  const importedSections = [];
+  data.forEach(r => {
+    const [title, content] = r;
+    if (!title || ["name", "university", "faculty"].includes(title.toLowerCase())) return;
+
+    importedSections.push({
+      id: Date.now() + Math.random(),
+      title: title,
+      content: content || ""
+    });
+  });
+
+  if (importedSections.length) {
+    sections = importedSections;
+    renderSectionsEditor();
+  }
+
+  render();
+}
+
 
   // Update sections
   const importedSections = [];
