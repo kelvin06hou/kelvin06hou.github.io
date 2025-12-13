@@ -70,6 +70,7 @@ ${code}
     document.getElementById("pyResult").innerText = output;
 }
 
+/* C++ */
 async function runCpp() {
     const code = document.getElementById("cppCode").value;
     let output = "";
@@ -84,7 +85,7 @@ async function runCpp() {
         return;
     }
 
-    /* ---- Cases 1–10: RECOMPILE EACH TIME ---- */
+    /* ---- Cases 1–10 ---- */
     for (let i = 0; i < tests.length; i++) {
         const [a, b] = tests[i];
         const expected = (BigInt(a) + BigInt(b)).toString();
@@ -93,7 +94,10 @@ async function runCpp() {
             const compiled = await Clang.compile(code);
             if (!compiled.success) throw "compile error";
 
-            const result = compiled.run(`${a}\n${b}\n`).trim();
+            const raw = compiled.run(`${a} ${b}\n`);
+            const match = raw.match(/-?\d+/g);
+            const result = match ? match[match.length - 1] : null;
+
             output += `Case ${i + 1}: ${result === expected ? "V" : "X"}\n`;
         } catch {
             output += `Case ${i + 1}: X\n`;
