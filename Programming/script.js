@@ -1,20 +1,15 @@
-let pyodideReady = false;
-let pyodide;
+let pyodide = null;
 
-async function loadPyodideOnce() {
-    if (!pyodideReady) {
-        pyodide = await loadPyodide();
-        pyodideReady = true;
-    }
-}
+/* =====================
+   Shared Utilities
+===================== */
 
 const tests = [
-    null, // Case 0 (execution check)
+    [0, 0],
     [1, 2],
     [-5, 10],
     [100, 200],
     [-100, -200],
-    [0, 0],
     [2000000000, -2000000000],
     [999999999, 1],
     [-999999999, -1],
@@ -29,63 +24,80 @@ function showTab(id) {
 
 showTab('instruction');
 
-/* ===================== Python ===================== */
+/* =====================
+   Python Judge
+===================== */
 
 async function runPython() {
-    await loadPyodideOnce();
-    const code = document.getElementById("pyCode").value;
-    let result = "";
+    if (!pyodide) {
+        pyodide = await loadPyodide();
+    }
 
-    // Case 0
+    const code = document.getElementById("pyCode").value;
+    let output = "";
+
+    /* ---- Case 0: syntax check ONLY ---- */
     try {
-        compile.run("0 0");
-        result += "Case 0: V\n";
+        pyodide.runPython(`compile(${JSON.stringify(code)}, "<user>", "exec")`);
+        output += "Case 0: V\n";
     } catch {
-        document.getElementById("cppResult").innerText = "Case 0: X";
+        document.getElementById("pyResult").innerText = "Case 0: X";
         return;
     }
-    
-    for (let i = 1; i <= 10; i++) {
+
+    /* ---- Cases 1–10 ---- */
+    for (let i = 0; i < 10; i++) {
         const [a, b] = tests[i];
+        const expected = (BigInt(a) + BigInt(b)).toString();
+
         try {
             pyodide.globals.set("input_data", `${a} ${b}`);
             const wrapped = `
 input = lambda: input_data
 ${code}
 `;
-            const output = pyodide.runPython(wrapped).toString().trim();
-            const expected = (BigInt(a) + BigInt(b)).toString();
-
-            result += `Case ${i}: ${output === expected ? "V" : "X"}\n`;
+            const result = pyodide.runPython(wrapped).toString().trim();
+            output += `Case ${i + 1}: ${result === expected ? "V" : "X"}\n`;
         } catch {
-            result += `Case ${i}: X\n`;
+            output += `Case ${i + 1}: X\n`;
         }
     }
 
-    document.getElementById("pyResult").innerText = result;
+    document.getElementById("pyResult").innerText = output;
 }
 
-/* ===================== C++ ===================== */
+/* =====================
+   C++ Judge
+===================== */
 
 function runCpp() {
     const code = document.getElementById("cppCode").value;
-    let result = "";
+    let output = "";
 
+    let compiled;
+
+    /* ---- Case 0: compilation ONLY ---- */
     try {
-        const compile = Clang.compile(code);
-        if (!compile.success) throw "compile error";
-        result += "Case 0: V\n";
-
-        for (let i = 1; i <= 10; i++) {
-            const [a, b] = tests[i];
-            const output = compile.run(`${a} ${b}`).trim();
-            const expected = (BigInt(a) + BigInt(b)).toString();
-            result += `Case ${i}: ${output === expected ? "V" : "X"}\n`;
-        }
+        compiled = Clang.compile(code);
+        if (!compiled.success) throw "compile error";
+        output += "Case 0: V\n";
     } catch {
-        result = "Case 0: X";
+        document.getElementById("cppResult").innerText = "Case 0: X";
+        return;
     }
 
-    document.getElementById("cppResult").innerText = result;
-}
+    /* ---- Cases 1–10 ---- */
+    for (let i = 0; i < 10; i++) {
+        const [a, b] = tests[i];
+        const expected = (BigInt(a) + BigInt(b)).toString();
 
+        try {
+            const result = compiled.run(`${a} ${b}\n`).trim();
+            output += `Case ${i + 1}: ${result === expected ? "V" : "X"}\n`;
+        } catch {
+            output += `Case ${i + 1}: X\n`;
+        }
+    }
+
+    document.getElementById("cppResult").innerText = output;
+}
