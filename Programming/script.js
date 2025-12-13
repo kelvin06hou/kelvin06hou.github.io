@@ -75,10 +75,19 @@ async function runCpp() {
     const code = document.getElementById("cppCode").value;
     let output = "";
 
-    /* ---- Case 0: compilation check ---- */
+    /* ---- Structural check ---- */
+    if (!hasMainFunction(code)) {
+        document.getElementById("cppResult").innerText =
+            "Case 0: X\nMissing main() function";
+        return;
+    }
+
+    let compiled;
+
+    /* ---- Case 0: compilation ---- */
     try {
-        const testCompile = await Clang.compile(code);
-        if (!testCompile.success) throw "compile error";
+        compiled = await Clang.compile(code);
+        if (!compiled.success) throw "compile error";
         output += "Case 0: V\n";
     } catch {
         document.getElementById("cppResult").innerText = "Case 0: X";
@@ -91,12 +100,9 @@ async function runCpp() {
         const expected = (BigInt(a) + BigInt(b)).toString();
 
         try {
-            const compiled = await Clang.compile(code);
-            if (!compiled.success) throw "compile error";
-
-            const raw = compiled.run(`${a} ${b}\n`);
+            const raw = await compiled.run(`${a}\n${b}\n`);
             const match = raw.match(/-?\d+/g);
-            const result = match ? match[match.length - 1] : null;
+            const result = match ? match.pop() : null;
 
             output += `Case ${i + 1}: ${result === expected ? "V" : "X"}\n`;
         } catch {
