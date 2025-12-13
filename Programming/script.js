@@ -70,32 +70,29 @@ ${code}
     document.getElementById("pyResult").innerText = output;
 }
 
-/* =====================
-   C++ Judge
-===================== */
-
 async function runCpp() {
     const code = document.getElementById("cppCode").value;
     let output = "";
 
-    let compiled;
-
-    /* ---- Case 0: compilation ONLY ---- */
+    /* ---- Case 0: compilation check ---- */
     try {
-        compiled = await Clang.compile(code);
-        if (!compiled.success) throw "compile error";
+        const testCompile = await Clang.compile(code);
+        if (!testCompile.success) throw "compile error";
         output += "Case 0: V\n";
     } catch {
         document.getElementById("cppResult").innerText = "Case 0: X";
         return;
     }
 
-    /* ---- Cases 1–10: execution ---- */
+    /* ---- Cases 1–10: RECOMPILE EACH TIME ---- */
     for (let i = 0; i < tests.length; i++) {
         const [a, b] = tests[i];
         const expected = (BigInt(a) + BigInt(b)).toString();
 
         try {
+            const compiled = await Clang.compile(code);
+            if (!compiled.success) throw "compile error";
+
             const result = compiled.run(`${a}\n${b}\n`).trim();
             output += `Case ${i + 1}: ${result === expected ? "V" : "X"}\n`;
         } catch {
