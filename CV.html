@@ -355,25 +355,28 @@ Organization {Location}
   }
 
   /* ========= Export ========= */
-  function exportCSV() {
-    const rows = [
-      ["Name", name.value],
-      ["University", university.value],
-      ["Faculty", faculty.value]
-    ];
+function exportCSV() {
+  const rows = [
+    ["Name", document.getElementById("name").value],
+    ["University", document.getElementById("university").value],
+    ["Faculty", document.getElementById("faculty").value]
+  ];
 
-    sections.forEach(s => rows.push([s.title, s.content]));
+  sections.forEach(s => {
+    // Ensure multi-line content is properly quoted
+    const content = s.content.replace(/"/g, '""'); 
+    rows.push([s.title, content]);
+  });
 
-    const csv = rows.map(r =>
-      r.map(v => `"${(v || "").replace(/"/g, '""')}"`).join(",")
-    ).join("\n");
+  const csv = rows.map(r => `"${r[0]}","${r[1]}"`).join("\n");
 
-    const blob = new Blob([csv], { type: "text/csv" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "cv_data.csv";
-    a.click();
-  }
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "cv_data.csv";
+  a.click();
+}
+
 
   function savePDF() {
     html2pdf().set({
