@@ -38,13 +38,13 @@ async function runPython() {
 
     // Case 0
     try {
-        pyodide.runPython(code);
+        compile.run("0 0");
         result += "Case 0: V\n";
     } catch {
-        document.getElementById("pyResult").innerText = "Case 0: X";
+        document.getElementById("cppResult").innerText = "Case 0: X";
         return;
     }
-
+    
     for (let i = 1; i <= 10; i++) {
         const [a, b] = tests[i];
         try {
