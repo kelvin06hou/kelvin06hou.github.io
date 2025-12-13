@@ -182,7 +182,6 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
 <script>
   const headerFields = ["name", "university", "faculty"];
@@ -364,6 +363,7 @@ function exportCSV() {
   ];
 
   sections.forEach(s => {
+    // Ensure multi-line content is properly quoted
     const content = s.content.replace(/"/g, '""'); 
     rows.push([s.title, content]);
   });
@@ -376,7 +376,6 @@ function exportCSV() {
   a.download = "cv_data.csv";
   a.click();
 }
-
 
 
   function savePDF() {
@@ -423,16 +422,18 @@ function handleCSV(event) {
   const file = event.target.files[0];
   if (!file) return;
 
-  Papa.parse(file, {
-    header: false,
-    skipEmptyLines: true,
-    complete: function(results) {
-      parseCSVAndUpdate(results.data);
-    }
-  });
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const text = e.target.result;
+    parseCSVAndUpdate(text);
+  };
+  reader.readAsText(file, "UTF-8");
 }
 
-function parseCSVAndUpdate(data) {
+function parseCSVAndUpdate(csvText) {
+  const rows = csvText.split("\n").map(r => r.trim()).filter(Boolean);
+  const data = rows.map(r => r.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim()));
+
   // Update header fields
   const headerMap = {};
   data.forEach(r => {
@@ -447,13 +448,8 @@ function parseCSVAndUpdate(data) {
   const importedSections = [];
   data.forEach(r => {
     const [title, content] = r;
-    if (!title || ["name", "university", "faculty"].includes(title.toLowerCase())) return;
-
-    importedSections.push({
-      id: Date.now() + Math.random(),
-      title: title,
-      content: content || ""
-    });
+    if (!title || title.toLowerCase() === "name" || title.toLowerCase() === "university" || title.toLowerCase() === "faculty") return;
+    importedSections.push({ id: Date.now() + Math.random(), title: title, content: content || "" });
   });
 
   if (importedSections.length) {
@@ -463,29 +459,6 @@ function parseCSVAndUpdate(data) {
 
   render();
 }
-
-
-  // Update sections
-  const importedSections = [];
-  data.forEach(r => {
-    const [title, content] = r;
-    if (!title || ["name", "university", "faculty"].includes(title.toLowerCase())) return;
-
-    importedSections.push({
-      id: Date.now() + Math.random(),
-      title: title,
-      content: content || ""
-    });
-  });
-
-  if (importedSections.length) {
-    sections = importedSections;
-    renderSectionsEditor();
-  }
-
-  render();
-}
-
 
 
 </script>
