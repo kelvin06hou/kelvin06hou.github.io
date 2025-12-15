@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Local Email Sender</title>
+<style>
+    body { font-family: Arial; max-width: 500px; margin: 40px auto; }
+    label { display: block; margin-top: 12px; }
+    input, textarea, button { width: 100%; padding: 8px; margin-top: 4px; }
+    button { margin-top: 16px; }
+</style>
+</head>
+<body>
+<h2>Send Email with Attachment</h2>
+
+<form id="emailForm" enctype="multipart/form-data">
+    <label>From (Gmail)</label>
+    <input type="email" name="from" required>
+
+    <label>Gmail App Password</label>
+    <input type="password" name="password" required>
+
+    <label>To</label>
+    <input type="email" name="to" required>
+
+    <label>Subject</label>
+    <input type="text" name="subject" required>
+
+    <label>Message (HTML allowed)</label>
+    <textarea name="message" rows="6" placeholder="Use HTML tags like &lt;b&gt;bold&lt;/b&gt;"></textarea>
+
+    <label>Attachment</label>
+    <input type="file" name="attachment">
+
+    <button type="submit">Send Email</button>
+</form>
+
+<p id="result"></p>
+
+<script>
+document.getElementById("emailForm").addEventListener("submit", async function(e){
+    e.preventDefault();
+
+    const formData = new FormData(this);
+
+    const response = await fetch("/send-email", {
+        method: "POST",
+        body: formData
+    });
+
+    const result = await response.text();
+    document.getElementById("result").innerText = result;
+});
+</script>
+
+</body>
+</html>
