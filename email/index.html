@@ -1,24 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Email Sender</title>
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Send Gmail with Attachments</title>
 </head>
 <body>
-    <div class="container">
-        <h2>Send Email</h2>
-        <form id="emailForm">
-            <input type="email" id="to_email" placeholder="Recipient Email" required><br>
-            <input type="text" id="subject" placeholder="Subject" required><br>
-            <textarea id="message" placeholder="Message" required></textarea><br>
-            <input type="file" id="attachment"><br>
-            <button type="submit">Send Email</button>
-        </form>
-        <div id="status"></div>
-    </div>
-    <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
-    <script src="script.js"></script>
+  <h2>Send Gmail</h2>
+  <form id="emailForm">
+    <input type="email" id="to_email" placeholder="Recipient Email" required><br>
+    <input type="text" id="subject" placeholder="Subject" required><br>
+    <textarea id="message" placeholder="Message" required></textarea><br>
+    <input type="file" id="attachment"><br>
+    <button type="submit">Send Email</button>
+  </form>
+  <div id="status"></div>
+
+<script>
+document.getElementById('emailForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const formData = new FormData();
+  formData.append('to_email', document.getElementById('to_email').value);
+  formData.append('subject', document.getElementById('subject').value);
+  formData.append('message', document.getElementById('message').value);
+
+  const attachment = document.getElementById('attachment').files[0];
+  if (attachment) formData.append('attachment', attachment);
+
+  try {
+    const res = await fetch('https://YOUR_SERVER_URL/send-email', { // your deployed serverless function URL
+      method: 'POST',
+      body: formData
+    });
+    const data = await res.json();
+    document.getElementById('status').innerText = data.message || data.error;
+  } catch (err) {
+    document.getElementById('status').innerText = err.message;
+  }
+});
+</script>
 </body>
 </html>

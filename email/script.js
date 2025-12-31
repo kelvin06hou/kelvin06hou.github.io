@@ -1,38 +1,46 @@
-(function(){
-    emailjs.init("YOUR_USER_ID"); // Replace with your EmailJS User ID
-})();
+const nodemailer = require('nodemailer');
+const multiparty = require('multiparty');
 
-document.getElementById('emailForm').addEventListener('submit', function(event){
-    event.preventDefault();
+module.exports = async (req, res) => {
+  if (req.method !== 'POST') {
+    return res.status(405).send('Method Not Allowed');
+  }
 
-    const to_email = document.getElementById('to_email').value;
-    const subject = document.getElementById('subject').value;
-    const message = document.getElementById('message').value;
-    const attachmentFile = document.getElementById('attachment').files[0];
+  const form = new multiparty.Form();
 
-    const reader = new FileReader();
+  form.parse(req, async (err, fields, files) => {
+    if (err) return res.status(500).send(err.message);
 
-    reader.onload = function(event) {
-        const base64Attachment = event.target.result.split(',')[1]; // get base64 content
+    const to_email = fields.to_email[0];
+    const subject = fields.subject[0];
+    const message = fields.message[0];
+    const attachmentFile = files.attachment ? files.attachment[0] : null;
 
-        const templateParams = {
-            to_email: to_email,
-            subject: subject,
-            message: message,
-            attachment: base64Attachment
-        };
+    // Create transporter for Gmail
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.GMAIL_USER, // your Gmail
+        pass: process.env.GMAIL_APP_PASSWORD // Gmail App Password
+      }
+    });
 
-        emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', templateParams)
-            .then(function(response) {
-                document.getElementById('status').innerText = "Email sent successfully!";
-            }, function(error) {
-                document.getElementById('status').innerText = "Failed to send email: " + error.text;
-            });
+    const mailOptions = {
+      from: process.env.GMAIL_USER,
+      to: to_email,
+      subject: subject,
+      text: message,
+      attachments: attachmentFile ? [{
+        filename: attachmentFile.originalFilename,
+        path: attachmentFile.path
+      }] : []
     };
 
-    if(attachmentFile){
-        reader.readAsDataURL(attachmentFile);
-    } else {
-        reader.onload({target:{result:','}}); // Send without attachment
+    try {
+      await transporter.sendMail(mailOptions);
+      res.status(200).json({ message: 'Email sent successfully!' });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
     }
-});
+  });
+};

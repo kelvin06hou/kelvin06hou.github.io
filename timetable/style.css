@@ -1,0 +1,26 @@
+table {
+  border-collapse: collapse;
+  width: 100%;
+  max-width: 1000px;
+  margin: auto;
+}
+
+th, td {
+  border: 1px solid #bbb;
+  text-align: center;
+  padding: 6px;
+}
+
+th {
+  background: #f0f0f0;
+}
+
+.time {
+  font-weight: bold;
+  background: #fafafa;
+}
+
+.course {
+  background: #cce5ff;
+  font-size: 0.95em;
+}
