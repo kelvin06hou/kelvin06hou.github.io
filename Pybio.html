@@ -36,6 +36,7 @@
 			#toc.open { transform: translateX(0); }
 			#toc h3 { margin: 0 0 8px 0; font-size: 1rem; }
 			#toc ul { list-style:none; margin:0; padding:0; }
+			#toc ul ul { padding-left: 1.2rem; }
 			#toc li { margin:10px 0; line-height:1.6; }
 			#toc a { color:#0b5fff; text-decoration:none; font-size:0.95rem; display:block; padding:6px 0; }
 			#toc a:hover { text-decoration:underline; }
@@ -191,6 +192,9 @@
 				return;
 			}
 			const used = new Map();
+			// maintain a current list pointer and level to build nested ULs
+			let currentLevel = 1;
+			let currentList = tocList;
 			headings.forEach((h, idx) => {
 				let txt = (h.textContent || '').trim();
 				if (!txt) return;
@@ -199,10 +203,33 @@
 				if (!slug) slug = 'heading-'+idx;
 				if (used.has(slug)) { const c = used.get(slug)+1; used.set(slug,c); slug = slug + '-' + c; } else used.set(slug,0);
 				h.id = h.id || slug;
-				const li = document.createElement('li');
 				const level = parseInt(h.tagName.replace('H','')) || 1;
-				if (level === 1) li.classList.add('toc-level-1');
-				else li.classList.add('toc-level-2');
+				// adjust currentList to match heading level
+				if (level > currentLevel) {
+					for (let lv = currentLevel + 1; lv <= level; lv++) {
+						let lastLi = currentList.lastElementChild;
+						if (!lastLi) {
+							lastLi = document.createElement('li');
+							currentList.appendChild(lastLi);
+						}
+						const newUl = document.createElement('ul');
+						newUl.style.listStyle = 'none'; newUl.style.margin = '0'; newUl.style.padding = '0';
+						lastLi.appendChild(newUl);
+						currentList = newUl;
+					}
+					currentLevel = level;
+				} else if (level < currentLevel) {
+					for (let lv = currentLevel; lv > level; lv--) {
+						// climb up to parent UL
+						let parent = currentList.parentElement; // likely an LI
+						if (parent) parent = parent.parentElement; // its parent UL
+						if (!parent || parent.tagName !== 'UL') parent = tocList;
+						currentList = parent;
+					}
+					currentLevel = level;
+				}
+				const li = document.createElement('li');
+				li.classList.add('toc-level-' + level);
 				const a = document.createElement('a');
 				a.href = '#'+h.id;
 				a.textContent = txt;
@@ -210,11 +237,10 @@
 					ev.preventDefault();
 					const target = document.getElementById(h.id);
 					if (target) target.scrollIntoView({behavior:'smooth', block:'start'});
-					// optionally close toc on selection
 					toggleTOC(false);
 				});
 				li.appendChild(a);
-				tocList.appendChild(li);
+				currentList.appendChild(li);
 			});
 			// show toc
 			toc.setAttribute('aria-hidden','false');
