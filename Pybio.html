@@ -30,10 +30,14 @@
 			.nb-output-error { background:#fee; color:#900; padding:8px; border-radius:4px; overflow:auto }
 
 			/* token colors */
-			.tok-keyword { color:#0000ff; font-weight:600 }
-			.tok-comment { color:#6a9955; font-style:italic }
-			.tok-string { color:#a31515 }
-			.tok-number { color:#098658 }
+			/* VS Code-like colors (Dark+) approximation */
+			.tok-keyword { color:#569CD6; font-weight:700; }
+			.tok-comment { color:#6A9955; font-style:italic; }
+			.tok-string { color:#CE9178; }
+			.tok-number { color:#B5CEA8; }
+			.tok-operator { color:#D4D4D4; }
+			.tok-builtin { color:#4EC9B0; }
+			.tok-function { color:#DCDCAA; font-weight:600; }
 		</style>
 	</head>
 	<body>
@@ -154,53 +158,83 @@
 			if (!line) return '';
 			if (lang === 'python' || lang === 'py') {
 				const keywords = new Set(['def','return','if','else','elif','for','while','import','from','as','class','try','except','finally','with','lambda','pass','break','continue','True','False','None','in','is','and','or','not','yield','global','nonlocal','assert','raise']);
+				const builtins = new Set(['print','len','range','enumerate','map','filter','list','dict','set','int','str','float','bool','open','sum','min','max','abs','sorted','zip']);
+				const operatorChars = new Set(['+','-','*','/','%','=','<','>','!','&','|','^','~',':',',','.','?','@','#']);
 				let out = '';
 				let i = 0;
 				const n = line.length;
 				let inStr = false; let strChar = null; let buf = '';
-				function flushBuf() {
+
+				function flushBuf(peekIndex) {
 					if (!buf) return;
 					if (/^\d+(\.\d+)?$/.test(buf)) {
-						out += '<span class="tok-number">'+buf+'</span>';
+						out += '<span class="tok-number">'+buf+'<\/span>';
 					} else if (keywords.has(buf)) {
-						out += '<span class="tok-keyword">'+buf+'</span>';
+						out += '<span class="tok-keyword">'+buf+'<\/span>';
 					} else {
-						out += buf.split(/([_a-zA-Z][_a-zA-Z0-9]*)/).map(part=>{
-							return part && /^[A-Za-z_][_A-Za-z0-9]*$/.test(part) && keywords.has(part) ? '<span class="tok-keyword">'+part+'</span>' : part;
-						}).join('');
+						// detect function: next non-space char is '('
+						let isFunc = false;
+						if (typeof peekIndex === 'number') {
+							let j = peekIndex;
+							while (j < n && /\s/.test(line[j])) j++;
+							if (line[j] === '(') isFunc = true;
+						}
+						if (isFunc) {
+							out += '<span class="tok-function">'+buf+'<\/span>';
+						} else if (builtins.has(buf)) {
+							out += '<span class="tok-builtin">'+buf+'<\/span>';
+						} else {
+							out += buf;
+						}
 					}
 					buf = '';
 				}
+
 				while (i < n) {
 					const ch = line[i];
 					if (inStr) {
 						buf += escapeHtmlNoTrim(ch);
 						if (ch === strChar && line[i-1] !== '\\') {
-							out += '<span class="tok-string">'+buf+'</span>';
+							out += '<span class="tok-string">'+buf+'<\/span>';
 							buf = '';
 							inStr = false; strChar = null;
 						}
 						i++; continue;
 					}
 					if (ch === '"' || ch === "'") {
-						flushBuf(); inStr = true; strChar = ch; buf = escapeHtmlNoTrim(ch); i++; continue;
+						// start string
+						flushBuf(i);
+						inStr = true; strChar = ch; buf = escapeHtmlNoTrim(ch); i++; continue;
 					}
 					if (ch === '#') {
-						flushBuf(); // rest is comment
+						flushBuf(i);
 						const comment = escapeHtmlNoTrim(line.slice(i));
-						out += '<span class="tok-comment">'+comment+'</span>';
+						out += '<span class="tok-comment">'+comment+'<\/span>';
 						break;
+					}
+					if (operatorChars.has(ch)) {
+						flushBuf(i);
+						// handle multi-char operators (==, !=, <=, >=, //, **)
+						let op = ch;
+						const next = line[i+1] || '';
+						if ((ch === '=' && next === '=') || (ch === '!' && next === '=') || (ch === '<' && next === '=') || (ch === '>' && next === '=') || (ch === '/' && next === '/') || (ch === '*' && next === '*')) {
+							op = ch + next; i += 2;
+						} else {
+							i++;
+						}
+						out += '<span class="tok-operator">'+escapeHtmlNoTrim(op)+'<\/span>';
+						continue;
 					}
 					if ((/[A-Za-z0-9_]/).test(ch)) {
 						buf += ch; i++; continue;
 					} else {
-						flushBuf(); out += escapeHtmlNoTrim(ch); i++; continue;
+						flushBuf(i);
+						out += escapeHtmlNoTrim(ch); i++; continue;
 					}
 				}
-				flushBuf();
+				flushBuf(i);
 				return out;
 			} else {
-				// fallback: plain escaped
 				return escapeHtmlNoTrim(line);
 			}
 		}
