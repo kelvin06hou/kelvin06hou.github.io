@@ -38,7 +38,6 @@
 	</head>
 	<body>
 		<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-			<button id="reloadBtn">重新載入 Notebook（取最新）</button>
 			<span id="lastLoaded" style="color:#666;font-size:0.95rem;"></span>
 		</div>
 
@@ -59,7 +58,7 @@
 		async function renderNotebook(url) {
 			const container = document.getElementById('notebook');
 			const last = document.getElementById('lastLoaded');
-			container.innerHTML = '<p style="color:#666">載入中…</p>';
+			container.innerHTML = '<p style="color:#666;margin:0">載入中…</p>';
 			try {
 				const res = await fetch(url, {cache: 'no-store'});
 				if (!res.ok) throw new Error('fetch failed: ' + res.status);
@@ -67,7 +66,7 @@
 				const cells = nb.cells || [];
 				const out = [];
 				out.push('<div class="nb-root">');
-				out.push('<h2>' + (nb.metadata?.title || 'Notebook') + '</h2>');
+				// Notebook title hidden by request
 				cells.forEach((cell, i) => {
 					if (cell.cell_type === 'markdown') {
 						const src = Array.isArray(cell.source) ? cell.source.join('') : (cell.source || '');
