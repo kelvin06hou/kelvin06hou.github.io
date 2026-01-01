@@ -270,7 +270,8 @@
 		}
 
 		function highlightCodeLine(line, lang) {
-			if (!line) return '';
+			// preserve visual height for empty or whitespace-only lines
+			if (!line || /^\s*$/.test(line)) return '&nbsp;';
 			// handle Python specially, otherwise do a lightweight generic tokenizer
 			if (lang === 'python' || lang === 'py') {
 				const keywords = new Set(['def','return','if','else','elif','for','while','import','from','as','class','try','except','finally','with','lambda','pass','break','continue','True','False','None','in','is','and','or','not','yield','global','nonlocal','assert','raise']);
