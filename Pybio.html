@@ -14,7 +14,7 @@
 			.nb-cell { margin: 10px 0; border-radius: 6px; overflow: hidden; }
 			.nb-markdown { padding: 8px 12px; background: #fff; }
 			.nb-code { border: 1px solid #e6e6e6; }
-			.nb-code .nb-outputs { padding: 8px; background: #fafafa; }
+			.nb-cell > .nb-outputs { padding: 8px; background: #fafafa; margin-top:8px; border-radius:6px; }
 			/* code block: each line is its own row with alternating background */
 			.nb-code pre { margin: 0; }
 			.nb-code pre code { display: block; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', 'Courier New', monospace; white-space: pre; }
@@ -68,14 +68,15 @@
 						out.push('<div class="nb-cell nb-markdown">' + md + '</div>');
 					} else if (cell.cell_type === 'code') {
 						const src = Array.isArray(cell.source) ? cell.source.join('') : (cell.source || '');
-						// code: 將每一行包成 .code-line，並保留換行
+						// code: 將每一行包成 .code-line
 						const lines = src.split(/\r\n|\r|\n/);
-						out.push('<div class="nb-cell nb-code"><pre><code>');
+						out.push('<div class="nb-cell">');
+						out.push('<div class="nb-code"><pre><code>');
 						lines.forEach(line => {
 							out.push('<span class="code-line">' + escapeHtml(line) + '</span>');
 						});
-						out.push('</code></pre>');
-						// outputs
+						out.push('</code></pre></div>');
+						// outputs: 與 code 同級（分離）
 						const outputs = cell.outputs || [];
 						if (outputs.length) {
 							out.push('<div class="nb-outputs">');
@@ -104,7 +105,7 @@
 										const txt = escapeHtml(JSON.stringify(data));
 										const linesOut = txt.split(/\r\n|\r|\n/);
 										out.push('<div class="output-lines nb-output-plain">');
-										linesOut.forEach(l => out.push('<span class="output-line">' + l + '</span>'));
+										linesOut.forEach(l => out.push('<span class="output-line">' + escapeHtml(l) + '</span>'));
 										out.push('</div>');
 									}
 								} else if (outp.output_type === 'error') {
