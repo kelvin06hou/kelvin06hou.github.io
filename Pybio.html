@@ -97,11 +97,22 @@
 				const nb = await res.json();
 				const cells = nb.cells || [];
 				const out = [];
+				// collect headings from markdown sources (preserve notebook cell order)
+				const collectedHeadings = [];
 				out.push('<div class="nb-root">');
 				// Notebook title hidden by request
 				cells.forEach((cell, i) => {
 					if (cell.cell_type === 'markdown') {
 						const src = Array.isArray(cell.source) ? cell.source.join('') : (cell.source || '');
+						// extract markdown-style headings (# .. ######)
+						const lines = src.split(/\r\n|\r|\n/);
+						lines.forEach(ln => {
+							const m = ln.match(/^\s*(#{1,6})\s+(.*)$/);
+							if (m) collectedHeadings.push({ level: m[1].length, text: m[2].trim() });
+							// also check for HTML heading tags in the markdown source
+							const htmlMatch = ln.match(/<h([1-6])[^>]*>(.*?)<\/h\1>/i);
+							if (htmlMatch) collectedHeadings.push({ level: parseInt(htmlMatch[1],10), text: htmlMatch[2].replace(/<[^>]+>/g,'').trim() });
+						});
 						const md = marked.parse(src);
 						out.push('<div class="nb-cell nb-markdown">' + md + '</div>');
 					} else if (cell.cell_type === 'code') {
@@ -174,6 +185,25 @@
 				});
 				out.push('</div>');
 				container.innerHTML = out.join('');
+				// After rendering, if we collected headings from markdown sources, assign stable ids to DOM headings in order
+				try {
+					if (collectedHeadings.length) {
+						const domHeadings = container.querySelectorAll('.nb-root h1, .nb-root h2, .nb-root h3, .nb-root h4, .nb-root h5, .nb-root h6');
+						// if counts match or dom has at least as many headings, map them in order
+						if (domHeadings.length >= collectedHeadings.length) {
+							const used = new Map();
+							for (let i = 0; i < collectedHeadings.length; i++) {
+								const info = collectedHeadings[i];
+								const el = domHeadings[i];
+								let slug = (info.text || '').toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9\-]/g,'') || ('heading-'+i);
+								if (used.has(slug)) { const c = used.get(slug)+1; used.set(slug,c); slug = slug + '-' + c; } else used.set(slug,0);
+								el.id = el.id || slug;
+							}
+						} else {
+							// fallback: let buildTOC assign ids based on DOM order
+						}
+					}
+				} catch(e) { /* ignore mapping errors */ }
 				// restore and persist any <details> open/closed state for this notebook view
 				try { restoreDetailsState(container, (url||'').split('?')[0] || location.pathname); } catch(e){}
 				// build table-of-contents from headings
