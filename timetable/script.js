@@ -17,7 +17,7 @@ function generateTimeSlots() {
 }
 
 const timeSlots = generateTimeSlots();
-const occupied = {}; // Tracks merged cells
+const occupied = {}; // Tracks merged cells per day & time
 
 /* ---------- Build Table ---------- */
 timeSlots.forEach(time => {
@@ -29,7 +29,7 @@ timeSlots.forEach(time => {
     if (occupied[key]) return;
 
     const course = courses.find(
-      c => c.day === day && c.start === time
+      c => c.days.includes(day) && c.start === time
     );
 
     if (course) {

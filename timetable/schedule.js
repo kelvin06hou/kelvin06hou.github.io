@@ -1,27 +1,27 @@
 const courses = [
   {
-    day: "Mon",
+    days: ["Mon", "Tue"],
     start: "09:00",
     end: "10:30",
     name: "Microbiology",
     type: "lecture"
   },
   {
-    day: "Tue",
+    days: ["Wed"],
     start: "13:00",
     end: "15:00",
     name: "Statistics",
     type: "lecture"
   },
   {
-    day: "Thu",
+    days: ["Thu"],
     start: "10:00",
     end: "12:00",
     name: "CRISPR Lab",
     type: "lab"
   },
   {
-    day: "Fri",
+    days: ["Fri"],
     start: "15:30",
     end: "17:00",
     name: "Group Meeting",
