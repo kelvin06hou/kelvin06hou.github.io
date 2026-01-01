@@ -15,61 +15,97 @@
 			<button id="reloadBtn">重新載入 Notebook（取最新）</button>
 			<span id="lastLoaded" style="color:#666;font-size:0.95rem;"></span>
 		</div>
-		<iframe id="nbframe" src="test_notebook.html?v=1" title="test_notebook.html" frameborder="0" aria-label="Embedded notebook"></iframe>
+
+		<!-- 由 client-side 直接載入並解析 test.ipynb -->
+		<div id="notebook" class="frame-wrap"></div>
+
+		<!-- 依賴：marked (markdown) 與 highlight.js (code highlight) -->
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
 		<script>
-		// 自動調整 iframe 高度以配合內容（若同源可讀取內容高度）
-		function adjustIframe() {
-			const ifr = document.getElementById('nbframe');
-			if (!ifr) return;
-			// 預設為視窗高度，避免在無法存取內容時顯示空白
-			ifr.style.width = '100%';
-			ifr.style.display = 'block';
-			ifr.style.border = '0';
+		// 直接載入並解析 JSON 格式的 test.ipynb，當只更新 .ipynb 時也會展示最新內容
+		function escapeHtml(s) {
+			return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+		}
+
+		async function renderNotebook(url) {
+			const container = document.getElementById('notebook');
+			const last = document.getElementById('lastLoaded');
+			container.innerHTML = '<p style="color:#666">載入中…</p>';
 			try {
-				const doc = ifr.contentDocument || ifr.contentWindow.document;
-				const height = Math.max(doc.documentElement.scrollHeight || 0, doc.body.scrollHeight || 0, doc.documentElement.offsetHeight || 0);
-				if (height && height > 0) {
-					ifr.style.height = height + 'px';
-				} else {
-					ifr.style.height = window.innerHeight + 'px';
-				}
-			} catch (e) {
-				// cross-origin 或其他無法存取情況：使用視窗高度（內部會產生滾動）
-				ifr.style.height = window.innerHeight + 'px';
+				const res = await fetch(url, {cache: 'no-store'});
+				if (!res.ok) throw new Error('fetch failed: ' + res.status);
+				const nb = await res.json();
+				const cells = nb.cells || [];
+				const out = [];
+				out.push('<div class="nb-root">');
+				out.push('<h2>' + (nb.metadata?.title || 'Notebook') + '</h2>');
+				cells.forEach((cell, i) => {
+					if (cell.cell_type === 'markdown') {
+						const src = Array.isArray(cell.source) ? cell.source.join('') : (cell.source || '');
+						const md = marked.parse(src);
+						out.push('<div class="nb-cell nb-markdown">' + md + '</div>');
+					} else if (cell.cell_type === 'code') {
+						const src = Array.isArray(cell.source) ? cell.source.join('') : (cell.source || '');
+						out.push('<div class="nb-cell nb-code"><pre><code>' + escapeHtml(src) + '</code></pre>');
+						// outputs
+						const outputs = cell.outputs || [];
+						if (outputs.length) {
+							out.push('<div class="nb-outputs">');
+							outputs.forEach(outp => {
+								if (outp.output_type === 'stream') {
+									const txt = Array.isArray(outp.text) ? outp.text.join('') : (outp.text || '');
+									out.push('<pre class="nb-output-stream">' + escapeHtml(txt) + '</pre>');
+								} else if (outp.output_type === 'execute_result' || outp.output_type === 'display_data') {
+									const data = outp.data || {};
+									if (data['text/html']) {
+										const html = Array.isArray(data['text/html']) ? data['text/html'].join('') : data['text/html'];
+										out.push('<div class="nb-output-html">' + html + '</div>');
+									} else if (data['image/png']) {
+										out.push('<img class="nb-output-img" src="data:image/png;base64,' + data['image/png'] + '" />');
+									} else if (data['text/plain']) {
+										const txt = Array.isArray(data['text/plain']) ? data['text/plain'].join('') : data['text/plain'];
+										out.push('<pre class="nb-output-plain">' + escapeHtml(txt) + '</pre>');
+									} else {
+										// fallback: try JSON stringify
+										out.push('<pre class="nb-output-plain">' + escapeHtml(JSON.stringify(data)) + '</pre>');
+									}
+								} else if (outp.output_type === 'error') {
+									const err = (outp.ename || '') + ': ' + ((outp.evalue || '')) + '\n' + (outp.traceback ? outp.traceback.join('\n') : '');
+									out.push('<pre class="nb-output-error">' + escapeHtml(err) + '</pre>');
+								}
+							});
+							out.push('</div>');
+						}
+						out.push('</div>');
+					}
+				});
+				out.push('</div>');
+				container.innerHTML = out.join('');
+				// highlight code blocks
+				document.querySelectorAll('#notebook pre code').forEach(block => {
+					try { hljs.highlightBlock(block); } catch (e) {}
+				});
+				if (last) last.textContent = '上次載入：' + new Date().toLocaleString();
+			} catch (err) {
+				container.innerHTML = '<div class="fallback">載入失敗：' + escapeHtml(String(err)) + '</div>';
+				if (last) last.textContent = '載入失敗';
 			}
 		}
 
 		window.addEventListener('DOMContentLoaded', function () {
-			const ifr = document.getElementById('nbframe');
 			const btn = document.getElementById('reloadBtn');
-			const last = document.getElementById('lastLoaded');
-			if (!ifr) return;
-			ifr.style.minHeight = '100vh';
-			// 在 iframe 加載完成時嘗試調整高度
-			ifr.addEventListener('load', function () {
-				adjustIframe();
-				// 若內容載入後有遲到的資源，延遲再次調整
-				setTimeout(adjustIframe, 500);
-				// 更新上次載入時間文字
-				if (last) last.textContent = '上次載入：' + new Date().toLocaleString();
-			});
-
-			// 重新載入時加上時間戳以破壞快取，確保載入最新版
 			function loadLatest() {
 				const t = Date.now();
-				ifr.src = 'test_notebook.html?v=' + t;
+				// 加上 query 破壞快取，確保讀到最新的 test.ipynb
+				renderNotebook('test.ipynb?v=' + t);
 			}
-
-			if (btn) btn.addEventListener('click', function () {
-				loadLatest();
-			});
-
-			// 頁面開啟時自動嘗試載入最新版本
+			if (btn) btn.addEventListener('click', loadLatest);
 			loadLatest();
-			window.addEventListener('resize', adjustIframe);
-			// 嘗試首次調整
-			adjustIframe();
+			// optional: 也可以每隔一段時間自動重新載入
+			// setInterval(loadLatest, 30_000);
 		});
 		</script>
 	</body>
