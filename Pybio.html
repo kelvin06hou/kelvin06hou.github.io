@@ -6,7 +6,7 @@
 		<title>Notebook Embed</title>
 		<style>
 			body { font-family: Arial, sans-serif; margin: 24px; }
-			.frame-wrap { width: 100%; height: auto; border: 1px solid #ddd; padding: 12px; box-sizing: border-box; }
+			.frame-wrap { width: 100%; height: auto; border: none; padding: 12px; box-sizing: border-box; }
 			.fallback { margin-top: 12px; }
 			/* Notebook styles */
 			.nb-root { max-width: 100%; }
@@ -37,9 +37,7 @@
 		</style>
 	</head>
 	<body>
-		<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-			<span id="lastLoaded" style="color:#666;font-size:0.95rem;"></span>
-		</div>
+		<!-- header removed: no last-loaded timestamp -->
 
 		<!-- 由 client-side 直接載入並解析 test.ipynb -->
 		<div id="notebook" class="frame-wrap"></div>
@@ -57,7 +55,6 @@
 
 		async function renderNotebook(url) {
 			const container = document.getElementById('notebook');
-			const last = document.getElementById('lastLoaded');
 			container.innerHTML = '<p style="color:#666;margin:0">載入中…</p>';
 			try {
 				const res = await fetch(url, {cache: 'no-store'});
@@ -143,10 +140,8 @@
 				out.push('</div>');
 				container.innerHTML = out.join('');
 				// （目前以交錯背景為主）
-				if (last) last.textContent = '上次載入：' + new Date().toLocaleString();
 			} catch (err) {
 				container.innerHTML = '<div class="fallback">載入失敗：' + escapeHtml(String(err)) + '</div>';
-				if (last) last.textContent = '載入失敗';
 			}
 		}
 
