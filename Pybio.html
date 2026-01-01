@@ -46,6 +46,11 @@
 			#toc .toc-level-1 { font-weight:700; font-size:1.02rem; padding-left:0; color:#0b3b95; }
 			#toc .toc-level-2 { padding-left: 2ch; font-size:0.95rem; color:#333; }
 			#toc .toc-level-3 { padding-left: 4ch; font-size:0.92rem; color:#444; }
+			/* expander button for collapsible TOC */
+			.toc-expander { background:transparent; border:0; padding:0 6px 0 0; margin-right:6px; cursor:pointer; color:inherit; display:inline-flex; align-items:center; }
+			.toc-expander svg { width:12px; height:12px; transform:rotate(0deg); transition:transform .18s ease; }
+			.toc-expander.open svg { transform:rotate(90deg); }
+			#toc ul ul.collapsed { display:none; }
 			/* when toc open, add slight backdrop to page */
 			body.toc-open::after { content:''; position:fixed; left:0; top:0; right:0; bottom:0; background:rgba(0,0,0,0.04); z-index:1050; }
 
@@ -261,6 +266,39 @@
 			});
 			// show toc
 			toc.setAttribute('aria-hidden','false');
+			// make TOC items collapsible: add expander buttons to items with child ULs
+			try {
+				const allLis = tocList.querySelectorAll('li');
+				allLis.forEach(li => {
+					const childUl = li.querySelector('ul');
+					if (childUl && childUl.children.length > 0) {
+						li.classList.add('has-children');
+						// collapse child lists by default (but keep top-level children visible if you prefer)
+						childUl.classList.add('collapsed');
+						const btn = document.createElement('button');
+						btn.className = 'toc-expander';
+						btn.setAttribute('aria-expanded','false');
+						btn.innerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><path d="M8 5v14l11-7z"/></svg>';
+						btn.addEventListener('click', (ev) => {
+							ev.stopPropagation();
+							const isOpen = !childUl.classList.contains('collapsed');
+							if (isOpen) {
+								childUl.classList.add('collapsed');
+								btn.classList.remove('open');
+								btn.setAttribute('aria-expanded','false');
+							} else {
+								childUl.classList.remove('collapsed');
+								btn.classList.add('open');
+								btn.setAttribute('aria-expanded','true');
+							}
+						});
+						// insert expander before link if link exists, otherwise at top
+						const a = li.querySelector('a');
+						if (a) li.insertBefore(btn, a);
+						else li.insertBefore(btn, li.firstChild);
+					}
+				});
+			} catch(e) { /* ignore */ }
 		}
 
 		// TOC toggle behavior
