@@ -11,26 +11,46 @@
 		</style>
 	</head>
 	<body>
-		<h1>Embedded Notebook</h1>
-		<p>嵌入本地轉換後的 <strong>test_notebook.html</strong>（無外部品牌標示）。</p>
+		<iframe id="nbframe" src="test_notebook.html" title="test_notebook.html" frameborder="0" aria-label="Embedded notebook"></iframe>
 
-		<div class="frame-wrap">
-			<iframe
-				src="test_notebook.html"
-				title="test_notebook.html"
-				width="100%"
-				height="100%"
-				frameborder="0"
-			></iframe>
-		</div>
+		<script>
+		// 自動調整 iframe 高度以配合內容（若同源可讀取內容高度）
+		function adjustIframe() {
+			const ifr = document.getElementById('nbframe');
+			if (!ifr) return;
+			// 預設為視窗高度，避免在無法存取內容時顯示空白
+			ifr.style.width = '100%';
+			ifr.style.display = 'block';
+			ifr.style.border = '0';
+			try {
+				const doc = ifr.contentDocument || ifr.contentWindow.document;
+				const height = Math.max(doc.documentElement.scrollHeight || 0, doc.body.scrollHeight || 0, doc.documentElement.offsetHeight || 0);
+				if (height && height > 0) {
+					ifr.style.height = height + 'px';
+				} else {
+					ifr.style.height = window.innerHeight + 'px';
+				}
+			} catch (e) {
+				// cross-origin 或其他無法存取情況：使用視窗高度（內部會產生滾動）
+				ifr.style.height = window.innerHeight + 'px';
+			}
+		}
 
-		<div class="fallback">
-			若 iframe 無法顯示，請點選下列連結：
-			<ul>
-				<li><a href="test_notebook.html" target="_blank">在本地打開 test_notebook.html</a></li>
-				<li><a href="https://github.com/kelvin06hou/kelvin06hou.github.io/blob/main/test.ipynb" target="_blank">在 GitHub 上開啟原始檔案</a></li>
-			</ul>
-		</div>
+		window.addEventListener('DOMContentLoaded', function () {
+			const ifr = document.getElementById('nbframe');
+			if (!ifr) return;
+			ifr.style.minHeight = '100vh';
+			// 在 iframe 加載完成時嘗試調整高度
+			ifr.addEventListener('load', function () {
+				adjustIframe();
+				// 若內容載入後有遲到的資源，延遲再次調整
+				setTimeout(adjustIframe, 500);
+			});
+			window.addEventListener('resize', adjustIframe);
+			// 嘗試首次調整
+			adjustIframe();
+		});
+		</script>
 	</body>
 </html>
 
