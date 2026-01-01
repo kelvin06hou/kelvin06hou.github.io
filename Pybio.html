@@ -49,6 +49,8 @@
 			/* token colors */
 			/* VS Code-like colors (Dark+) approximation */
 			.tok-keyword { color:#569CD6; font-weight:700; }
+			/* ensure comment tokens inside code blocks are visible as green */
+			.nb-code pre code .tok-comment { color:#228B22; font-style:italic; }
 			.tok-comment { color:#228B22; font-style:italic; }
 			.tok-string { color:#CE9178; }
 			.tok-number { color:#B5CEA8; }
@@ -284,6 +286,7 @@
 
 		function highlightCodeLine(line, lang) {
 			if (!line) return '';
+			// handle Python specially, otherwise do a lightweight generic tokenizer
 			if (lang === 'python' || lang === 'py') {
 				const keywords = new Set(['def','return','if','else','elif','for','while','import','from','as','class','try','except','finally','with','lambda','pass','break','continue','True','False','None','in','is','and','or','not','yield','global','nonlocal','assert','raise']);
 				const builtins = new Set(['print','len','range','enumerate','map','filter','list','dict','set','int','str','float','bool','open','sum','min','max','abs','sorted','zip']);
@@ -340,6 +343,7 @@
 						out += '<span class="tok-comment">'+comment+'<\/span>';
 						break;
 					}
+
 					if (operatorChars.has(ch)) {
 						flushBuf(i);
 						// handle multi-char operators (==, !=, <=, >=, //, **)
@@ -363,7 +367,31 @@
 				flushBuf(i);
 				return out;
 			} else {
-				return escapeHtmlNoTrim(line);
+				// generic: detect common single-line and inline block comments
+				let s = escapeHtmlNoTrim(line);
+				// // single-line
+				const idxDouble = line.indexOf('//');
+				const idxHash = line.indexOf('#');
+				const idxSlashStar = line.indexOf('/*');
+				let firstIdx = -1; let kind = null;
+				if (idxDouble >= 0) { firstIdx = idxDouble; kind = 'double'; }
+				if (idxHash >= 0 && (firstIdx === -1 || idxHash < firstIdx)) { firstIdx = idxHash; kind = 'hash'; }
+				if (idxSlashStar >= 0 && (firstIdx === -1 || idxSlashStar < firstIdx)) { firstIdx = idxSlashStar; kind = 'slashstar'; }
+				if (firstIdx === -1) return s;
+				let before = escapeHtmlNoTrim(line.slice(0, firstIdx));
+				if (kind === 'double' || kind === 'hash') {
+					const comment = escapeHtmlNoTrim(line.slice(firstIdx));
+					return before + '<span class="tok-comment">' + comment + '<\/span>';
+				}
+				// slashstar: try to find end
+				const endIdx = line.indexOf('*/', firstIdx+2);
+				if (endIdx >= 0) {
+					const comment = escapeHtmlNoTrim(line.slice(firstIdx, endIdx+2));
+					return before + '<span class="tok-comment">' + comment + '<\/span>' + escapeHtmlNoTrim(line.slice(endIdx+2));
+				} else {
+					const comment = escapeHtmlNoTrim(line.slice(firstIdx));
+					return before + '<span class="tok-comment">' + comment + '<\/span>';
+				}
 			}
 		}
 
