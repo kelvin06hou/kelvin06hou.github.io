@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-Hant">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Notebook Embed</title>
+		<style>
+			body { font-family: Arial, sans-serif; margin: 24px; }
+			.frame-wrap { width: 100%; height: 80vh; border: 1px solid #ddd; }
+			.fallback { margin-top: 12px; }
+		</style>
+	</head>
+	<body>
+		<h1>Embedded Notebook</h1>
+		<p>使用 nbviewer 嵌入工作區中的 <strong>test.ipynb</strong>。</p>
+
+		<div class="frame-wrap">
+			<iframe
+				src="https://nbviewer.org/github/kelvin06hou/kelvin06hou.github.io/blob/main/test.ipynb"
+				title="test.ipynb"
+				width="100%"
+				height="100%"
+				frameborder="0"
+			></iframe>
+		</div>
+
+		<div class="fallback">
+			若 iframe 無法顯示，請點選下列連結：
+			<ul>
+				<li><a href="https://nbviewer.org/github/kelvin06hou/kelvin06hou.github.io/blob/main/test.ipynb" target="_blank">在 nbviewer 打開 test.ipynb</a></li>
+				<li><a href="https://github.com/kelvin06hou/kelvin06hou.github.io/blob/main/test.ipynb" target="_blank">在 GitHub 上開啟原始檔案</a></li>
+			</ul>
+		</div>
+	</body>
+</html>
+
