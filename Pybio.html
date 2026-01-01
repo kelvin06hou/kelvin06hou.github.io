@@ -143,6 +143,8 @@
 				});
 				out.push('</div>');
 				container.innerHTML = out.join('');
+				// restore and persist any <details> open/closed state for this notebook view
+				try { restoreDetailsState(container, (url||'').split('?')[0] || location.pathname); } catch(e){}
 				// （目前以交錯背景為主）
 			} catch (err) {
 				container.innerHTML = '<div class="fallback">載入失敗：' + escapeHtml(String(err)) + '</div>';
@@ -237,6 +239,25 @@
 			} else {
 				return escapeHtmlNoTrim(line);
 			}
+		}
+
+		// Persist and restore <details> open/closed state per notebook view using localStorage
+		function restoreDetailsState(container, ns) {
+			try {
+				const details = container.querySelectorAll('details');
+				details.forEach((d, i) => {
+					const summary = d.querySelector('summary');
+					const summaryText = summary ? summary.textContent.trim() : '';
+					const key = 'pybio:details:' + (ns || '') + ':' + i + ':' + summaryText;
+					const v = localStorage.getItem(key);
+					if (v === 'open') d.open = true;
+					else if (v === 'closed') d.open = false;
+					// save changes when toggled
+					d.addEventListener('toggle', () => {
+						try { localStorage.setItem(key, d.open ? 'open' : 'closed'); } catch(e){}
+					});
+				});
+			} catch (e) { /* ignore */ }
 		}
 
 		window.addEventListener('DOMContentLoaded', function () {
