@@ -6,8 +6,23 @@
 		<title>Notebook Embed</title>
 		<style>
 			body { font-family: Arial, sans-serif; margin: 24px; }
-			.frame-wrap { width: 100%; height: 80vh; border: 1px solid #ddd; }
+			.frame-wrap { width: 100%; height: auto; border: 1px solid #ddd; padding: 12px; box-sizing: border-box; }
 			.fallback { margin-top: 12px; }
+			/* Notebook styles */
+			.nb-root { max-width: 100%; }
+			.nb-root h2 { margin: 0 0 12px 0; }
+			.nb-cell { margin: 10px 0; border-radius: 6px; overflow: hidden; }
+			.nb-markdown { padding: 8px 12px; background: #fff; }
+			.nb-code { border: 1px solid #e6e6e6; }
+			.nb-code .nb-outputs { padding: 8px; background: #fafafa; }
+			/* code block: each line is its own row with alternating background */
+			.nb-code pre { margin: 0; }
+			.nb-code pre code { display: block; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', 'Courier New', monospace; white-space: pre; }
+			.nb-code pre code .code-line { display: block; padding: 6px 10px; font-size: 0.95rem; line-height: 1.4; }
+			.nb-code pre code .code-line:nth-child(odd) { background: #f7f7f7; }
+			.nb-code pre code .code-line:nth-child(even) { background: #ffffff; }
+			.nb-output-stream, .nb-output-plain { background:#111; color:#eee; padding:8px; border-radius:4px; overflow:auto }
+			.nb-output-error { background:#fee; color:#900; padding:8px; border-radius:4px; overflow:auto }
 		</style>
 	</head>
 	<body>
@@ -49,7 +64,13 @@
 						out.push('<div class="nb-cell nb-markdown">' + md + '</div>');
 					} else if (cell.cell_type === 'code') {
 						const src = Array.isArray(cell.source) ? cell.source.join('') : (cell.source || '');
-						out.push('<div class="nb-cell nb-code"><pre><code>' + escapeHtml(src) + '</code></pre>');
+						// code: 將每一行包成 .code-line，並保留換行
+						const lines = src.split(/\r\n|\r|\n/);
+						out.push('<div class="nb-cell nb-code"><pre><code>');
+						lines.forEach(line => {
+							out.push('<span class="code-line">' + escapeHtml(line) + '</span>\\n');
+						});
+						out.push('</code></pre>');
 						// outputs
 						const outputs = cell.outputs || [];
 						if (outputs.length) {
@@ -84,10 +105,7 @@
 				});
 				out.push('</div>');
 				container.innerHTML = out.join('');
-				// highlight code blocks
-				document.querySelectorAll('#notebook pre code').forEach(block => {
-					try { hljs.highlightBlock(block); } catch (e) {}
-				});
+				// （目前以交錯背景為主；若需要語法高亮可再加入 highlight 處理）
 				if (last) last.textContent = '上次載入：' + new Date().toLocaleString();
 			} catch (err) {
 				container.innerHTML = '<div class="fallback">載入失敗：' + escapeHtml(String(err)) + '</div>';
