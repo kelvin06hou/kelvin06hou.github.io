@@ -39,7 +39,8 @@
 			#toc li { margin:10px 0; line-height:1.6; }
 			#toc a { color:#0b5fff; text-decoration:none; font-size:0.95rem; display:block; padding:6px 0; }
 			#toc a:hover { text-decoration:underline; }
-			#toc .toc-level-2 { padding-left: 18px; font-size:0.9rem; color:#333; margin-top:2px; }
+			#toc .toc-level-1 { font-weight:700; font-size:1.02rem; padding-left:4px; color:#0b3b95; }
+			#toc .toc-level-2 { padding-left: 20px; font-size:0.95rem; color:#333; }
 			/* when toc open, add slight backdrop to page */
 			body.toc-open::after { content:''; position:fixed; left:0; top:0; right:0; bottom:0; background:rgba(0,0,0,0.04); z-index:1050; }
 
@@ -199,7 +200,8 @@
 				h.id = h.id || slug;
 				const li = document.createElement('li');
 				const level = parseInt(h.tagName.replace('H','')) || 1;
-				if (level >= 2) li.classList.add('toc-level-2');
+				if (level === 1) li.classList.add('toc-level-1');
+				else li.classList.add('toc-level-2');
 				const a = document.createElement('a');
 				a.href = '#'+h.id;
 				a.textContent = txt;
