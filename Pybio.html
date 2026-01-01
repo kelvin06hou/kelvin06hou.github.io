@@ -21,7 +21,11 @@
 			.nb-code pre code .code-line { display: block; padding: 6px 10px; font-size: 0.95rem; line-height: 1.4; }
 			.nb-code pre code .code-line:nth-child(odd) { background: #f7f7f7; }
 			.nb-code pre code .code-line:nth-child(even) { background: #ffffff; }
-			.nb-output-stream, .nb-output-plain { background:#111; color:#eee; padding:8px; border-radius:4px; overflow:auto }
+			.nb-output-stream, .nb-output-plain { background:transparent; color:inherit; padding:0; border-radius:4px; overflow:auto }
+			.nb-outputs .output-lines { border-radius:4px; overflow:auto; }
+			.nb-outputs .output-lines .output-line { display:block; padding:6px 10px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', 'Courier New', monospace; white-space:pre-wrap; }
+			.nb-outputs .output-lines .output-line:nth-child(odd) { background:#f7f7f7; }
+			.nb-outputs .output-lines .output-line:nth-child(even) { background:#ffffff; }
 			.nb-output-error { background:#fee; color:#900; padding:8px; border-radius:4px; overflow:auto }
 		</style>
 	</head>
@@ -68,7 +72,7 @@
 						const lines = src.split(/\r\n|\r|\n/);
 						out.push('<div class="nb-cell nb-code"><pre><code>');
 						lines.forEach(line => {
-							out.push('<span class="code-line">' + escapeHtml(line) + '</span>\\n');
+							out.push('<span class="code-line">' + escapeHtml(line) + '</span>');
 						});
 						out.push('</code></pre>');
 						// outputs
@@ -78,7 +82,10 @@
 							outputs.forEach(outp => {
 								if (outp.output_type === 'stream') {
 									const txt = Array.isArray(outp.text) ? outp.text.join('') : (outp.text || '');
-									out.push('<pre class="nb-output-stream">' + escapeHtml(txt) + '</pre>');
+									const linesOut = txt.split(/\r\n|\r|\n/);
+									out.push('<div class="output-lines nb-output-stream">');
+									linesOut.forEach(l => out.push('<span class="output-line">' + escapeHtml(l) + '</span>'));
+									out.push('</div>');
 								} else if (outp.output_type === 'execute_result' || outp.output_type === 'display_data') {
 									const data = outp.data || {};
 									if (data['text/html']) {
@@ -88,14 +95,24 @@
 										out.push('<img class="nb-output-img" src="data:image/png;base64,' + data['image/png'] + '" />');
 									} else if (data['text/plain']) {
 										const txt = Array.isArray(data['text/plain']) ? data['text/plain'].join('') : data['text/plain'];
-										out.push('<pre class="nb-output-plain">' + escapeHtml(txt) + '</pre>');
+										const linesOut = txt.split(/\r\n|\r|\n/);
+										out.push('<div class="output-lines nb-output-plain">');
+										linesOut.forEach(l => out.push('<span class="output-line">' + escapeHtml(l) + '</span>'));
+										out.push('</div>');
 									} else {
 										// fallback: try JSON stringify
-										out.push('<pre class="nb-output-plain">' + escapeHtml(JSON.stringify(data)) + '</pre>');
+										const txt = escapeHtml(JSON.stringify(data));
+										const linesOut = txt.split(/\r\n|\r|\n/);
+										out.push('<div class="output-lines nb-output-plain">');
+										linesOut.forEach(l => out.push('<span class="output-line">' + l + '</span>'));
+										out.push('</div>');
 									}
 								} else if (outp.output_type === 'error') {
 									const err = (outp.ename || '') + ': ' + ((outp.evalue || '')) + '\n' + (outp.traceback ? outp.traceback.join('\n') : '');
-									out.push('<pre class="nb-output-error">' + escapeHtml(err) + '</pre>');
+									const errLines = (escapeHtml(err)).split(/\r\n|\r|\n/);
+									out.push('<div class="nb-output-error">');
+									errLines.forEach(l => out.push('<div>' + l + '</div>'));
+									out.push('</div>');
 								}
 							});
 							out.push('</div>');
