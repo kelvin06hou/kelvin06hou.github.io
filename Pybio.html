@@ -11,7 +11,11 @@
 		</style>
 	</head>
 	<body>
-		<iframe id="nbframe" src="test_notebook.html" title="test_notebook.html" frameborder="0" aria-label="Embedded notebook"></iframe>
+		<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+			<button id="reloadBtn">重新載入 Notebook（取最新）</button>
+			<span id="lastLoaded" style="color:#666;font-size:0.95rem;"></span>
+		</div>
+		<iframe id="nbframe" src="test_notebook.html?v=1" title="test_notebook.html" frameborder="0" aria-label="Embedded notebook"></iframe>
 
 		<script>
 		// 自動調整 iframe 高度以配合內容（若同源可讀取內容高度）
@@ -38,6 +42,8 @@
 
 		window.addEventListener('DOMContentLoaded', function () {
 			const ifr = document.getElementById('nbframe');
+			const btn = document.getElementById('reloadBtn');
+			const last = document.getElementById('lastLoaded');
 			if (!ifr) return;
 			ifr.style.minHeight = '100vh';
 			// 在 iframe 加載完成時嘗試調整高度
@@ -45,7 +51,22 @@
 				adjustIframe();
 				// 若內容載入後有遲到的資源，延遲再次調整
 				setTimeout(adjustIframe, 500);
+				// 更新上次載入時間文字
+				if (last) last.textContent = '上次載入：' + new Date().toLocaleString();
 			});
+
+			// 重新載入時加上時間戳以破壞快取，確保載入最新版
+			function loadLatest() {
+				const t = Date.now();
+				ifr.src = 'test_notebook.html?v=' + t;
+			}
+
+			if (btn) btn.addEventListener('click', function () {
+				loadLatest();
+			});
+
+			// 頁面開啟時自動嘗試載入最新版本
+			loadLatest();
 			window.addEventListener('resize', adjustIframe);
 			// 嘗試首次調整
 			adjustIframe();
