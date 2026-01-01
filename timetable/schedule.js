@@ -1,24 +1,31 @@
 const courses = [
   {
-    days: ["Mon", "Tue"],
-    start: "09:00",
-    end: "10:30",
-    name: "Microbiology",
-    type: "lecture"
-  },
-  {
-    days: ["Wed"],
-    start: "13:00",
-    end: "15:00",
-    name: "Statistics",
-    type: "lecture"
-  },
-  {
-    days: ["Thu"],
+    days: ["Mon", "Thu"],
     start: "10:00",
-    end: "12:00",
-    name: "CRISPR Lab",
-    type: "lab"
+    end: "11:15",
+    name: "GEGA1004",
+    type: "lecture"
+  },
+  {
+    days: ["Tue","Fri"],
+    start: "10:00",
+    end: "11:15",
+    name: "HSCI2008",
+    type: "lecture"
+  },
+  {
+    days: ["Mon","Thu"],
+    start: "14:30",
+    end: "15:45",
+    name: "HSCI2006",
+    type: "lecture"
+  },
+  {
+    days: ["Mon","Thu"],
+    start: "16:00",
+    end: "17:15",
+    name: "GELH1002",
+    type: "lecture"
   },
   {
     days: ["Fri"],
