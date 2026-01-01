@@ -4,6 +4,8 @@ table {
   max-width: 1100px;
   min-width: 800px;
   margin: 40px auto;
+  table-layout: fixed;
+
 }
 
 th, td {
@@ -12,16 +14,44 @@ th, td {
   padding: 6px;
 }
 
+
 th {
   background: #f0f0f0;
 }
 
-.time {
-  font-weight: bold;
-  background: #fafafa;
+th:first-child,
+td.time {
+  width: 90px;
+  min-width: 90px;
 }
 
+th:not(:first-child),
+td:not(.time) {
+  width: 140px;
+}
+
+
 .course {
-  background: #cce5ff;
-  font-size: 0.95em;
+  background-color: #e3f2fd; /* 預設淺藍 */
+  color: #0d47a1;
+}
+
+.course.type-lab {
+  background-color: #e8f5e9; /* 淺綠 */
+  color: #1b5e20;
+}
+
+.course.type-lecture {
+  background-color: #fff3e0; /* 淺橘 */
+  color: #e65100;
+}
+
+.course.type-meeting {
+  background-color: #fce4ec; /* 淺粉 */
+  color: #880e4f;
+}
+
+.timetable-wrapper {
+  overflow-x: auto;
+  padding: 16px;
 }

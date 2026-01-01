@@ -36,7 +36,7 @@ timeSlots.forEach(time => {
       const span = (end - start) / slotMinutes;
 
       const cell = document.createElement("td");
-      cell.className = "course";
+      cell.className = `course type-${course.type || "lecture"}`;
       cell.rowSpan = span;
       cell.innerHTML = `<strong>${course.name}</strong>`;
 
