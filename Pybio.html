@@ -77,8 +77,6 @@
 						const src = Array.isArray(cell.source) ? cell.source.join('') : (cell.source || '');
 						// code: 將每一行包成 .code-line
 						const lines = src.split(/\r\n|\r|\n/);
-						out.push('<div class="nb-cell">');
-						out.push('<div class="nb-code"><pre><code>');
 						// pick bar color based on language metadata
 						const lang = (cell.metadata && cell.metadata.language) ? (cell.metadata.language.toLowerCase()) : '';
 						const langColorMap = {
@@ -97,7 +95,6 @@
 						lines.forEach(line => {
 							out.push('<span class="code-line">' + highlightCodeLine(line, lang) + '</span>');
 						});
-						out.push('</code></pre></div>');
 						out.push('</code></pre></div>');
 						// outputs: 與 code 同級（分離）
 						const outputs = cell.outputs || [];
