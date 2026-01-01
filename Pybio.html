@@ -37,6 +37,9 @@
 			#toc h3 { margin: 0 0 8px 0; font-size: 1rem; }
 			#toc ul { list-style:none; margin:0; padding:0; }
 			#toc ul ul { padding-left: 1.2rem; }
+			/* 隱藏清單直到側邊欄展開，以滿足「僅展開時才可見」需求 */
+			#tocList { display: none; }
+			#toc.open #tocList { display: block; }
 			#toc li { margin:10px 0; line-height:1.6; }
 			#toc a { color:#0b5fff; text-decoration:none; font-size:0.95rem; display:block; padding:6px 0; }
 			#toc a:hover { text-decoration:underline; }
@@ -188,15 +191,14 @@
 			if (!toc || !tocList) return;
 			// clear
 			tocList.innerHTML = '';
-			const headings = container.querySelectorAll('.nb-root h1, .nb-root h2, .nb-root h3');
+			const headings = container.querySelectorAll('.nb-root h1, .nb-root h2, .nb-root h3, .nb-root h4, .nb-root h5, .nb-root h6');
 			if (!headings.length) {
 				toc.setAttribute('aria-hidden','true');
 				return;
 			}
 			const used = new Map();
-			// maintain a current list pointer and level to build nested ULs
-			let currentLevel = 1;
-			let currentList = tocList;
+			// stack-based builder: stack elements are {ul, level}
+			const stack = [{ ul: tocList, level: 0 }];
 			headings.forEach((h, idx) => {
 				let txt = (h.textContent || '').trim();
 				if (!txt) return;
@@ -206,30 +208,19 @@
 				if (used.has(slug)) { const c = used.get(slug)+1; used.set(slug,c); slug = slug + '-' + c; } else used.set(slug,0);
 				h.id = h.id || slug;
 				const level = parseInt(h.tagName.replace('H','')) || 1;
-				// adjust currentList to match heading level
-				if (level > currentLevel) {
-					for (let lv = currentLevel + 1; lv <= level; lv++) {
-						let lastLi = currentList.lastElementChild;
-						if (!lastLi) {
-							lastLi = document.createElement('li');
-							currentList.appendChild(lastLi);
-						}
-						const newUl = document.createElement('ul');
-						newUl.style.listStyle = 'none'; newUl.style.margin = '0'; newUl.style.padding = '0';
-						lastLi.appendChild(newUl);
-						currentList = newUl;
-					}
-					currentLevel = level;
-				} else if (level < currentLevel) {
-					for (let lv = currentLevel; lv > level; lv--) {
-						// climb up to parent UL
-						let parent = currentList.parentElement; // likely an LI
-						if (parent) parent = parent.parentElement; // its parent UL
-						if (!parent || parent.tagName !== 'UL') parent = tocList;
-						currentList = parent;
-					}
-					currentLevel = level;
+				// if deeper than stack top, create nested ULs (create intermediate levels if needed)
+				while (stack[stack.length-1].level < level) {
+					const top = stack[stack.length-1];
+					// ensure there is a parent LI to attach the new UL
+					let parentLi = top.ul.lastElementChild;
+					if (!parentLi) { parentLi = document.createElement('li'); top.ul.appendChild(parentLi); }
+					const newUl = document.createElement('ul'); newUl.style.listStyle = 'none'; newUl.style.margin = '0'; newUl.style.padding = '0';
+					parentLi.appendChild(newUl);
+					stack.push({ ul: newUl, level: stack[stack.length-1].level + 1 });
 				}
+				// if current stack deeper or equal than level, pop until parent level < desired level
+				while (stack[stack.length-1].level >= level) stack.pop();
+				const cur = stack[stack.length-1];
 				const li = document.createElement('li');
 				li.classList.add('toc-level-' + level);
 				const a = document.createElement('a');
@@ -242,7 +233,11 @@
 					toggleTOC(false);
 				});
 				li.appendChild(a);
-				currentList.appendChild(li);
+				cur.ul.appendChild(li);
+				// prepare a nested UL for potential children
+				const childUl = document.createElement('ul'); childUl.style.listStyle = 'none'; childUl.style.margin = '0'; childUl.style.padding = '0';
+				li.appendChild(childUl);
+				stack.push({ ul: childUl, level: level + 1 });
 			});
 			// show toc
 			toc.setAttribute('aria-hidden','false');
