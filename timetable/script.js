@@ -1,11 +1,12 @@
 const table = document.getElementById("timetable");
 
-// 表頭
-const header = document.createElement("tr");
-header.innerHTML = "<th>Time</th>" + days.map(d => `<th>${d}</th>`).join("");
-table.appendChild(header);
+/* ---------- Header ---------- */
+const headerRow = document.createElement("tr");
+headerRow.innerHTML =
+  "<th>Time</th>" + days.map(d => `<th>${d}</th>`).join("");
+table.appendChild(headerRow);
 
-// 產生時間列
+/* ---------- Time Slots ---------- */
 function generateTimeSlots() {
   const slots = [];
   for (let h = startHour; h < endHour; h++) {
@@ -16,8 +17,9 @@ function generateTimeSlots() {
 }
 
 const timeSlots = generateTimeSlots();
-const occupied = {}; // 紀錄被 rowspan 覆蓋的格子
+const occupied = {}; // Tracks merged cells
 
+/* ---------- Build Table ---------- */
 timeSlots.forEach(time => {
   const row = document.createElement("tr");
   row.innerHTML = `<td class="time">${time}</td>`;
@@ -26,22 +28,21 @@ timeSlots.forEach(time => {
     const key = `${day}-${time}`;
     if (occupied[key]) return;
 
-    const course = courses.find(c =>
-      c.day === day && c.start === time
+    const course = courses.find(
+      c => c.day === day && c.start === time
     );
 
     if (course) {
-      const start = parseTime(course.start);
-      const end = parseTime(course.end);
-      const span = (end - start) / slotMinutes;
+      const span =
+        (parseTime(course.end) - parseTime(course.start)) /
+        slotMinutes;
 
       const cell = document.createElement("td");
-      cell.className = `course type-${course.type || "lecture"}`;
       cell.rowSpan = span;
+      cell.className = `course type-${course.type}`;
       cell.innerHTML = `<strong>${course.name}</strong>`;
 
       row.appendChild(cell);
-
       markOccupied(day, course.start, course.end);
     } else {
       row.appendChild(document.createElement("td"));
@@ -51,6 +52,7 @@ timeSlots.forEach(time => {
   table.appendChild(row);
 });
 
+/* ---------- Helpers ---------- */
 function parseTime(t) {
   const [h, m] = t.split(":").map(Number);
   return h * 60 + m;
@@ -61,9 +63,9 @@ function markOccupied(day, start, end) {
   const endMin = parseTime(end);
 
   while (current < endMin) {
-    const h = Math.floor(current / 60);
-    const m = current % 60;
-    occupied[`${day}-${String(h).padStart(2, "0")}:${m === 0 ? "00" : "30"}`] = true;
+    const h = String(Math.floor(current / 60)).padStart(2, "0");
+    const m = current % 60 === 0 ? "00" : "30";
+    occupied[`${day}-${h}:${m}`] = true;
     current += slotMinutes;
   }
 }

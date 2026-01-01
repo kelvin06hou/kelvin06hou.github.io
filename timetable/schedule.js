@@ -1,13 +1,11 @@
-const { type } = require("node:os");
-
 const courses = [
   {
-  day: "Thu",
-  start: "10:00",
-  end: "12:00",
-  name: "CRISPR Lab",
-  type: "lab"
-},
+    day: "Mon",
+    start: "09:00",
+    end: "10:30",
+    name: "Microbiology",
+    type: "lecture"
+  },
   {
     day: "Tue",
     start: "13:00",
@@ -21,6 +19,13 @@ const courses = [
     end: "12:00",
     name: "CRISPR Lab",
     type: "lab"
+  },
+  {
+    day: "Fri",
+    start: "15:30",
+    end: "17:00",
+    name: "Group Meeting",
+    type: "meeting"
   }
 ];
 

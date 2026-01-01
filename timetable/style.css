@@ -1,28 +1,45 @@
+/* ---------- Layout ---------- */
+body {
+  font-family: Arial, sans-serif;
+}
+
+h2 {
+  text-align: center;
+}
+
+.timetable-wrapper {
+  overflow-x: auto;
+  padding: 16px;
+}
+
+/* ---------- Table ---------- */
 table {
   border-collapse: collapse;
   width: 100%;
+  min-width: 900px;
   max-width: 1100px;
-  min-width: 800px;
-  margin: 40px auto;
-  table-layout: fixed;
-
+  margin: auto;
+  table-layout: fixed; /* CRITICAL */
 }
 
 th, td {
   border: 1px solid #bbb;
   text-align: center;
   padding: 6px;
+  font-size: 0.9rem;
 }
-
 
 th {
-  background: #f0f0f0;
+  background-color: #f2f2f2;
+  font-weight: 600;
 }
 
-th:first-child,
-td.time {
+/* ---------- Column Widths ---------- */
+td.time,
+th:first-child {
   width: 90px;
-  min-width: 90px;
+  background: #fafafa;
+  font-weight: bold;
 }
 
 th:not(:first-child),
@@ -30,28 +47,32 @@ td:not(.time) {
   width: 140px;
 }
 
-
+/* ---------- Course Blocks ---------- */
 .course {
-  background-color: #e3f2fd; /* 預設淺藍 */
-  color: #0d47a1;
+  border-radius: 6px;
+  padding: 4px;
+  font-weight: 600;
 }
 
-.course.type-lab {
-  background-color: #e8f5e9; /* 淺綠 */
-  color: #1b5e20;
-}
-
-.course.type-lecture {
-  background-color: #fff3e0; /* 淺橘 */
+/* Light pastel palette */
+.type-lecture {
+  background-color: #fff3e0;
   color: #e65100;
 }
 
-.course.type-meeting {
-  background-color: #fce4ec; /* 淺粉 */
+.type-lab {
+  background-color: #e8f5e9;
+  color: #1b5e20;
+}
+
+.type-meeting {
+  background-color: #fce4ec;
   color: #880e4f;
 }
 
-.timetable-wrapper {
-  overflow-x: auto;
-  padding: 16px;
+/* ---------- Mobile Handling ---------- */
+@media (max-width: 768px) {
+  table {
+    min-width: 900px; /* allow horizontal scroll */
+  }
 }
