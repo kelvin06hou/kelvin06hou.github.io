@@ -17,7 +17,7 @@ function generateTimeSlots() {
 }
 
 const timeSlots = generateTimeSlots();
-const occupied = {}; // Tracks merged cells per day & time
+const occupied = {};
 
 /* ---------- Build Table ---------- */
 timeSlots.forEach(time => {
@@ -40,7 +40,16 @@ timeSlots.forEach(time => {
       const cell = document.createElement("td");
       cell.rowSpan = span;
       cell.className = `course type-${course.type}`;
-      cell.innerHTML = `<strong>${course.name}</strong>`;
+
+      /* ---- TIME + NAME RENDERED INSIDE BLOCK ---- */
+      cell.innerHTML = `
+        <div class="course-time">
+          ${course.start}–${course.end}
+        </div>
+        <div class="course-name">
+          ${course.name}
+        </div>
+      `;
 
       row.appendChild(cell);
       markOccupied(day, course.start, course.end);

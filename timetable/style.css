@@ -51,8 +51,24 @@ td:not(.time) {
 /* ---------- Course Blocks ---------- */
 .course {
   border-radius: 6px;
-  padding: 4px;
+  padding: 6px;
   font-weight: 600;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Time shown INSIDE block */
+.course-time {
+  font-size: 0.8rem;
+  font-weight: 500;
+  margin-bottom: 4px;
+  opacity: 0.85;
+}
+
+/* Event name */
+.course-name {
+  font-size: 0.95rem;
 }
 
 /* ---------- Pastel Colors ---------- */
