@@ -7,7 +7,7 @@ const courses = [
     type: "lecture"
   },
   {
-    days: ["Tue","Fri"],
+    days: ["Tue", "Fri"],
     start: "10:00",
     end: "11:15",
     name: "HSCI2008",

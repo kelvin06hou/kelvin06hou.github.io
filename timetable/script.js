@@ -33,9 +33,11 @@ timeSlots.forEach(time => {
     );
 
     if (course) {
-      const span =
-        (parseTime(course.end) - parseTime(course.start)) /
-        slotMinutes;
+    const duration =
+    parseTime(course.end) - parseTime(course.start);
+
+    const span = Math.ceil(duration / slotMinutes);
+
 
       const cell = document.createElement("td");
       cell.rowSpan = span;
