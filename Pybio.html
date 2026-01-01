@@ -13,7 +13,8 @@
 			.nb-root h2 { margin: 0 0 12px 0; }
 			.nb-cell { margin: 10px 0; border-radius: 6px; overflow: hidden; }
 			.nb-markdown { padding: 8px 12px; background: #fff; }
-			.nb-code { border: 1px solid #e6e6e6; }
+			.nb-code { border: 1px solid #e6e6e6; position: relative; padding-left: 8px; box-sizing: border-box; }
+			.nb-code { border-left: 8px solid var(--bar-color, #9bb8ff); }
 			.nb-cell > .nb-outputs { padding: 8px; background: #fafafa; margin-top:8px; border-radius:6px; }
 			/* code block: each line is its own row with alternating background */
 			.nb-code pre { margin: 0; }
@@ -27,6 +28,12 @@
 			.nb-outputs .output-lines .output-line:nth-child(odd) { background:#f7f7f7; }
 			.nb-outputs .output-lines .output-line:nth-child(even) { background:#ffffff; }
 			.nb-output-error { background:#fee; color:#900; padding:8px; border-radius:4px; overflow:auto }
+
+			/* token colors */
+			.tok-keyword { color:#0000ff; font-weight:600 }
+			.tok-comment { color:#6a9955; font-style:italic }
+			.tok-string { color:#a31515 }
+			.tok-number { color:#098658 }
 		</style>
 	</head>
 	<body>
@@ -72,9 +79,25 @@
 						const lines = src.split(/\r\n|\r|\n/);
 						out.push('<div class="nb-cell">');
 						out.push('<div class="nb-code"><pre><code>');
+						// pick bar color based on language metadata
+						const lang = (cell.metadata && cell.metadata.language) ? (cell.metadata.language.toLowerCase()) : '';
+						const langColorMap = {
+							python: '#2b9a3e',
+							py: '#2b9a3e',
+							c: '#2b6cff',
+							cpp: '#2b6cff',
+							javascript: '#f0db4f',
+							js: '#f0db4f',
+							bash: '#9b59b6',
+							sh: '#9b59b6'
+						};
+						const barColor = langColorMap[lang] || '#9bb8ff';
+						out.push('<div class="nb-cell">');
+						out.push('<div class="nb-code" style="--bar-color:' + barColor + '"><pre><code>');
 						lines.forEach(line => {
-							out.push('<span class="code-line">' + escapeHtml(line) + '</span>');
+							out.push('<span class="code-line">' + highlightCodeLine(line, lang) + '</span>');
 						});
+						out.push('</code></pre></div>');
 						out.push('</code></pre></div>');
 						// outputs: 與 code 同級（分離）
 						const outputs = cell.outputs || [];
@@ -123,11 +146,71 @@
 				});
 				out.push('</div>');
 				container.innerHTML = out.join('');
-				// （目前以交錯背景為主；若需要語法高亮可再加入 highlight 處理）
+				// （目前以交錯背景為主）
 				if (last) last.textContent = '上次載入：' + new Date().toLocaleString();
 			} catch (err) {
 				container.innerHTML = '<div class="fallback">載入失敗：' + escapeHtml(String(err)) + '</div>';
 				if (last) last.textContent = '載入失敗';
+			}
+		}
+
+		// --- 簡易逐行語法著色器 (目前支援 Python 基本 token)
+		function escapeHtmlNoTrim(s) {
+			return (s||'').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+		}
+
+		function highlightCodeLine(line, lang) {
+			if (!line) return '';
+			if (lang === 'python' || lang === 'py') {
+				const keywords = new Set(['def','return','if','else','elif','for','while','import','from','as','class','try','except','finally','with','lambda','pass','break','continue','True','False','None','in','is','and','or','not','yield','global','nonlocal','assert','raise']);
+				let out = '';
+				let i = 0;
+				const n = line.length;
+				let inStr = false; let strChar = null; let buf = '';
+				function flushBuf() {
+					if (!buf) return;
+					if (/^\d+(\.\d+)?$/.test(buf)) {
+						out += '<span class="tok-number">'+buf+'</span>';
+					} else if (keywords.has(buf)) {
+						out += '<span class="tok-keyword">'+buf+'</span>';
+					} else {
+						out += buf.split(/([_a-zA-Z][_a-zA-Z0-9]*)/).map(part=>{
+							return part && /^[A-Za-z_][_A-Za-z0-9]*$/.test(part) && keywords.has(part) ? '<span class="tok-keyword">'+part+'</span>' : part;
+						}).join('');
+					}
+					buf = '';
+				}
+				while (i < n) {
+					const ch = line[i];
+					if (inStr) {
+						buf += escapeHtmlNoTrim(ch);
+						if (ch === strChar && line[i-1] !== '\\') {
+							out += '<span class="tok-string">'+buf+'</span>';
+							buf = '';
+							inStr = false; strChar = null;
+						}
+						i++; continue;
+					}
+					if (ch === '"' || ch === "'") {
+						flushBuf(); inStr = true; strChar = ch; buf = escapeHtmlNoTrim(ch); i++; continue;
+					}
+					if (ch === '#') {
+						flushBuf(); // rest is comment
+						const comment = escapeHtmlNoTrim(line.slice(i));
+						out += '<span class="tok-comment">'+comment+'</span>';
+						break;
+					}
+					if ((/[A-Za-z0-9_]/).test(ch)) {
+						buf += ch; i++; continue;
+					} else {
+						flushBuf(); out += escapeHtmlNoTrim(ch); i++; continue;
+					}
+				}
+				flushBuf();
+				return out;
+			} else {
+				// fallback: plain escaped
+				return escapeHtmlNoTrim(line);
 			}
 		}
 
