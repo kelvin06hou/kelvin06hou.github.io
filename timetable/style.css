@@ -45,7 +45,7 @@ th:first-child {
 
 th:not(:first-child),
 td:not(.time) {
-  width: 140px;
+  width: 120px;
 }
 
 /* ---------- Course Blocks ---------- */

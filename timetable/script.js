@@ -11,7 +11,9 @@ function generateTimeSlots() {
   const slots = [];
   for (let h = startHour; h < endHour; h++) {
     slots.push(`${String(h).padStart(2, "0")}:00`);
+    slots.push(`${String(h).padStart(2, "0")}:15`);
     slots.push(`${String(h).padStart(2, "0")}:30`);
+    slots.push(`${String(h).padStart(2, "0")}:45`);
   }
   return slots;
 }

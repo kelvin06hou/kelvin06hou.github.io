@@ -39,4 +39,4 @@ const courses = [
 const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const startHour = 8;
 const endHour = 20;
-const slotMinutes = 30;
+const slotMinutes = 15;
