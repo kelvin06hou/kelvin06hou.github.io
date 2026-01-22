@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Time Sign In / Out</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --danger: #dc2626;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .container {
+      max-width: 430px; /* iPhone Pro width */
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    header {
+      text-align: center;
+      padding: 24px 0 16px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.4rem;
+      font-weight: 700;
+    }
+
+    .circle-btn {
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      border: none;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #fff;
+      background: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 24px auto;
+      cursor: pointer;
+      box-shadow: 0 10px 25px rgba(37,99,235,0.3);
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    .circle-btn:active {
+      transform: scale(0.96);
+    }
+
+    .circle-btn.signout {
+      background: var(--danger);
+      box-shadow: 0 10px 25px rgba(220,38,38,0.3);
+    }
+
+    .status {
+      text-align: center;
+      font-size: 0.95rem;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+
+    .month-section {
+      margin-top: 24px;
+    }
+
+    .month-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin: 16px 0 8px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    th, td {
+      padding: 8px 4px;
+      text-align: left;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    th {
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 0.8rem;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Time Sign In / Out</h1>
+    </header>
+
+    <button id="signBtn" class="circle-btn">SIGN IN</button>
+    <div id="status" class="status">Not signed in</div>
+
+    <div id="records"></div>
+  </div>
+
+  <script>
+    const signBtn = document.getElementById('signBtn');
+    const statusText = document.getElementById('status');
+    const recordsDiv = document.getElementById('records');
+
+    const STORAGE_KEY = 'timeRecords';
+    const STATE_KEY = 'currentState'; // signedIn | signedOut
+    const ACTIVE_KEY = 'activeRecord';
+
+    function loadRecords() {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+    }
+
+    function saveRecords(data) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    function formatTime(date) {
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function formatDate(date) {
+      return date.toLocaleDateString();
+    }
+
+    function getMonthKey(date) {
+      return `${date.getFullYear()}-${date.getMonth()}`;
+    }
+
+    function getMonthTitle(date) {
+      return date.toLocaleString('default', { month: 'long', year: 'numeric' });
+    }
+
+    function render() {
+      const records = loadRecords();
+      recordsDiv.innerHTML = '';
+
+      Object.keys(records)
+        .sort()
+        .forEach(monthKey => {
+          const monthData = records[monthKey];
+          const monthDate = new Date(monthData[0].date);
+
+          const section = document.createElement('div');
+          section.className = 'month-section';
+
+          const title = document.createElement('div');
+          title.className = 'month-title';
+          title.textContent = getMonthTitle(monthDate);
+
+          const card = document.createElement('div');
+          card.className = 'card';
+
+          const table = document.createElement('table');
+          table.innerHTML = `
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Sign In</th>
+                <th>Sign Out</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${monthData.map(r => `
+                <tr>
+                  <td>${formatDate(new Date(r.date))}</td>
+                  <td>${r.signIn || '-'}</td>
+                  <td>${r.signOut || '-'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          `;
+
+          card.appendChild(table);
+          section.appendChild(title);
+          section.appendChild(card);
+          recordsDiv.appendChild(section);
+        });
+    }
+
+    function updateButton() {
+      const state = localStorage.getItem(STATE_KEY) || 'signedOut';
+      if (state === 'signedIn') {
+        signBtn.textContent = 'SIGN OUT';
+        signBtn.classList.add('signout');
+        statusText.textContent = 'Signed in';
+      } else {
+        signBtn.textContent = 'SIGN IN';
+        signBtn.classList.remove('signout');
+        statusText.textContent = 'Not signed in';
+      }
+    }
+
+    signBtn.addEventListener('click', () => {
+      const now = new Date();
+      const records = loadRecords();
+      const monthKey = getMonthKey(now);
+      records[monthKey] = records[monthKey] || [];
+
+      let state = localStorage.getItem(STATE_KEY) || 'signedOut';
+
+      if (state === 'signedOut') {
+        const record = {
+          date: now.toISOString(),
+          signIn: formatTime(now),
+          signOut: ''
+        };
+        records[monthKey].push(record);
+        localStorage.setItem(ACTIVE_KEY, JSON.stringify({ monthKey, index: records[monthKey].length - 1 }));
+        localStorage.setItem(STATE_KEY, 'signedIn');
+      } else {
+        const active = JSON.parse(localStorage.getItem(ACTIVE_KEY));
+        if (active && records[active.monthKey] && records[active.monthKey][active.index]) {
+          records[active.monthKey][active.index].signOut = formatTime(now);
+        }
+        localStorage.setItem(STATE_KEY, 'signedOut');
+        localStorage.removeItem(ACTIVE_KEY);
+      }
+
+      saveRecords(records);
+      updateButton();
+      render();
+    });
+
+    updateButton();
+    render();
+  </script>
+</body>
+</html>
