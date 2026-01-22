@@ -13,233 +13,187 @@
       --text: #0f172a;
       --muted: #64748b;
     }
-
     * { box-sizing: border-box; }
-
     body {
       margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
       background: var(--bg);
       color: var(--text);
     }
-
-    .container {
-      max-width: 430px; /* iPhone Pro width */
-      margin: 0 auto;
-      padding: 16px;
-    }
-
-    header {
-      text-align: center;
-      padding: 24px 0 16px;
-    }
-
-    header h1 {
-      margin: 0;
-      font-size: 1.4rem;
-      font-weight: 700;
-    }
-
+    .container { max-width: 430px; margin: 0 auto; padding: 16px; }
+    header { text-align: center; padding: 24px 0 16px; }
+    header h1 { margin: 0; font-size: 1.4rem; font-weight: 700; }
     .circle-btn {
-      width: 220px;
-      height: 220px;
-      border-radius: 50%;
-      border: none;
-      font-size: 1.3rem;
-      font-weight: 700;
-      color: #fff;
-      background: var(--primary);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 24px auto;
-      cursor: pointer;
-      box-shadow: 0 10px 25px rgba(37,99,235,0.3);
-      transition: transform 0.15s ease, background 0.15s ease;
+      width: 220px; height: 220px; border-radius: 50%; border: none;
+      font-size: 1.3rem; font-weight: 700; color: #fff; background: var(--primary);
+      display: flex; align-items: center; justify-content: center; margin: 24px auto;
+      cursor: pointer; box-shadow: 0 10px 25px rgba(37,99,235,0.3);
     }
-
-    .circle-btn:active {
-      transform: scale(0.96);
-    }
-
-    .circle-btn.signout {
-      background: var(--danger);
-      box-shadow: 0 10px 25px rgba(220,38,38,0.3);
-    }
-
-    .status {
-      text-align: center;
-      font-size: 0.95rem;
-      color: var(--muted);
-      margin-bottom: 16px;
-    }
-
-    .month-section {
-      margin-top: 24px;
-    }
-
-    .month-title {
-      font-size: 1.1rem;
-      font-weight: 700;
-      margin: 16px 0 8px;
-    }
-
-    .card {
-      background: var(--card);
-      border-radius: 14px;
-      padding: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.9rem;
-    }
-
-    th, td {
-      padding: 8px 4px;
-      text-align: left;
-      border-bottom: 1px solid #e5e7eb;
-    }
-
-    th {
-      color: var(--muted);
-      font-weight: 600;
-      font-size: 0.8rem;
-    }
-
-    tr:last-child td {
-      border-bottom: none;
-    }
+    .circle-btn.signout { background: var(--danger); box-shadow: 0 10px 25px rgba(220,38,38,0.3); }
+    .status { text-align: center; font-size: 0.95rem; color: var(--muted); margin-bottom: 16px; }
+    .month-section { margin-top: 24px; }
+    .month-title { font-size: 1.1rem; font-weight: 700; margin: 16px 0 8px; }
+    .card { background: var(--card); border-radius: 14px; padding: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th, td { padding: 8px 4px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+    th { color: var(--muted); font-weight: 600; font-size: 0.8rem; }
+    tr:last-child td { border-bottom: none; }
   </style>
 </head>
 <body>
   <div class="container">
-    <header>
-      <h1>Time Sign In / Out</h1>
-    </header>
-
+    <header><h1>Time Sign In / Out</h1></header>
     <button id="signBtn" class="circle-btn">SIGN IN</button>
     <div id="status" class="status">Not signed in</div>
-
     <div id="records"></div>
   </div>
 
   <script>
+    const STORAGE_KEY = 'timeRecords';
+    const STATE_KEY = 'currentState';
+    const ACTIVE_KEY = 'activeRecord';
+
     const signBtn = document.getElementById('signBtn');
     const statusText = document.getElementById('status');
     const recordsDiv = document.getElementById('records');
 
-    const STORAGE_KEY = 'timeRecords';
-    const STATE_KEY = 'currentState'; // signedIn | signedOut
-    const ACTIVE_KEY = 'activeRecord';
+    const loadRecords = () => {
+      try {
+        const raw = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        return Array.isArray(raw) ? raw : [];
+      } catch {
+        return [];
+      }
+    };
 
-    function loadRecords() {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
-    }
+    const saveRecords = d => localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
 
-    function saveRecords(data) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    }
+    const fmtDate = ms => {
+      const d = new Date(ms);
+      const month = d.toLocaleString('en-US', { month: 'short' });
+      const day = d.getDate();
+      return `${month} ${day}`;
+    };
 
-    function formatTime(date) {
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    }
+    const fmtTime = ms => {
+      const d = new Date(ms);
+      const hours = d.getHours().toString().padStart(2, '0');
+      const minutes = d.getMinutes().toString().padStart(2, '0');
+      return `${hours}:${minutes}`;
+    };
 
-    function formatDate(date) {
-      return date.toLocaleDateString();
-    }
+    const monthKey = ms => {
+      const d = new Date(ms);
+      return `${d.getFullYear()}-${d.getMonth()}`;
+    };
 
-    function getMonthKey(date) {
-      return `${date.getFullYear()}-${date.getMonth()}`;
-    }
-
-    function getMonthTitle(date) {
-      return date.toLocaleString('default', { month: 'long', year: 'numeric' });
-    }
+    const monthTitle = ms => new Date(ms).toLocaleString('default', { month: 'long', year: 'numeric' });
+    const hoursBetween = (a, b) => ((b - a) / 36e5).toFixed(2);
 
     function render() {
-      const records = loadRecords();
+      const now = Date.now();
+      const all = loadRecords().filter(r => r && typeof r.signInMs === 'number' && r.signInMs <= now);
+
+      const groups = {};
+      all.forEach(r => {
+        const key = monthKey(r.dateMs);
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(r);
+      });
+
+      const sortedMonthKeys = Object.keys(groups).sort((a, b) => {
+        const [ay, am] = a.split('-').map(Number);
+        const [by, bm] = b.split('-').map(Number);
+        return by !== ay ? by - ay : bm - am;
+      });
+
       recordsDiv.innerHTML = '';
 
-      Object.keys(records)
-        .sort()
-        .forEach(monthKey => {
-          const monthData = records[monthKey];
-          const monthDate = new Date(monthData[0].date);
+      sortedMonthKeys.forEach(key => {
+        const rows = groups[key]
+          .filter(r => r.signInMs <= now)
+          .sort((a, b) => b.signInMs - a.signInMs);
 
-          const section = document.createElement('div');
-          section.className = 'month-section';
+        if (!rows.length) return;
 
-          const title = document.createElement('div');
-          title.className = 'month-title';
-          title.textContent = getMonthTitle(monthDate);
+        const section = document.createElement('div');
+        section.className = 'month-section';
 
-          const card = document.createElement('div');
-          card.className = 'card';
+        const title = document.createElement('div');
+        title.className = 'month-title';
+        title.textContent = monthTitle(rows[0].dateMs);
 
-          const table = document.createElement('table');
-          table.innerHTML = `
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Sign In</th>
-                <th>Sign Out</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${monthData.map(r => `
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        const table = document.createElement('table');
+        table.innerHTML = `
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Sign In</th>
+              <th>Sign Out</th>
+              <th>Hours</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map(r => {
+              let hrs = '-';
+              if (typeof r.signOutMs === 'number' && r.signOutMs <= now) {
+                hrs = hoursBetween(r.signInMs, r.signOutMs);
+              }
+              return `
                 <tr>
-                  <td>${formatDate(new Date(r.date))}</td>
-                  <td>${r.signIn || '-'}</td>
-                  <td>${r.signOut || '-'}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          `;
+                  <td>${fmtDate(r.dateMs)}</td>
+                  <td>${fmtTime(r.signInMs)}</td>
+                  <td>${r.signOutMs && r.signOutMs <= now ? fmtTime(r.signOutMs) : '-'}</td>
+                  <td>${hrs}</td>
+                </tr>`;
+            }).join('')}
+          </tbody>`;
 
-          card.appendChild(table);
-          section.appendChild(title);
-          section.appendChild(card);
-          recordsDiv.appendChild(section);
-        });
+        card.appendChild(table);
+
+        const total = rows.reduce((sum, r) => {
+          if (r.signOutMs && r.signOutMs <= now) {
+            return sum + (r.signOutMs - r.signInMs) / 36e5;
+          }
+          return sum;
+        }, 0);
+
+        const totalText = document.createElement('div');
+        totalText.style.marginTop = '8px';
+        totalText.style.fontSize = '0.85rem';
+        totalText.style.color = 'var(--muted)';
+        totalText.textContent = `Total hours this month: ${total.toFixed(2)} hrs`;
+
+        card.appendChild(totalText);
+        section.appendChild(title);
+        section.appendChild(card);
+        recordsDiv.appendChild(section);
+      });
     }
 
     function updateButton() {
       const state = localStorage.getItem(STATE_KEY) || 'signedOut';
-      if (state === 'signedIn') {
-        signBtn.textContent = 'SIGN OUT';
-        signBtn.classList.add('signout');
-        statusText.textContent = 'Signed in';
-      } else {
-        signBtn.textContent = 'SIGN IN';
-        signBtn.classList.remove('signout');
-        statusText.textContent = 'Not signed in';
-      }
+      signBtn.textContent = state === 'signedIn' ? 'SIGN OUT' : 'SIGN IN';
+      signBtn.classList.toggle('signout', state === 'signedIn');
+      statusText.textContent = state === 'signedIn' ? 'Signed in' : 'Not signed in';
     }
 
     signBtn.addEventListener('click', () => {
-      const now = new Date();
+      const now = Date.now();
       const records = loadRecords();
-      const monthKey = getMonthKey(now);
-      records[monthKey] = records[monthKey] || [];
-
-      let state = localStorage.getItem(STATE_KEY) || 'signedOut';
+      const state = localStorage.getItem(STATE_KEY) || 'signedOut';
 
       if (state === 'signedOut') {
-        const record = {
-          date: now.toISOString(),
-          signIn: formatTime(now),
-          signOut: ''
-        };
-        records[monthKey].push(record);
-        localStorage.setItem(ACTIVE_KEY, JSON.stringify({ monthKey, index: records[monthKey].length - 1 }));
+        records.push({ dateMs: now, signInMs: now, signOutMs: null });
+        localStorage.setItem(ACTIVE_KEY, records.length - 1);
         localStorage.setItem(STATE_KEY, 'signedIn');
       } else {
-        const active = JSON.parse(localStorage.getItem(ACTIVE_KEY));
-        if (active && records[active.monthKey] && records[active.monthKey][active.index]) {
-          records[active.monthKey][active.index].signOut = formatTime(now);
+        const idx = Number(localStorage.getItem(ACTIVE_KEY));
+        if (!Number.isNaN(idx) && records[idx]) {
+          records[idx].signOutMs = now;
         }
         localStorage.setItem(STATE_KEY, 'signedOut');
         localStorage.removeItem(ACTIVE_KEY);
@@ -249,6 +203,8 @@
       updateButton();
       render();
     });
+
+    console.assert(Array.isArray(loadRecords()), 'loadRecords() must return an array');
 
     updateButton();
     render();
