@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="zh-Hant">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>HSCI2007 Exp4</title>
+		<style>
+			body { font-family: Arial, sans-serif; margin: 24px; }
+			.frame-wrap { width: 100%; height: auto; border: none; padding: 12px; box-sizing: border-box; }
+			.fallback { margin-top: 12px; }
+			/* Notebook styles */
+			.nb-root { max-width: 100%; }
+			.nb-root h2 { margin: 0 0 12px 0; }
+			.nb-cell { margin: 10px 0; border-radius: 6px; overflow: hidden; }
+			.nb-markdown { padding: 8px 12px; background: #fff; }
+			.nb-code { border: 1px solid #e6e6e6; position: relative; padding-left: 0; box-sizing: border-box; }
+			.nb-code { border-left: 6px solid var(--bar-color, #9bb8ff); }
+			.nb-cell > .nb-outputs { padding: 8px; background: #fafafa; margin-top:8px; border-radius:6px; }
+			/* code block: each line is its own row with alternating background */
+			.nb-code pre { margin: 0; }
+			.nb-code pre code { display: block; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', 'Courier New', monospace; white-space: pre; }
+			.nb-code pre code .code-line { display: block; padding: 6px 8px; font-size: 0.95rem; line-height: 1.4; }
+			.nb-code pre code .code-line:nth-child(odd) { background: #f7f7f7; }
+			.nb-code pre code .code-line:nth-child(even) { background: #ffffff; }
+			.nb-output-stream, .nb-output-plain { background:transparent; color:inherit; padding:0; border-radius:4px; overflow:auto }
+			.nb-outputs .output-lines { border-radius:4px; overflow:auto; }
+			.nb-outputs .output-lines .output-line { display:block; padding:6px 8px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', 'Courier New', monospace; white-space:pre-wrap; }
+			.nb-outputs .output-lines .output-line:nth-child(odd) { background:#f7f7f7; }
+			.nb-outputs .output-lines .output-line:nth-child(even) { background:#ffffff; }
+			.nb-output-error { background:#fee; color:#900; padding:8px; border-radius:4px; overflow:auto }
+
+			/* TOC sidebar */
+			#tocToggle { position: fixed; left: 12px; top: 12px; z-index:1200; background:#0b5fff; color:#fff; border:none; width:40px; height:40px; padding:6px; border-radius:8px; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,0.12); display:flex; align-items:center; justify-content:center; }
+			#tocToggle svg { width:20px; height:20px; display:block; fill:currentColor; }
+			#toc { position: fixed; left: 0; top: 0; bottom: 0; width: 280px; background: #ffffff; border-right: 1px solid #e6e6e6; padding: 12px; box-sizing: border-box; transform: translateX(-100%); transition: transform .22s ease; z-index:1100; overflow:auto; }
+			#toc.open { transform: translateX(0); }
+			#toc h3 { margin: 0 0 8px 0; font-size: 1rem; }
+			#toc ul { list-style:none; margin:0; padding:0; }
+			#toc ul ul { padding-left: 1.2rem; }
+			/* 隱藏清單直到側邊欄展開，以滿足「僅展開時才可見」需求 */
+			#tocList { display: none; }
+			#toc.open #tocList { display: block; }
+			#toc li { margin:10px 0; line-height:1.6; }
+			#toc a { color:#0b5fff; text-decoration:none; font-size:0.95rem; display:inline-block; padding:6px 0; }
+			#toc a:hover { text-decoration:underline; }
+			#toc .toc-level-1 { font-weight:700; font-size:1.02rem; padding-left:0; color:#0b3b95; }
+			#toc .toc-level-2 { padding-left: 2ch; font-size:0.95rem; color:#333; }
+			#toc .toc-level-3 { padding-left: 4ch; font-size:0.92rem; color:#444; }
+			/* expander button for collapsible TOC */
+			.toc-expander { background:transparent; border:0; padding:0 6px 0 0; margin-right:6px; cursor:pointer; color:inherit; display:inline-flex; align-items:center; }
+			.toc-expander svg { width:12px; height:12px; transform:rotate(0deg); transition:transform .18s ease; }
+			.toc-expander.open svg { transform:rotate(90deg); }
+			/* container for expander + link on same line */
+			.toc-item { display:flex; align-items:center; gap:6px; }
+			#toc ul ul.collapsed { display:none; }
+			#toc ul ul.collapsed { display:none; }
+			/* when toc open, add slight backdrop to page */
+			body.toc-open::after { content:''; position:fixed; left:0; top:0; right:0; bottom:0; background:rgba(0,0,0,0.04); z-index:1050; }
+
+			/* token colors */
+			/* VS Code-like colors (Dark+) approximation */
+			.tok-keyword { color:#569CD6; font-weight:700; }
+			/* ensure comment tokens inside code blocks are visible as green */
+			.nb-code pre code .tok-comment { color:#228B22; font-style:italic; }
+			.tok-comment { color:#228B22; font-style:italic; }
+			.tok-string { color:#CE9178; }
+			.tok-number { color:#B5CEA8; }
+			.tok-operator { color:#D4D4D4; }
+			.tok-builtin { color:#E6C23A; }
+			.tok-function { color:#DCDCAA; font-weight:600; }
+		</style>
+	</head>
+	<body>
+			<!-- header removed: no last-loaded timestamp -->
+
+			<!-- TOC toggle & sidebar (collapsed by default) -->
+			<button id="tocToggle" aria-controls="toc" aria-expanded="false" aria-label="目錄" title="目錄">
+				<!-- simple hamburger / toc icon -->
+				<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+					<path d="M3 6h18v2H3zM3 11h12v2H3zM3 16h18v2H3z" />
+				</svg>
+			</button>
+			<nav id="toc" aria-hidden="true"><h3>目錄</h3><ul id="tocList"></ul></nav>
+
+			<!-- 由 client-side 直接載入並解析 biomed.ipynb -->
+			<div id="notebook" class="frame-wrap"></div>
+
+		<!-- 依賴：marked (markdown) 與 highlight.js (code highlight) -->
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+		<script>
+		// 直接載入並解析 JSON 格式的 biomed.ipynb，當只更新 .ipynb 時也會展示最新內容
+		function escapeHtml(s) {
+			return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+		}
+
+		async function renderNotebook(url) {
+			const container = document.getElementById('notebook');
+			container.innerHTML = '<p style="color:#666;margin:0">載入中…</p>';
+			try {
+				const res = await fetch(url, {cache: 'no-store'});
+				if (!res.ok) throw new Error('fetch failed: ' + res.status);
+				const nb = await res.json();
+				const cells = nb.cells || [];
+				const out = [];
+				// collect headings from markdown sources (preserve notebook cell order)
+				const collectedHeadings = [];
+				out.push('<div class="nb-root">');
+				// Notebook title hidden by request
+				cells.forEach((cell, i) => {
+					if (cell.cell_type === 'markdown') {
+						const src = Array.isArray(cell.source) ? cell.source.join('') : (cell.source || '');
+						// extract markdown-style headings (# .. ######)
+						const lines = src.split(/\r\n|\r|\n/);
+						lines.forEach(ln => {
+							const m = ln.match(/^\s*(#{1,6})\s+(.*)$/);
+							if (m) collectedHeadings.push({ level: m[1].length, text: m[2].trim() });
+							// also check for HTML heading tags in the markdown source
+							const htmlMatch = ln.match(/<h([1-6])[^>]*>(.*?)<\/h\1>/i);
+							if (htmlMatch) collectedHeadings.push({ level: parseInt(htmlMatch[1],10), text: htmlMatch[2].replace(/<[^>]+>/g,'').trim() });
+						});
+						const md = marked.parse(src);
+						out.push('<div class="nb-cell nb-markdown">' + md + '</div>');
+					} else if (cell.cell_type === 'code') {
+						const src = Array.isArray(cell.source) ? cell.source.join('') : (cell.source || '');
+						// code: 將每一行包成 .code-line
+						const lines = src.split(/\r\n|\r|\n/);
+						// pick bar color based on language metadata
+						const lang = (cell.metadata && cell.metadata.language) ? (cell.metadata.language.toLowerCase()) : '';
+						const langColorMap = {
+							python: '#2b9a3e',
+							py: '#2b9a3e',
+							c: '#2b6cff',
+							cpp: '#2b6cff',
+							javascript: '#f0db4f',
+							js: '#f0db4f',
+							bash: '#9b59b6',
+							sh: '#9b59b6'
+						};
+						const barColor = langColorMap[lang] || '#9bb8ff';
+						out.push('<div class="nb-cell">');
+						out.push('<div class="nb-code" style="--bar-color:' + barColor + '"><pre><code>');
+						lines.forEach(line => {
+							out.push('<span class="code-line">' + highlightCodeLine(line, lang) + '</span>');
+						});
+						out.push('</code></pre></div>');
+						// outputs: 與 code 同級（分離）
+						const outputs = cell.outputs || [];
+						if (outputs.length) {
+							out.push('<div class="nb-outputs">');
+							outputs.forEach(outp => {
+								if (outp.output_type === 'stream') {
+									const txt = Array.isArray(outp.text) ? outp.text.join('') : (outp.text || '');
+									const linesOut = txt.split(/\r\n|\r|\n/);
+									out.push('<div class="output-lines nb-output-stream">');
+									linesOut.forEach(l => out.push('<span class="output-line">' + escapeHtml(l) + '</span>'));
+									out.push('</div>');
+								} else if (outp.output_type === 'execute_result' || outp.output_type === 'display_data') {
+									const data = outp.data || {};
+									if (data['text/html']) {
+										const html = Array.isArray(data['text/html']) ? data['text/html'].join('') : data['text/html'];
+										out.push('<div class="nb-output-html">' + html + '</div>');
+									} else if (data['image/png']) {
+										out.push('<img class="nb-output-img" src="data:image/png;base64,' + data['image/png'] + '" />');
+									} else if (data['text/plain']) {
+										const txt = Array.isArray(data['text/plain']) ? data['text/plain'].join('') : data['text/plain'];
+										const linesOut = txt.split(/\r\n|\r|\n/);
+										out.push('<div class="output-lines nb-output-plain">');
+										linesOut.forEach(l => out.push('<span class="output-line">' + escapeHtml(l) + '</span>'));
+										out.push('</div>');
+									} else {
+										// fallback: try JSON stringify
+										const txt = escapeHtml(JSON.stringify(data));
+										const linesOut = txt.split(/\r\n|\r|\n/);
+										out.push('<div class="output-lines nb-output-plain">');
+										linesOut.forEach(l => out.push('<span class="output-line">' + escapeHtml(l) + '</span>'));
+										out.push('</div>');
+									}
+								} else if (outp.output_type === 'error') {
+									const err = (outp.ename || '') + ': ' + ((outp.evalue || '')) + '\n' + (outp.traceback ? outp.traceback.join('\n') : '');
+									const errLines = (escapeHtml(err)).split(/\r\n|\r|\n/);
+									out.push('<div class="nb-output-error">');
+									errLines.forEach(l => out.push('<div>' + l + '</div>'));
+									out.push('</div>');
+								}
+							});
+							out.push('</div>');
+						}
+						out.push('</div>');
+					}
+				});
+				out.push('</div>');
+				container.innerHTML = out.join('');
+				// After rendering, if we collected headings from markdown sources, assign stable ids to DOM headings in order
+				try {
+					if (collectedHeadings.length) {
+						const domHeadings = container.querySelectorAll('.nb-root h1, .nb-root h2, .nb-root h3, .nb-root h4, .nb-root h5, .nb-root h6');
+						// if counts match or dom has at least as many headings, map them in order
+						if (domHeadings.length >= collectedHeadings.length) {
+							const used = new Map();
+							for (let i = 0; i < collectedHeadings.length; i++) {
+								const info = collectedHeadings[i];
+								const el = domHeadings[i];
+								let slug = (info.text || '').toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9\-]/g,'') || ('heading-'+i);
+								if (used.has(slug)) { const c = used.get(slug)+1; used.set(slug,c); slug = slug + '-' + c; } else used.set(slug,0);
+								el.id = el.id || slug;
+							}
+						} else {
+							// fallback: let buildTOC assign ids based on DOM order
+						}
+					}
+				} catch(e) { /* ignore mapping errors */ }
+				// restore and persist any <details> open/closed state for this notebook view
+				try { restoreDetailsState(container, (url||'').split('?')[0] || location.pathname); } catch(e){}
+				// build table-of-contents from headings
+				try { buildTOC(container, (url||'').split('?')[0] || location.pathname); } catch(e){}
+				// （目前以交錯背景為主）
+			} catch (err) {
+				container.innerHTML = '<div class="fallback">載入失敗：' + escapeHtml(String(err)) + '</div>';
+			}
+		}
+
+		// Build TOC from rendered headings inside container
+		function buildTOC(container, ns) {
+			const toc = document.getElementById('toc');
+			const tocList = document.getElementById('tocList');
+			if (!toc || !tocList) return;
+			// clear
+			tocList.innerHTML = '';
+			const headings = container.querySelectorAll('.nb-root h1, .nb-root h2, .nb-root h3, .nb-root h4, .nb-root h5, .nb-root h6');
+			if (!headings.length) {
+				toc.setAttribute('aria-hidden','true');
+				return;
+			}
+			const used = new Map();
+			// stack-based builder: stack elements are {ul, level}
+			const stack = [{ ul: tocList, level: 0 }];
+			headings.forEach((h, idx) => {
+				let txt = (h.textContent || '').trim();
+				if (!txt) return;
+				// ensure id
+				let slug = txt.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9\-]/g,'');
+				if (!slug) slug = 'heading-'+idx;
+				if (used.has(slug)) { const c = used.get(slug)+1; used.set(slug,c); slug = slug + '-' + c; } else used.set(slug,0);
+				h.id = h.id || slug;
+				const level = parseInt(h.tagName.replace('H','')) || 1;
+				// pop until we find the correct parent level (< current heading level)
+				while (stack.length && stack[stack.length-1].level >= level) stack.pop();
+				const parent = stack[stack.length-1].ul;
+				const li = document.createElement('li');
+				li.classList.add('toc-level-' + level);
+				const a = document.createElement('a');
+				a.href = '#'+h.id;
+				a.textContent = txt;
+				a.addEventListener('click', (ev) => {
+					ev.preventDefault();
+					const target = document.getElementById(h.id);
+					if (target) target.scrollIntoView({behavior:'smooth', block:'start'});
+					toggleTOC(false);
+				});
+				li.appendChild(a);
+				parent.appendChild(li);
+				// prepare child UL for potential deeper headings
+				const childUl = document.createElement('ul'); childUl.style.listStyle = 'none'; childUl.style.margin = '0'; childUl.style.padding = '0';
+				li.appendChild(childUl);
+				stack.push({ ul: childUl, level: level });
+			});
+			// show toc
+			toc.setAttribute('aria-hidden','false');
+			// make TOC items collapsible: add expander buttons to items with child ULs
+			try {
+				const allLis = tocList.querySelectorAll('li');
+				allLis.forEach(li => {
+					const childUl = li.querySelector('ul');
+					if (childUl && childUl.children.length > 0) {
+						li.classList.add('has-children');
+						// collapse child lists by default (but keep top-level children visible if you prefer)
+						childUl.classList.add('collapsed');
+						const btn = document.createElement('button');
+						btn.className = 'toc-expander';
+						btn.setAttribute('aria-expanded','false');
+						btn.innerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><path d="M8 5v14l11-7z"/></svg>';
+						btn.addEventListener('click', (ev) => {
+							ev.stopPropagation();
+							const isOpen = !childUl.classList.contains('collapsed');
+							if (isOpen) {
+								childUl.classList.add('collapsed');
+								btn.classList.remove('open');
+								btn.setAttribute('aria-expanded','false');
+							} else {
+								childUl.classList.remove('collapsed');
+								btn.classList.add('open');
+								btn.setAttribute('aria-expanded','true');
+							}
+						});
+						// insert expander before link if link exists, otherwise at top
+						const a = li.querySelector('a');
+						if (a) li.insertBefore(btn, a);
+						else li.insertBefore(btn, li.firstChild);
+					}
+				});
+			} catch(e) { /* ignore */ }
+		}
+
+		// TOC toggle behavior
+		(function setupTOCToggle(){
+			const btn = document.getElementById('tocToggle');
+			const toc = document.getElementById('toc');
+			if (!btn || !toc) return;
+			function setOpen(v) {
+				if (v) {
+					toc.classList.add('open'); document.body.classList.add('toc-open'); btn.setAttribute('aria-expanded','true'); toc.setAttribute('aria-hidden','false');
+				} else {
+					toc.classList.remove('open'); document.body.classList.remove('toc-open'); btn.setAttribute('aria-expanded','false'); toc.setAttribute('aria-hidden','true');
+				}
+				try { localStorage.setItem('pybio:toc:open', v ? '1' : '0'); } catch(e){}
+			}
+			function toggleTOC(open) {
+				if (typeof open === 'boolean') setOpen(open); else setOpen(!toc.classList.contains('open'));
+			}
+			btn.addEventListener('click', () => toggleTOC());
+			// restore saved
+			try { const v = localStorage.getItem('pybio:toc:open'); if (v === '1') setOpen(true); } catch(e){}
+			// close when backdrop clicked
+			document.addEventListener('click', (ev)=>{
+				const insideBtn = ev.target.closest && ev.target.closest('#tocToggle');
+				const insideToc = ev.target.closest && ev.target.closest('#toc');
+				if (!insideBtn && !insideToc && document.getElementById('toc').classList.contains('open')) {
+					setOpen(false);
+				}
+			});
+			// expose toggle for other code
+			window.toggleTOC = toggleTOC;
+		})();
+
+		// --- 簡易逐行語法著色器 (目前支援 Python 基本 token)
+		function escapeHtmlNoTrim(s) {
+			return (s||'').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+		}
+
+		function highlightCodeLine(line, lang) {
+			// preserve visual height for empty or whitespace-only lines
+			if (!line || /^\s*$/.test(line)) return '&nbsp;';
+			// handle Python specially, otherwise do a lightweight generic tokenizer
+			if (lang === 'python' || lang === 'py') {
+				const keywords = new Set(['def','return','if','else','elif','for','while','import','from','as','class','try','except','finally','with','lambda','pass','break','continue','True','False','None','in','is','and','or','not','yield','global','nonlocal','assert','raise']);
+				const builtins = new Set(['print','len','range','enumerate','map','filter','list','dict','set','int','str','float','bool','open','sum','min','max','abs','sorted','zip']);
+				const operatorChars = new Set(['+','-','*','/','%','=','<','>','!','&','|','^','~',':',',','.','?','@','#']);
+				let out = '';
+				let i = 0;
+				const n = line.length;
+				let inStr = false; let strChar = null; let buf = '';
+
+				function flushBuf(peekIndex) {
+					if (!buf) return;
+					if (/^\d+(\.\d+)?$/.test(buf)) {
+						out += '<span class="tok-number">'+buf+'<\/span>';
+					} else if (keywords.has(buf)) {
+						out += '<span class="tok-keyword">'+buf+'<\/span>';
+					} else {
+						// detect function: next non-space char is '('
+						let isFunc = false;
+						if (typeof peekIndex === 'number') {
+							let j = peekIndex;
+							while (j < n && /\s/.test(line[j])) j++;
+							if (line[j] === '(') isFunc = true;
+						}
+						if (isFunc) {
+							out += '<span class="tok-function">'+buf+'<\/span>';
+						} else if (builtins.has(buf)) {
+							out += '<span class="tok-builtin">'+buf+'<\/span>';
+						} else {
+							out += buf;
+						}
+					}
+					buf = '';
+				}
+
+				while (i < n) {
+					const ch = line[i];
+					if (inStr) {
+						buf += escapeHtmlNoTrim(ch);
+						if (ch === strChar && line[i-1] !== '\\') {
+							out += '<span class="tok-string">'+buf+'<\/span>';
+							buf = '';
+							inStr = false; strChar = null;
+						}
+						i++; continue;
+					}
+					if (ch === '"' || ch === "'") {
+						// start string
+						flushBuf(i);
+						inStr = true; strChar = ch; buf = escapeHtmlNoTrim(ch); i++; continue;
+					}
+					if (ch === '#') {
+						flushBuf(i);
+						const comment = escapeHtmlNoTrim(line.slice(i));
+						out += '<span class="tok-comment">'+comment+'<\/span>';
+						break;
+					}
+
+					if (operatorChars.has(ch)) {
+						flushBuf(i);
+						// handle multi-char operators (==, !=, <=, >=, //, **)
+						let op = ch;
+						const next = line[i+1] || '';
+						if ((ch === '=' && next === '=') || (ch === '!' && next === '=') || (ch === '<' && next === '=') || (ch === '>' && next === '=') || (ch === '/' && next === '/') || (ch === '*' && next === '*')) {
+							op = ch + next; i += 2;
+						} else {
+							i++;
+						}
+						out += '<span class="tok-operator">'+escapeHtmlNoTrim(op)+'<\/span>';
+						continue;
+					}
+					if ((/[A-Za-z0-9_]/).test(ch)) {
+						buf += ch; i++; continue;
+					} else {
+						flushBuf(i);
+						out += escapeHtmlNoTrim(ch); i++; continue;
+					}
+				}
+				flushBuf(i);
+				return out;
+			} else {
+				// generic: detect common single-line and inline block comments
+				let s = escapeHtmlNoTrim(line);
+				// // single-line
+				const idxDouble = line.indexOf('//');
+				const idxHash = line.indexOf('#');
+				const idxSlashStar = line.indexOf('/*');
+				let firstIdx = -1; let kind = null;
+				if (idxDouble >= 0) { firstIdx = idxDouble; kind = 'double'; }
+				if (idxHash >= 0 && (firstIdx === -1 || idxHash < firstIdx)) { firstIdx = idxHash; kind = 'hash'; }
+				if (idxSlashStar >= 0 && (firstIdx === -1 || idxSlashStar < firstIdx)) { firstIdx = idxSlashStar; kind = 'slashstar'; }
+				if (firstIdx === -1) return s;
+				let before = escapeHtmlNoTrim(line.slice(0, firstIdx));
+				if (kind === 'double' || kind === 'hash') {
+					const comment = escapeHtmlNoTrim(line.slice(firstIdx));
+					return before + '<span class="tok-comment">' + comment + '<\/span>';
+				}
+				// slashstar: try to find end
+				const endIdx = line.indexOf('*/', firstIdx+2);
+				if (endIdx >= 0) {
+					const comment = escapeHtmlNoTrim(line.slice(firstIdx, endIdx+2));
+					return before + '<span class="tok-comment">' + comment + '<\/span>' + escapeHtmlNoTrim(line.slice(endIdx+2));
+				} else {
+					const comment = escapeHtmlNoTrim(line.slice(firstIdx));
+					return before + '<span class="tok-comment">' + comment + '<\/span>';
+				}
+			}
+		}
+
+		// Persist and restore <details> open/closed state per notebook view using localStorage
+		function restoreDetailsState(container, ns) {
+			try {
+				const details = container.querySelectorAll('details');
+				details.forEach((d, i) => {
+					const summary = d.querySelector('summary');
+					const summaryText = summary ? summary.textContent.trim() : '';
+					const key = 'pybio:details:' + (ns || '') + ':' + i + ':' + summaryText;
+					const v = localStorage.getItem(key);
+					if (v === 'open') d.open = true;
+					else if (v === 'closed') d.open = false;
+					// save changes when toggled
+					d.addEventListener('toggle', () => {
+						try { localStorage.setItem(key, d.open ? 'open' : 'closed'); } catch(e){}
+					});
+				});
+			} catch (e) { /* ignore */ }
+		}
+
+		window.addEventListener('DOMContentLoaded', function () {
+			const btn = document.getElementById('reloadBtn');
+			function loadLatest() {
+				const t = Date.now();
+				// 加上 query 破壞快取，確保讀到最新的 biomed.ipynb
+				renderNotebook('biomed.ipynb?v=' + t);
+			}
+			if (btn) btn.addEventListener('click', loadLatest);
+			loadLatest();
+			// optional: 也可以每隔一段時間自動重新載入
+			// setInterval(loadLatest, 30_000);
+		});
+		</script>
+	</body>
+</html>
+
