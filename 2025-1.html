@@ -3,54 +3,60 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Travel log</title>
+  <title>Travel Log</title>
   <link rel="icon" type="image/png" href="image/webicon.png">
   
-  <!-- Link the shared standalone style sheet -->
   <link rel="stylesheet" href="style.css">
   
-  <!-- Link the dynamic structure layout controller -->
   <script src="navbar-footer.js" defer></script>
 
   <style>
-    /* Global layout adjustments for the Dashboard */
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-    main {
+    /* ==========================================================================
+       1. 導航欄與頁面主體分離關鍵修復 / Navbar & Body Separation Key Fixes
+       ========================================================================== */
+    
+    /* 給主要內容容器加上明確的類別，並使用 padding-top 將內容完全推開。
+       因為固定定位的 navbar 佔用了大約 90px 的高度，這裡給予 140px 的安全間距，
+       確保標題 "JAPAN CHRONICLES" 絕對不會被任何選單遮擋。
+    */
+    .travel-dashboard-container {
+      padding-top: 140px; 
       max-width: 1400px;
       margin: 0 auto;
-      padding: 40px 20px;
+      padding-left: 20px;
+      padding-right: 20px;
       background-color: #fcfcfc;
     }
 
-    /* --- FEATURE 1: DASHBOARD HERO HEADER --- */
     .dashboard-intro {
       text-align: center;
       margin-bottom: 40px;
+      position: relative;
+      z-index: 10; /* 確保標題層級正常 */
     }
     .dashboard-intro h2 {
       font-size: 2.2rem;
       color: #2c3e50;
       font-weight: 600;
       letter-spacing: 1px;
+      margin-bottom: 8px;
     }
     .dashboard-intro p {
-      color: #95a5a6;
+      color: #78716c;
       font-size: 1rem;
-      margin-top: 8px;
+      line-height: 1.6;
     }
 
-    /* --- FEATURE 2: SLIDING TAB CONTROLLER --- */
+    /* ==========================================================================
+       2. 滑動切換控制器樣式 / Sliding Tab Controller Styles
+       ========================================================================== */
     .tab-control-container {
       display: flex;
       justify-content: center;
       background-color: #ffffff;
       border-bottom: 1px solid #e2e8f0;
       position: relative;
-      margin-bottom: 30px;
+      margin-bottom: 40px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.02);
       border-radius: 8px;
     }
@@ -66,7 +72,7 @@
       z-index: 2;
     }
     .tab-btn.active {
-      color: #e74c3c;
+      color: #f97316;
       font-weight: 600;
     }
     .sliding-bar {
@@ -74,14 +80,16 @@
       bottom: 0;
       left: 0;
       height: 4px;
-      background-color: #e74c3c;
+      background-color: #f97316; /* 與 style.css 主色調橘色同步 */
       width: 50%;
       transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
       z-index: 1;
       border-radius: 2px;
     }
 
-    /* --- FEATURE 3: WINDOW VIEWPORT SLIDING CANVAS --- */
+    /* ==========================================================================
+       3. 視窗畫布與滑動外殼 / Viewport & Sliding Canvas Wrapper
+       ========================================================================== */
     .window-viewport {
       width: 100%;
       overflow: hidden;
@@ -94,26 +102,29 @@
     }
     .view-panel {
       width: 50%;
-      padding: 10px;
+      padding: 10px 5px;
     }
 
-    /* --- FEATURE 4: CHRONOLOGICAL TIMELINE LAYOUT --- */
+    /* ==========================================================================
+       4. 時間軸樣式修正（點在線的上層、實心填色）/ Timeline Fixes
+       ========================================================================== */
     .timeline-container {
       position: relative;
       max-width: 1000px;
       margin: 0 auto;
       padding: 20px 0;
     }
-    /* Central timeline spine line */
+    /* 中央軸線 */
     .timeline-container::after {
       content: '';
       position: absolute;
       width: 4px;
-      background-color: #e2e8f0;
+      background-color: #fed7aa; /* 採用 style.css 的明亮時間軸色 */
       top: 0;
       bottom: 0;
       left: 50%;
       margin-left: -2px;
+      z-index: 1; /* 軸線設在底層 */
     }
     .timeline-node {
       padding: 10px 40px;
@@ -123,27 +134,28 @@
       opacity: 0;
       transform: translateY(30px);
     }
-    /* Alternating alignment vectors */
     .node-left { left: 0; }
     .node-right { left: 50%; }
     
-    /* Interactive pulsing node connector anchors */
+    /* 修正核心 1：完全飽滿填色的橘色圓點，無空心邊框，
+       並且 z-index 明確設為 10，百分之百壓在灰色/淺橘色軸線之上。
+    */
     .timeline-node::after {
       content: '';
       position: absolute;
       width: 16px;
       height: 16px;
+      background-color: #f97316; /* 完全實心填色 */
+      border: none;              /* 移除任何可能導致空心的外框 */
       right: -8px;
-      background-color: #ffffff;
-      border: 4px solid #e74c3c;
       top: 30px;
       border-radius: 50%;
-      z-index: 1;
+      z-index: 10;               /* 確保圓點圖層高於直線 */
       transition: transform 0.3s ease;
+      box-shadow: 0 0 0 4px #ffffff; /* 白框陰影，使點與線交界更乾淨 */
     }
     .node-right::after { left: -8px; }
 
-    /* Timeline item card details */
     .timeline-card {
       padding: 24px;
       background-color: #ffffff;
@@ -156,13 +168,10 @@
       transform: translateY(-5px);
       box-shadow: 0 10px 30px rgba(0,0,0,0.08);
     }
-    .timeline-card:hover::after {
-      transform: scale(1.3);
-    }
     .timeline-date {
       font-size: 0.85rem;
       font-weight: 600;
-      color: #e74c3c;
+      color: #f97316;
       letter-spacing: 0.5px;
       margin-bottom: 6px;
     }
@@ -173,7 +182,7 @@
       margin-bottom: 12px;
     }
 
-    /* --- FEATURE 5: CAROUSEL GALLERY SLIDER --- */
+    /* 相簿卡片影像容器 */
     .gallery-slider-box {
       width: 100%;
       height: 320px;
@@ -193,11 +202,13 @@
     }
     .timeline-text {
       font-size: 0.95rem;
-      color: #7f8c8d;
-      line-height: 1.6;
+      color: #666;
+      line-height: 1.8;
     }
 
-    /* --- FEATURE 6: MASONRY GRID LAYOUT (DECEMBER PANEL) --- */
+    /* ==========================================================================
+       5. 畫廊網格不對稱佈局 (December 區塊) / Masonry Gallery Grid Layout
+       ========================================================================== */
     .masonry-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -219,7 +230,7 @@
       box-shadow: 0 10px 30px rgba(0,0,0,0.08);
     }
 
-    /* --- FEATURE 7: HARDWARE ACCELERATED ENTRY ANIMATIONS --- */
+    /* 入場淡入動畫觸發權杖 */
     .sliding-canvas-wrapper.active-panel-0 .view-panel-0 .timeline-node,
     .sliding-canvas-wrapper.active-panel-1 .view-panel-1 .masonry-card {
       animation: smoothCardReveal 0.7s cubic-bezier(0.25, 1, 0.5, 1) forwards;
@@ -232,7 +243,7 @@
       }
     }
 
-    /* Staggered load delays for realistic cascading entry waves */
+    /* 級聯延遲載入曲線 */
     .view-panel-0 .timeline-node:nth-child(1) { animation-delay: 0.1s; }
     .view-panel-0 .timeline-node:nth-child(2) { animation-delay: 0.25s; }
     .view-panel-0 .timeline-node:nth-child(3) { animation-delay: 0.4s; }
@@ -241,13 +252,25 @@
     .view-panel-1 .masonry-card:nth-child(2) { animation-delay: 0.2s; }
     .view-panel-1 .masonry-card:nth-child(3) { animation-delay: 0.3s; }
 
-    /* Responsive adjustments for mid-sized devices and mobile displays */
+    /* ==========================================================================
+       6. 窄螢幕響應式適應（動態調整導航欄高度防遮擋）/ Responsive Spacing Fixes
+       ========================================================================== */
     @media screen and (max-width: 768px) {
       .timeline-container::after { left: 31px; }
       .timeline-node { width: 100%; padding-left: 70px; padding-right: 20px; }
       .node-left, .node-right { left: 0; }
       .timeline-node::after { left: 23px; right: auto; }
       .node-right::after { left: 23px; }
+    }
+
+    @media screen and (max-width: 600px) {
+      /* 當螢幕寬度小於 600px 時，你的選單會變成上下垂直排列，
+         Navbar 的物理高度會大幅暴增。因此我們將推擠空間增加到 180px，
+         徹底防止手機版檢視時 Title 再次被遮擋。
+      */
+      .travel-dashboard-container {
+        padding-top: 180px;
+      }
     }
   </style>
 
@@ -257,52 +280,45 @@
       const indicator = document.getElementById("tab-indicator");
       const buttons = document.querySelectorAll(".tab-btn");
 
-      // Slide the entire view canvas wrapper panel smoothly
+      // 執行水平畫布滑動位移
       wrapper.style.transform = `translateX(${panelIndex * -50}%)`;
 
-      // Move the orange sliding bottom highlight line indicator
+      // 移動滑動條指示器
       indicator.style.transform = `translateX(${panelIndex * 100}%)`;
 
-      // Toggle text opacity and weighting highlights on tabs
+      // 同步高亮文字狀態
       buttons.forEach((btn, idx) => {
         btn.classList.toggle("active", idx === panelIndex);
       });
 
-      // Inject the structural panel-index state token to kick off reveal loops
+      // 觸發對應面板的淡入級聯動畫
       wrapper.className = `sliding-canvas-wrapper active-panel-${panelIndex}`;
     }
   </script>
 </head>
 
 <body>
-  <!-- The header container is left empty; JS will automatically populate it -->
   <header></header>
 
-  <main>
-    <!-- Dynamic Introduction Header Box -->
+  <main class="travel-dashboard-container">
+    
     <div class="dashboard-intro">
       <h2>JAPAN CHRONICLES 2025 / 日本行旅紀錄</h2>
       <p>Exploring the extremes of seasons: From mountain snowscapes to autumn leaves</p>
     </div>
 
-    <!-- Sliding Layout Section Control Navigation Bar -->
     <div class="tab-control-container">
       <button class="tab-btn active" onclick="switchTimeline(0)">Winter Timeline (2025-01)</button>
       <button class="tab-btn" onclick="switchTimeline(1)">Autumn Collection (2025-12)</button>
       <div id="tab-indicator" class="sliding-bar"></div>
     </div>
 
-    <!-- Main Mask Viewport Area -->
     <div class="window-viewport">
       <div id="canvas-wrapper" class="sliding-canvas-wrapper active-panel-0">
         
-        <!-- =================================================================== -->
-        <!-- VIEW PANEL 0: JANUARY 2025 (WINTER CHRONOLOGICAL TIMELINE LAYOUT) -->
-        <!-- =================================================================== -->
         <section class="view-panel view-panel-0">
           <div class="timeline-container">
             
-            <!-- Timeline Item Node 1: Left Vector -->
             <div class="timeline-node node-left">
               <div class="timeline-card">
                 <div class="timeline-date">JANUARY 10, 2025</div>
@@ -314,7 +330,6 @@
               </div>
             </div>
 
-            <!-- Timeline Item Node 2: Right Vector -->
             <div class="timeline-node node-right">
               <div class="timeline-card">
                 <div class="timeline-date">JANUARY 15, 2025</div>
@@ -326,7 +341,6 @@
               </div>
             </div>
 
-            <!-- Timeline Item Node 3: Left Vector -->
             <div class="timeline-node node-left">
               <div class="timeline-card">
                 <div class="timeline-date">JANUARY 22, 2025</div>
@@ -334,20 +348,16 @@
                 <div class="gallery-slider-box">
                   <img src="https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=800&q=80" alt="Kyoto temple structure in winter snowfall">
                 </div>
-                <p class="timeline-text">Witnessing Kyoto's iconic Golden Pavilion surrounded by fresh, white snow. The contrast between the brilliant gold leaf and the pristine winter landscape is breathtaking. / 有幸目睹京都著名的金閣寺披上一層無瑕的白雪。耀眼的黃金葉片建築與周圍純淨雪景產生的強烈對比，美得令人屏息、難以忘懷。</p>
+                <p class="timeline-text">Witnessing Kyoto's iconic Golden Pavilion surrounded by fresh, white snow. The contrast between the brilliant gold leaf and the pristine winter landscape is breathtaking. / 有幸目睹京都著名的金閣寺披上一層無瑕的白雪。耀眼的黃金葉片建築與周圍純淨雪景產生的強烈對比，美得令人息、難以忘懷。</p>
               </div>
             </div>
 
           </div>
         </section>
 
-        <!-- =================================================================== -->
-        <!-- VIEW PANEL 1: DECEMBER 2025 (AUTUMN RICH GALLERY MASONRY LAYOUT) -->
-        <!-- =================================================================== -->
         <section class="view-panel view-panel-1">
           <div class="masonry-grid">
             
-            <!-- Gallery Item Card 1 -->
             <article class="masonry-card">
               <div class="gallery-slider-box" style="height: 260px;">
                 <img src="https://images.unsplash.com/photo-1528360983277-13d401cdc186?auto=format&fit=crop&w=800&q=80" alt="Kyoto historic street with traditional lanterns">
@@ -359,11 +369,9 @@
               </div>
             </article>
 
-            <!-- Gallery Item Card 2 -->
             <article class="masonry-card">
               <div class="gallery-slider-box" style="height: 380px;">
-                <!-- Taller box layout mimicking a dynamic masonry flow structure -->
-                <img src="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=800&q=80" alt="Arashiyama bamboo path with twilight mood">
+                <img src="https://images.unsplash.com/photo-1504618223053-559bdef9dd5a?auto=format&fit=crop&w=800&q=80" alt="Arashiyama bamboo path with twilight mood">
               </div>
               <div style="padding: 20px;">
                 <div class="timeline-date">DECEMBER 07, 2025</div>
@@ -372,10 +380,9 @@
               </div>
             </article>
 
-            <!-- Gallery Item Card 3 -->
             <article class="masonry-card">
               <div class="gallery-slider-box" style="height: 280px;">
-                <img src="https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=800&q=80" alt="Gion district tea house lantern fire">
+                <img src="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=800&q=80" alt="Gion district tea house lantern fire">
               </div>
               <div style="padding: 20px;">
                 <div class="timeline-date">DECEMBER 12, 2025</div>
