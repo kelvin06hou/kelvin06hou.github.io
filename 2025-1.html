@@ -11,11 +11,257 @@
   
   <!-- Link the dynamic structure layout controller -->
   <script src="navbar-footer.js" defer></script>
+
+  <style>
+    /* Inline operational parameters for the sliding travel engine */
+    /* 針對滑動旅遊日誌引擎的專屬內聯操作參數 */
+    .tab-control-container {
+      display: flex;
+      justify-content: center;
+      background-color: #ffffff;
+      border-bottom: 1px solid #e2e8f0;
+      position: relative;
+      max-width: 1200px;
+      margin: 20px auto 0 auto;
+      border-radius: 8px 8px 0 0;
+    }
+    .tab-btn {
+      padding: 16px 32px;
+      font-size: 1rem;
+      font-weight: 500;
+      color: #7f8c8d;
+      background: none;
+      border: none;
+      cursor: pointer;
+      transition: color 0.3s ease;
+    }
+    .tab-btn.active {
+      color: #e74c3c;
+      font-weight: 600;
+    }
+    .sliding-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 3px;
+      background-color: #e74c3c;
+      width: 50%;
+      transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    /* Master layout viewport window configuration */
+    .window-viewport {
+      width: 100%;
+      overflow: hidden;
+    }
+    .sliding-canvas-wrapper {
+      display: flex;
+      width: 200%;
+      transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+      transform: translateX(0);
+    }
+    .view-panel {
+      width: 50%; /* Each panel takes half of the 200% canvas wrapper space */
+      padding: 40px 20px;
+    }
+
+    /* Structural responsive photo grid layouts */
+    .travel-grid {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 30px;
+    }
+    .log-card {
+      background-color: #ffffff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    /* Track token triggers executing staggered canvas animations */
+    .sliding-canvas-wrapper.active-panel-0 .view-panel-0 .log-card,
+    .sliding-canvas-wrapper.active-panel-1 .view-panel-1 .log-card {
+      animation: fadeInUpCard 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+    }
+    .log-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+    }
+    .picture-frame {
+      width: 100%;
+      height: 240px;
+      background-color: #eaeded;
+      position: relative;
+      overflow: hidden;
+    }
+    .picture-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.5s ease;
+    }
+    .log-card:hover .picture-frame img {
+      transform: scale(1.05);
+    }
+    .season-badge {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      background-color: rgba(26, 37, 47, 0.85);
+      color: #ffffff;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      backdrop-filter: blur(4px);
+    }
+    .card-content {
+      padding: 24px;
+    }
+    .card-date {
+      font-size: 0.8rem;
+      color: #bdc3c7;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .card-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #2c3e50;
+      margin-bottom: 12px;
+    }
+    .card-text {
+      font-size: 0.95rem;
+      color: #7f8c8d;
+      line-height: 1.6;
+    }
+
+    @keyframes fadeInUpCard {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Incremental tracking layout delays */
+    .log-card:nth-child(1) { animation-delay: 0.1s; }
+    .log-card:nth-child(2) { animation-delay: 0.2s; }
+  </style>
+
+  <script>
+    function switchTimeline(panelIndex) {
+      const wrapper = document.getElementById("canvas-wrapper");
+      const indicator = document.getElementById("tab-indicator");
+      const buttons = document.querySelectorAll(".tab-btn");
+
+      // Execute horizontal canvas sliding displacement logic
+      // 執行水平畫布滑動位移邏輯
+      wrapper.style.transform = `translateX(${panelIndex * -50}%)`;
+
+      // Update the selection tracking bar indicator location
+      // 更新選擇追蹤條指示器位置
+      indicator.style.transform = `translateX(${panelIndex * 100}%)`;
+
+      // Synchronize class tokens to clean text highlighting parameters
+      // 同步類別權杖以處理文字高亮參數
+      buttons.forEach((btn, idx) => {
+        btn.classList.toggle("active", idx === panelIndex);
+      });
+
+      // Update active identifier tokens to fire fading card reveals
+      // 更新作用中識別碼權杖以觸發淡入卡片顯現
+      wrapper.className = `sliding-canvas-wrapper active-panel-${panelIndex}`;
+    }
+  </script>
 </head>
 
 <body>
   <!-- The header container is left empty; JS will automatically populate it -->
   <header></header>
+
+  <!-- MAIN JOURNAL DISPLAY CONTAINER SPACE / 主要日誌顯示容器空間 -->
+  <main>
+    <!-- Interactive Sliding Track Controllers -->
+    <div class="tab-control-container">
+      <button class="tab-btn active" onclick="switchTimeline(0)">Winter Log (2025-01)</button>
+      <button class="tab-btn" onclick="switchTimeline(1)">Autumn Log (2025-12)</button>
+      <div id="tab-indicator" class="sliding-bar"></div>
+    </div>
+
+    <!-- Viewport Masking Panel Grid Wrapper -->
+    <div class="window-viewport">
+      <div id="canvas-wrapper" class="sliding-canvas-wrapper active-panel-0">
+        
+        <!-- VIEW PANEL 0: JANUARY 2025 (WINTER) -->
+        <!-- 視窗面板 0：2025 年 1 月冬季 -->
+        <section class="view-panel view-panel-0">
+          <div class="travel-grid">
+            <article class="log-card">
+              <div class="picture-frame">
+                <span class="season-badge">WINTER / 冬季</span>
+                <img src="image/japan-winter1.jpg" alt="Japan winter view">
+              </div>
+              <div class="card-content">
+                <div class="card-date">January 12, 2025</div>
+                <h2 class="card-title">The Silence of Mt. Fuji / 富士山的破曉雪落</h2>
+                <p class="card-text">Waking up at dawn to witness the frosted slopes of Fuji reflected on Lake Kawaguchi. The crisp mountain air drops well below freezing, casting a silent, white spell across the valley. / 清晨破曉時分，親眼目睹富士山的白雪覆蓋山坡倒映在河口湖上。冰冷的山區空氣降至冰點以下，為整個山谷增添了一抹寧靜的雪白色彩。</p>
+              </div>
+            </article>
+            
+            <article class="log-card">
+              <div class="picture-frame">
+                <span class="season-badge">WINTER / 冬季</span>
+                <img src="image/japan-winter2.jpg" alt="Tokyo street night view">
+              </div>
+              <div class="card-content">
+                <div class="card-date">January 18, 2025</div>
+                <h2 class="card-title">Neon Shadows in Shinjuku / 新宿霓虹下的冬夜</h2>
+                <p class="card-text">The freezing winter drizzle transforms Tokyo's narrow alleyways into liquid neon mirrors. Stepping into a warm ramen shop provides immediate shelter from the bustling metropolitan cold. / 寒冷的冬夜細雨將東京狹窄的巷弄轉化為液態霓虹鏡面。躲進一家溫暖的拉麵店，在繁華大都市的刺骨寒風中找到了片刻的溫暖庇護所。</p>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <!-- VIEW PANEL 1: DECEMBER 2025 (AUTUMN LEAVES) -->
+        <!-- 視窗面板 1：2025 年 12 月深秋 -->
+        <section class="view-panel view-panel-1">
+          <div class="travel-grid">
+            <article class="log-card">
+              <div class="picture-frame">
+                <span class="season-badge">AUTUMN / 深秋</span>
+                <img src="image/japan-autumn1.jpg" alt="Kyoto autumn maple leaves">
+              </div>
+              <div class="card-content">
+                <div class="card-date">December 03, 2025</div>
+                <h2 class="card-title">Kyoto's Crimson Canopies / 京都楓落與古寺</h2>
+                <p class="card-text">Walking down the pathways of Eikando Temple as late-season momiji leaves paint the sky in deep shades of amber and vermilion. A breathtaking contrast against ancient wooden architecture. / 漫步在永觀堂的小徑上，季末的紅葉將天空染成深琥珀色與硃砂紅。這片斑斕的自然景致與古老的木造寺廟建築形成了令人屏息的強烈對比。</p>
+              </div>
+            </article>
+
+            <article class="log-card">
+              <div class="picture-frame">
+                <span class="season-badge">AUTUMN / 深秋</span>
+                <img src="image/japan-autumn2.jpg" alt="Gion streets at twilight">
+              </div>
+              <div class="card-content">
+                <div class="card-date">December 08, 2025</div>
+                <h2 class="card-title">Twilight Paths of Gion / 祇園古街的暮色漫步</h2>
+                <p class="card-text">As the evening lantern fires spark up across historic wooden machiya townhouses, twilight catches the soft rustle of autumn leaves falling gently onto the timeless stone-paved pathways. / 當夜幕低垂，歷史悠久的木造町家茶屋紛紛點亮燈籠，暮色捕捉到了秋葉輕柔飄落在大街石板路上的細碎聲響，顯得格外靜謐。</p>
+              </div>
+            </article>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </main>
+
   <footer></footer>
 </body>
 </html>
