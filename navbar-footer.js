@@ -16,8 +16,8 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
         <nav>
           <a href="TravelLog.html">Home</a>
-          <a href="2025-1.html">2025-1</a>
-          <a href="2025-12.html">2025-12</a>
+          <a href="profile.html">About Me</a>
+          <a href="2025.html">2025</a>
         </nav>
       </div>
     `;
