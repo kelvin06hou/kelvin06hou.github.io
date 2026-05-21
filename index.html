@@ -17,14 +17,14 @@
   <!-- The header container is left empty; JS will automatically populate it -->
   <header></header>
 
-  <section class="hero">
+  <section id = "explore" class="hero">
     <div>
       <div class="tag">✈ Slow Travel Diary</div>
       <h2>Moments Across <span>Japan & Taipei</span></h2>
       <p>A relaxing visual journal capturing cafés, city lights, temples, railways, and cinematic travel memories from Osaka, Kyoto, and Taipei.</p>
       <div class="buttons">
-        <button class="btn-dark">Explore Trips</button>
-        <button class="btn-light">View Gallery</button>
+        <a href="#explore" class="btn-dark">Explore Trips</a>
+        <a href="#gallery" class="btn-light">View Gallery</a>
       </div>
     </div>
 
@@ -41,29 +41,32 @@
     </div>
   </section>
 
-  <section class="gallery">
+  <section id="gallery" class="gallery">
     <div class="gallery-header">
       <h3>Upcoming Travel Pages</h3>
       <p>Each trip page will contain image galleries, vlog stories, cafés, and memorable moments.</p>
     </div>
     <div class="cards">
-      <div class="card">
-        <img src="https://images.unsplash.com/photo-1542051841857-5f90071e7989?q=80&w=1200&auto=format&fit=crop" alt="Osaka and Kyoto" />
-        <div class="card-content">
-          <small>2025-1</small>
-          <h4>Osaka & Kyoto</h4>
-          <p>A calm winter journey filled with temples, railways, cafés, and cinematic city nights.</p>
+      <!-- Card 1: Nevigates to 2025-1.html-->
+      <a href="2025-1.html" class="card-link">
+        <div class="card">
+          <img src="https://images.unsplash.com/photo-1542051841857-5f90071e7989?q=80&w=1200&auto=format&fit=crop" alt="Osaka and Kyoto" />
+          <div class="card-content">
+            <small>2025-1</small>
+            <h4>Osaka & Kyoto</h4>
+            <p>A calm winter journey filled with temples, railways, cafés, and cinematic city nights.</p>
+          </div>
+        </div>
+      <a href="2025-12.html" class="card-link">
+        <div class="card">
+          <img src="https://images.unsplash.com/photo-1512453979798-5ea266f8880c?q=80&w=1200&auto=format&fit=crop" alt="Taipei" />
+          <div class="card-content">
+            <small>2025-12</small>
+            <h4>Taipei</h4>
+            <p>Lantern-lit streets, rainy evenings, and the relaxing atmosphere of Taiwan's capital.</p>
+          </div>
         </div>
       </div>
-      <div class="card">
-        <img src="https://images.unsplash.com/photo-1512453979798-5ea266f8880c?q=80&w=1200&auto=format&fit=crop" alt="Taipei" />
-        <div class="card-content">
-          <small>2025-12</small>
-          <h4>Taipei</h4>
-          <p>Lantern-lit streets, rainy evenings, and the relaxing atmosphere of Taiwan's capital.</p>
-        </div>
-      </div>
-    </div>
   </section>
 
   <!-- The footer container is left empty; JS will automatically populate it -->
