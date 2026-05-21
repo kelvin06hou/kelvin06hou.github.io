@@ -21,6 +21,18 @@
     .redirect-box {
       padding: 20px;
     }
+    /* Smooth style for the sentence containers */
+    .redirect-message {
+      font-size: 1.15rem;
+      line-height: 1.8;
+      margin-bottom: 24px;
+    }
+    /* Keep the countdown dynamic emphasis subtle and clean */
+    .countdown-timer {
+      font-weight: 600;
+      color: #2c3e50;
+      padding: 0 4px;
+    }
     a {
       color: #2c3e50;
       text-decoration: underline;
@@ -28,19 +40,41 @@
   </style>
 
   <script>
-    // Execute a non-history-breaking document redirection after a 3-second delay
-    // 在 3 秒鐘延遲之後，執行一個不破換瀏覽器歷程記錄的文件重導向
     window.addEventListener("DOMContentLoaded", () => {
-      setTimeout(() => {
-        window.location.replace("under-construction.html");
-      }, 3000); // 3000 milliseconds = 3 seconds / 3000 毫秒 = 3 秒
+      // Initialize the core countdown counter variable
+      let secondsRemaining = 3;
+      
+      // Select both inline timer target span elements (English and Chinese)
+      const timerEN = document.getElementById("timer-en");
+      const timerZH = document.getElementById("timer-zh");
+
+      // Setup a recurrent execution loop running exactly every 1000ms (1 second)
+      const countdownInterval = setInterval(() => {
+        secondsRemaining--; // Decrement the remaining counter value by 1
+        
+        if (secondsRemaining > 0) {
+          // Update only the inner digits fluidly inside the sentences
+          timerEN.textContent = secondsRemaining;
+          timerZH.textContent = secondsRemaining;
+        } else {
+          // Clear the interval tracking node to free background memory space
+          clearInterval(countdownInterval);
+          
+          // Execute an immediate, non-history-breaking document redirection
+          window.location.replace("under-construction.html");
+        }
+      }, 1000);
     });
   </script>
 </head>
 <body>
   <div class="redirect-box">
-    <p>The travel log is moving to its new home. You will be redirected automatically in 3 seconds...</p>
-    <p>網誌正移至新首頁。系統將於 3 秒內自動重新導向...</p>
+    <!-- Combined inline text layout containers -->
+    <div class="redirect-message">
+      <p>The travel log is moving to its new home. You will be redirected automatically in <span id="timer-en" class="countdown-timer">3</span> sec...</p>
+      <p>網誌正移至新首頁。系統將於 <span id="timer-zh" class="countdown-timer">3</span> 秒內自動重新導向...</p>
+    </div>
+    
     <p>If you are not redirected, please <a href="under-construction.html">click here</a>.</p>
   </div>
 </body>
