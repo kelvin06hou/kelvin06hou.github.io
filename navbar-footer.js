@@ -32,4 +32,30 @@ document.addEventListener("DOMContentLoaded", () => {
     document.body.appendChild(footerElement);
   }
   footerElement.innerHTML = footerHTML;
+  
+  const exploreButton = document.querySelector('.btn-dark');
+  const galleryButton = document.querySelector('.btn-light');
+  
+  const exploreSection = document.getElementById('explore');
+  const gallerySection = document.getElementById('gallery');
+
+  // 2. Bind smooth scroll behavior to the Explore Button
+  if (exploreButton && exploreSection) {
+    exploreButton.addEventListener('click', () => {
+      exploreSection.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start' 
+      });
+    });
+  }
+
+  // 3. Bind smooth scroll behavior to the Gallery Button
+  if (galleryButton && gallerySection) {
+    galleryButton.addEventListener('click', () => {
+      gallerySection.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start' 
+      });
+    });
+  }
 });
