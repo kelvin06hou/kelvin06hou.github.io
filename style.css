@@ -286,3 +286,21 @@
         justify-content: center;
       }
     }
+
+/* style.css updates */
+
+/* Style adjustments directly applied to the native card layout container */
+.card {
+  background: white;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer; /* Critical characteristic: Tells users the block is interactive */
+}
+
+/* Re-apply the crisp hover animation back to the card container layer */
+.card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 30px 60px rgba(0,0,0,0.15);
+}

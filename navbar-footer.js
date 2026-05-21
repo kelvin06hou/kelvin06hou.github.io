@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.body.appendChild(footerElement);
   }
   footerElement.innerHTML = footerHTML;
-  
+
   const exploreButton = document.querySelector('.btn-dark');
   const galleryButton = document.querySelector('.btn-light');
   
@@ -58,4 +58,17 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
   }
+
+  // Select all layout elements that possess the custom data-target attribute
+  const travelCards = document.querySelectorAll('.card[data-target]');
+
+  travelCards.forEach(card => {
+    // Attach a programmatic redirection event to each card block
+    card.addEventListener('click', () => {
+      const destinationPage = card.getAttribute('data-target');
+      if (destinationPage) {
+        window.location.href = destinationPage;
+      }
+    });
+  });
 });
