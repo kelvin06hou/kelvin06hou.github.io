@@ -3,6 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // =========================================================================
   // 1. Inject the Navigation Header Menu / 注入導覽列頂端選單
   // =========================================================================
+  if (currentPage !==  "under-construction.html" && currentPage !== "index.html") {
   const headerHTML = `
     <div class="navbar">
       <div class="logo">
@@ -96,5 +97,4 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   });
-
 });
