@@ -5,12 +5,43 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Redirecting...</title>
   
+  <style>
+    /* Minimal styling to match your peaceful blog aesthetic during the delay */
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 80vh;
+      background-color: #fcfcfc;
+      color: #7f8c8d;
+      margin: 0;
+      text-align: center;
+    }
+    .redirect-box {
+      padding: 20px;
+    }
+    a {
+      color: #2c3e50;
+      text-decoration: underline;
+    }
+  </style>
+
   <script>
-    // Execute an immediate, non-history-breaking document redirection
-    window.location.replace("under-construction.html");
+    // Execute a non-history-breaking document redirection after a 3-second delay
+    // 在 3 秒鐘延遲之後，執行一個不破換瀏覽器歷程記錄的文件重導向
+    window.addEventListener("DOMContentLoaded", () => {
+      setTimeout(() => {
+        window.location.replace("under-construction.html");
+      }, 3000); // 3000 milliseconds = 3 seconds / 3000 毫秒 = 3 秒
+    });
   </script>
 </head>
 <body>
-  <p>If you are not redirected automatically, please <a href="TravelLog.html">click here</a>.</p>
+  <div class="redirect-box">
+    <p>The travel log is moving to its new home. You will be redirected automatically in 3 seconds...</p>
+    <p>網誌正移至新首頁。系統將於 3 秒內自動重新導向...</p>
+    <p>If you are not redirected, please <a href="under-construction.html">click here</a>.</p>
+  </div>
 </body>
 </html>
