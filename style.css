@@ -1,5 +1,5 @@
 /* ==========================================================================
-   1. 全域重設與基本樣式 / Global Reset & Base Styles
+   1. 全域重設與基本主體樣式 / Global Reset & Base Body Styles
    ========================================================================== */
 * {
   margin: 0;
@@ -15,7 +15,7 @@ body {
 }
 
 /* ==========================================================================
-   2. 固定導航欄佈局 / Fixed Navbar Layout
+   2. 固定導航欄佈局 / Fixed Navigation Bar Layout
    ========================================================================== */
 header {
   position: fixed;
@@ -24,7 +24,7 @@ header {
   width: 100%;
   background: rgba(255, 255, 255, 0.95);
   border-bottom: 1px solid #e7e5e4;
-  z-index: 1000;
+  z-index: 1000; /* 確保導航欄永遠在整張網頁的最頂層 */
 }
 
 .navbar {
@@ -62,26 +62,25 @@ nav a:hover {
 }
 
 /* ==========================================================================
-   3. 網頁內容核心排版 (解決重疊關鍵) / Core Content Layout (Fixes Overlap)
+   3. 網頁主體內容（完全分離導航欄，防止 Title 被遮擋）/ Main Body Content
    ========================================================================== */
 
-/* 
-   修正核心：如果子網頁使用包含標題的常規佈局（如畫廊、服務、關於我們等），
-   直接透過 main 元素或通用的 .page-content-wrapper 統一推開頂部空間，
-   確保其與 100px 左右高度的導航欄保持優雅的物理分離。
+/* 修正核心 1：直接針對 main 以及通用包裹容器設定 140px 的頂部內邊距（padding-top），
+   這樣可以將網頁內容和 Title 完美推到固定導航欄的下方，徹底解決重疊遮擋問題！
 */
 main,
-.page-content-wrapper {
-  padding-top: 130px; /* 預留足夠的物理空間，完美避開固定導航欄並露出網頁 Title */
+.page-content-wrapper,
+.travel-dashboard-container {
+  padding-top: 140px; /* 留出合適的寬敞空間擺放網頁標題 */
   max-width: 1200px;
   margin: 0 auto;
   padding-left: 20px;
   padding-right: 20px;
 }
 
-/* 
-   如果該頁面是首頁，且使用了 .hero 區塊，因其內部已帶有強大的 padding，
-   我們在此對其進行覆蓋重置，避免與上方 main 的 padding 重疊累加。
+/* 首頁專用的大圖區塊（Hero Section）補償機制。
+   由於首頁內部已帶有強大的 padding，我們透過 has 語法取消 main 的全局 padding，
+   避免首頁內容被過度向下推開。
 */
 .hero {
   max-width: 1200px;
@@ -91,16 +90,13 @@ main,
   grid-template-columns: 1fr 1fr;
   align-items: center;
   gap: 60px;
-  /* 首頁專屬的大頂部間距，已包含導航欄高度 */
   padding: 160px 20px 80px; 
 }
 
-/* 當 main 內部包含首頁 .hero 時，取消 main 的全局 padding-top 影響 */
 main:has(.hero) {
   padding-top: 0;
 }
 
-/* 常規網頁標題樣式優化 */
 main h2.page-title {
   margin-bottom: 40px;
   font-size: 42px;
@@ -108,7 +104,7 @@ main h2.page-title {
 }
 
 /* ==========================================================================
-   4. 首頁其他組件與按鈕 / Hero Components & Buttons
+   4. 首頁組件與交互按鈕 / Hero Elements & Interactive Buttons
    ========================================================================== */
 .tag {
   display: inline-block;
@@ -172,7 +168,7 @@ main h2.page-title {
 }
 
 /* ==========================================================================
-   5. 時間軸組件 (優化點線層級與實心填色) / Timeline Component (Layering & Solid Fill)
+   5. 時間軸組件（徹底修復：點在線的最上層、完全實心填色）/ Timeline Component
    ========================================================================== */
 .timeline {
   background: rgba(255, 255, 255, 0.85);
@@ -187,11 +183,12 @@ main h2.page-title {
   margin-bottom: 40px;
 }
 
+/* 直線容器：必須加上 position: relative 與基礎 z-index */
 .timeline-line {
-  position: relative;   /* 關鍵：為絕對定位的子元素 dot 提供參考坐標系 */
-  border-left: 3px solid #fed7aa; /* 灰色/淺橘色直線 */
+  position: relative;   
+  border-left: 3px solid #fed7aa; /* 這是時間軸的直線 */
   padding-left: 24px;
-  z-index: 1;           /* 直線位於基底層 */
+  z-index: 1;           /* 關鍵點：將直線鎖定在底層（Layer 1） */
 }
 
 .place {
@@ -203,19 +200,27 @@ main h2.page-title {
   margin-bottom: 0;
 }
 
-/* 修正核心：點改為完全實心填色，且 z-index 設為最高層級 */
+/* 修正核心 2：
+   1. z-index: 10 -> 確保圓點圖層絕對高於直線，百分之百壓在直線上方！
+   2. background-color: #f97316 -> 完全實心填色，無空心。
+   3. border: none -> 移除任何可能導致透明空心的邊框干擾。
+*/
 .dot {
   position: absolute;
   width: 16px;
   height: 16px;
-  background-color: #f97316; /* 飽滿填充顏色 */
-  border: none;              /* 移除空心描邊邊框 */
+  background-color: #f97316; /* 飽滿的實心橘色填充 */
+  border: none;              /* 確保完全實心，不留邊緣空隙 */
   border-radius: 50%;
   
-  /* 精準對齊：使 16px 寬度的圓點正中心精準壓在 3px 寬度的邊框線上 */
+  /* 精準中心對齊計算：
+     直線寬 3px，左內邊距 24px。為了讓 16px 的圓點中心點完美壓在線的中心軸上：
+     -(padding-left) - (直線寬/2) - (圓點寬/2) = -24 - 1.5 - 8 = -33.5px
+  */
   left: -33.5px; 
   top: 6px;
-  z-index: 10;               /* 確保點處於直線的上層，不會被直線穿透 */
+  
+  z-index: 10;               /* 關鍵點：將圓點提升至高圖層（Layer 10），壓扁下方的線 */
 }
 
 .place h3 {
@@ -230,7 +235,7 @@ main h2.page-title {
 }
 
 /* ==========================================================================
-   6. 畫廊與卡片組件 / Gallery & Cards
+   6. 畫廊與卡片組件樣式 / Gallery & Interactive Cards Styles
    ========================================================================== */
 .gallery {
   max-width: 1200px;
@@ -260,17 +265,15 @@ main h2.page-title {
   gap: 32px;
 }
 
-/* 修正優化：卡片交互容器樣式合併 */
 .card {
   background: white;
   border-radius: 24px;
   overflow: hidden;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-  cursor: pointer; /* 提示使用者此區塊具備點擊互動屬性 */
+  cursor: pointer;
 }
 
-/* 動態懸浮動畫效果 */
 .card:hover {
   transform: translateY(-8px);
   box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
@@ -304,7 +307,7 @@ main h2.page-title {
 }
 
 /* ==========================================================================
-   7. 頁尾與社交圖標 / Footer & Social Icons
+   7. 頁尾與社交圖標樣式 / Footer & Social Icons Styles
    ========================================================================== */
 footer {
   text-align: center;
@@ -318,12 +321,12 @@ footer .footer-content {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px; /* 文字與社交圖標的上下間距 */
+  gap: 16px;
 }
 
 .footer-socials {
   display: flex;
-  gap: 20px; /* 圖標之間的橫向舒緩間距 */
+  gap: 20px;
   justify-content: center;
   align-items: center;
 }
@@ -342,27 +345,26 @@ footer .footer-content {
   height: 24px;
   object-fit: contain;
   display: block;
-  opacity: 0.7; /* 預設略微淡化，使其不奪主視覺 */
+  opacity: 0.7;
   transition: opacity 0.2s ease;
 }
 
-/* 懸浮回饋效果 */
 .social-icon-link:hover {
   transform: translateY(-2px);
 }
 
 .social-icon-link:hover .social-icon {
-  opacity: 1.0; /* 懸浮時圖標顏色完全恢復 */
+  opacity: 1.0;
 }
 
 /* ==========================================================================
-   8. 響應式斷點設計 (自適應導航欄高度) / Responsive Breakpoints
+   8. 響應式斷點設計（防止窄螢幕與手機端遮擋 Title）/ Responsive Breakpoints
    ========================================================================== */
 @media (max-width: 900px) {
-  /* 手機與平版端：同步微調內容區與首頁的頂部距離 */
   main,
-  .page-content-wrapper {
-    padding-top: 120px;
+  .page-content-wrapper,
+  .travel-dashboard-container {
+    padding-top: 120px; /* 根據平板選單縮放比例微調頂部內邊距 */
   }
 
   .hero {
@@ -385,13 +387,12 @@ footer .footer-content {
 }
 
 @media (max-width: 600px) {
-  /* 
-     關鍵修正：在小於 600px 寬度時，導航欄會變成上下兩排（垂直堆疊），
-     這使得 header 的高度大幅增加。因此，我們必須將內容區域的頂部間距擴大到 160px，
-     否則子網頁的標題（Title）依然會在窄螢幕下被遮擋。
+  /* 重要修復：當手機端螢幕寬度小於 600px 時，導航欄會變成上下垂直雙排排列（Navbar 變高）。
+     我們在這裡將 padding-top 擴大到 170px，強制推開內容，完美確保網頁 Title 永遠清晰可見！
   */
   main,
-  .page-content-wrapper {
+  .page-content-wrapper,
+  .travel-dashboard-container {
     padding-top: 170px; 
   }
 
