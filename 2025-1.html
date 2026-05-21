@@ -8,7 +8,36 @@
   
   <link rel="stylesheet" href="style.css">
   
-  <script src="navbar-footer.js" defer></script>
+  <script src="navbar-footer.js" defer>
+
+    // 監聽網頁滾動事件
+// Listen for scroll events on the window
+window.onscroll = function() {
+  toggleGoToTopButton();
+};
+
+function toggleGoToTopButton() {
+  const btn = document.getElementById("goToTopBtn");
+  // 當使用者向下滾動超過 400 像素時，顯示按鈕；否則隱藏
+  // Display the button when scrolling exceeds 400px; hide it otherwise
+  if (document.body.scrollTop > 400 || document.documentElement.scrollTop > 400) {
+    btn.classList.add("show");
+  } else {
+    btn.classList.remove("show");
+  }
+}
+
+// 點擊按鈕執行返回最頂端動作
+// Function to command the viewport back to the absolute top
+function scrollToTop() {
+  // 由於 html 已設定 scroll-behavior: smooth，此處會自動執行平滑滾動
+  // Smooth scroll will execute automatically due to the CSS global property
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  });
+}
+  </script>
 
   <style>
     /* ==========================================================================
@@ -399,5 +428,8 @@
   </main>
 
   <footer></footer>
+  <button id="goToTopBtn" class="go-to-top-btn" onclick="scrollToTop()" title="Go to top">
+  ↑
+</button>
 </body>
 </html>
