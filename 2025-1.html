@@ -13,27 +13,57 @@
   <script src="navbar-footer.js" defer></script>
 
   <style>
-    /* Inline operational parameters for the sliding travel engine */
-    /* 針對滑動旅遊日誌引擎的專屬內聯操作參數 */
+    /* Global layout adjustments for the Dashboard */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    main {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 40px 20px;
+      background-color: #fcfcfc;
+    }
+
+    /* --- FEATURE 1: DASHBOARD HERO HEADER --- */
+    .dashboard-intro {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .dashboard-intro h2 {
+      font-size: 2.2rem;
+      color: #2c3e50;
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+    .dashboard-intro p {
+      color: #95a5a6;
+      font-size: 1rem;
+      margin-top: 8px;
+    }
+
+    /* --- FEATURE 2: SLIDING TAB CONTROLLER --- */
     .tab-control-container {
       display: flex;
       justify-content: center;
       background-color: #ffffff;
       border-bottom: 1px solid #e2e8f0;
       position: relative;
-      max-width: 1200px;
-      margin: 20px auto 0 auto;
-      border-radius: 8px 8px 0 0;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+      border-radius: 8px;
     }
     .tab-btn {
-      padding: 16px 32px;
-      font-size: 1rem;
+      padding: 20px 40px;
+      font-size: 1.1rem;
       font-weight: 500;
       color: #7f8c8d;
       background: none;
       border: none;
       cursor: pointer;
       transition: color 0.3s ease;
+      z-index: 2;
     }
     .tab-btn.active {
       color: #e74c3c;
@@ -43,13 +73,15 @@
       position: absolute;
       bottom: 0;
       left: 0;
-      height: 3px;
+      height: 4px;
       background-color: #e74c3c;
       width: 50%;
-      transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+      transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+      z-index: 1;
+      border-radius: 2px;
     }
 
-    /* Master layout viewport window configuration */
+    /* --- FEATURE 3: WINDOW VIEWPORT SLIDING CANVAS --- */
     .window-viewport {
       width: 100%;
       overflow: hidden;
@@ -57,101 +89,166 @@
     .sliding-canvas-wrapper {
       display: flex;
       width: 200%;
-      transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+      transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
       transform: translateX(0);
     }
     .view-panel {
-      width: 50%; /* Each panel takes half of the 200% canvas wrapper space */
-      padding: 40px 20px;
+      width: 50%;
+      padding: 10px;
     }
 
-    /* Structural responsive photo grid layouts */
-    .travel-grid {
-      max-width: 1200px;
-      margin: 0 auto;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 30px;
-    }
-    .log-card {
-      background-color: #ffffff;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-      opacity: 0;
-      transform: translateY(20px);
-    }
-
-    /* Track token triggers executing staggered canvas animations */
-    .sliding-canvas-wrapper.active-panel-0 .view-panel-0 .log-card,
-    .sliding-canvas-wrapper.active-panel-1 .view-panel-1 .log-card {
-      animation: fadeInUpCard 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
-    }
-    .log-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-    }
-    .picture-frame {
-      width: 100%;
-      height: 240px;
-      background-color: #eaeded;
+    /* --- FEATURE 4: CHRONOLOGICAL TIMELINE LAYOUT --- */
+    .timeline-container {
       position: relative;
-      overflow: hidden;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px 0;
     }
-    .picture-frame img {
+    /* Central timeline spine line */
+    .timeline-container::after {
+      content: '';
+      position: absolute;
+      width: 4px;
+      background-color: #e2e8f0;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      margin-left: -2px;
+    }
+    .timeline-node {
+      padding: 10px 40px;
+      position: relative;
+      background-color: inherit;
+      width: 50%;
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    /* Alternating alignment vectors */
+    .node-left { left: 0; }
+    .node-right { left: 50%; }
+    
+    /* Interactive pulsing node connector anchors */
+    .timeline-node::after {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      right: -8px;
+      background-color: #ffffff;
+      border: 4px solid #e74c3c;
+      top: 30px;
+      border-radius: 50%;
+      z-index: 1;
+      transition: transform 0.3s ease;
+    }
+    .node-right::after { left: -8px; }
+
+    /* Timeline item card details */
+    .timeline-card {
+      padding: 24px;
+      background-color: #ffffff;
+      position: relative;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .timeline-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    }
+    .timeline-card:hover::after {
+      transform: scale(1.3);
+    }
+    .timeline-date {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #e74c3c;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+    .timeline-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #2c3e50;
+      margin-bottom: 12px;
+    }
+
+    /* --- FEATURE 5: CAROUSEL GALLERY SLIDER --- */
+    .gallery-slider-box {
+      width: 100%;
+      height: 320px;
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 16px;
+      position: relative;
+    }
+    .gallery-slider-box img {
       width: 100%;
       height: 100%;
       object-fit: cover;
       transition: transform 0.5s ease;
     }
-    .log-card:hover .picture-frame img {
-      transform: scale(1.05);
+    .timeline-card:hover .gallery-slider-box img {
+      transform: scale(1.04);
     }
-    .season-badge {
-      position: absolute;
-      top: 15px;
-      left: 15px;
-      background-color: rgba(26, 37, 47, 0.85);
-      color: #ffffff;
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-      backdrop-filter: blur(4px);
-    }
-    .card-content {
-      padding: 24px;
-    }
-    .card-date {
-      font-size: 0.8rem;
-      color: #bdc3c7;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-    }
-    .card-title {
-      font-size: 1.2rem;
-      font-weight: 600;
-      color: #2c3e50;
-      margin-bottom: 12px;
-    }
-    .card-text {
+    .timeline-text {
       font-size: 0.95rem;
       color: #7f8c8d;
       line-height: 1.6;
     }
 
-    @keyframes fadeInUpCard {
+    /* --- FEATURE 6: MASONRY GRID LAYOUT (DECEMBER PANEL) --- */
+    .masonry-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 30px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .masonry-card {
+      background-color: #ffffff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+      opacity: 0;
+      transform: translateY(30px);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .masonry-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    }
+
+    /* --- FEATURE 7: HARDWARE ACCELERATED ENTRY ANIMATIONS --- */
+    .sliding-canvas-wrapper.active-panel-0 .view-panel-0 .timeline-node,
+    .sliding-canvas-wrapper.active-panel-1 .view-panel-1 .masonry-card {
+      animation: smoothCardReveal 0.7s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+    }
+
+    @keyframes smoothCardReveal {
       to {
         opacity: 1;
         transform: translateY(0);
       }
     }
 
-    /* Incremental tracking layout delays */
-    .log-card:nth-child(1) { animation-delay: 0.1s; }
-    .log-card:nth-child(2) { animation-delay: 0.2s; }
+    /* Staggered load delays for realistic cascading entry waves */
+    .view-panel-0 .timeline-node:nth-child(1) { animation-delay: 0.1s; }
+    .view-panel-0 .timeline-node:nth-child(2) { animation-delay: 0.25s; }
+    .view-panel-0 .timeline-node:nth-child(3) { animation-delay: 0.4s; }
+    
+    .view-panel-1 .masonry-card:nth-child(1) { animation-delay: 0.1s; }
+    .view-panel-1 .masonry-card:nth-child(2) { animation-delay: 0.2s; }
+    .view-panel-1 .masonry-card:nth-child(3) { animation-delay: 0.3s; }
+
+    /* Responsive adjustments for mid-sized devices and mobile displays */
+    @media screen and (max-width: 768px) {
+      .timeline-container::after { left: 31px; }
+      .timeline-node { width: 100%; padding-left: 70px; padding-right: 20px; }
+      .node-left, .node-right { left: 0; }
+      .timeline-node::after { left: 23px; right: auto; }
+      .node-right::after { left: 23px; }
+    }
   </style>
 
   <script>
@@ -160,22 +257,18 @@
       const indicator = document.getElementById("tab-indicator");
       const buttons = document.querySelectorAll(".tab-btn");
 
-      // Execute horizontal canvas sliding displacement logic
-      // 執行水平畫布滑動位移邏輯
+      // Slide the entire view canvas wrapper panel smoothly
       wrapper.style.transform = `translateX(${panelIndex * -50}%)`;
 
-      // Update the selection tracking bar indicator location
-      // 更新選擇追蹤條指示器位置
+      // Move the orange sliding bottom highlight line indicator
       indicator.style.transform = `translateX(${panelIndex * 100}%)`;
 
-      // Synchronize class tokens to clean text highlighting parameters
-      // 同步類別權杖以處理文字高亮參數
+      // Toggle text opacity and weighting highlights on tabs
       buttons.forEach((btn, idx) => {
         btn.classList.toggle("active", idx === panelIndex);
       });
 
-      // Update active identifier tokens to fire fading card reveals
-      // 更新作用中識別碼權杖以觸發淡入卡片顯現
+      // Inject the structural panel-index state token to kick off reveal loops
       wrapper.className = `sliding-canvas-wrapper active-panel-${panelIndex}`;
     }
   </script>
@@ -185,76 +278,112 @@
   <!-- The header container is left empty; JS will automatically populate it -->
   <header></header>
 
-  <!-- MAIN JOURNAL DISPLAY CONTAINER SPACE / 主要日誌顯示容器空間 -->
   <main>
-    <!-- Interactive Sliding Track Controllers -->
+    <!-- Dynamic Introduction Header Box -->
+    <div class="dashboard-intro">
+      <h2>JAPAN CHRONICLES 2025 / 日本行旅紀錄</h2>
+      <p>Exploring the extremes of seasons: From mountain snowscapes to autumn leaves</p>
+    </div>
+
+    <!-- Sliding Layout Section Control Navigation Bar -->
     <div class="tab-control-container">
-      <button class="tab-btn active" onclick="switchTimeline(0)">Winter Log (2025-01)</button>
-      <button class="tab-btn" onclick="switchTimeline(1)">Autumn Log (2025-12)</button>
+      <button class="tab-btn active" onclick="switchTimeline(0)">Winter Timeline (2025-01)</button>
+      <button class="tab-btn" onclick="switchTimeline(1)">Autumn Collection (2025-12)</button>
       <div id="tab-indicator" class="sliding-bar"></div>
     </div>
 
-    <!-- Viewport Masking Panel Grid Wrapper -->
+    <!-- Main Mask Viewport Area -->
     <div class="window-viewport">
       <div id="canvas-wrapper" class="sliding-canvas-wrapper active-panel-0">
         
-        <!-- VIEW PANEL 0: JANUARY 2025 (WINTER) -->
-        <!-- 視窗面板 0：2025 年 1 月冬季 -->
+        <!-- =================================================================== -->
+        <!-- VIEW PANEL 0: JANUARY 2025 (WINTER CHRONOLOGICAL TIMELINE LAYOUT) -->
+        <!-- =================================================================== -->
         <section class="view-panel view-panel-0">
-          <div class="travel-grid">
-            <article class="log-card">
-              <div class="picture-frame">
-                <span class="season-badge">WINTER / 冬季</span>
-                <img src="image/japan-winter1.jpg" alt="Japan winter view">
-              </div>
-              <div class="card-content">
-                <div class="card-date">January 12, 2025</div>
-                <h2 class="card-title">The Silence of Mt. Fuji / 富士山的破曉雪落</h2>
-                <p class="card-text">Waking up at dawn to witness the frosted slopes of Fuji reflected on Lake Kawaguchi. The crisp mountain air drops well below freezing, casting a silent, white spell across the valley. / 清晨破曉時分，親眼目睹富士山的白雪覆蓋山坡倒映在河口湖上。冰冷的山區空氣降至冰點以下，為整個山谷增添了一抹寧靜的雪白色彩。</p>
-              </div>
-            </article>
+          <div class="timeline-container">
             
-            <article class="log-card">
-              <div class="picture-frame">
-                <span class="season-badge">WINTER / 冬季</span>
-                <img src="image/japan-winter2.jpg" alt="Tokyo street night view">
+            <!-- Timeline Item Node 1: Left Vector -->
+            <div class="timeline-node node-left">
+              <div class="timeline-card">
+                <div class="timeline-date">JANUARY 10, 2025</div>
+                <h3 class="timeline-title">Dawn Over Frozen Kawaguchiko / 富士山與河口湖冬曉</h3>
+                <div class="gallery-slider-box">
+                  <img src="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=800&q=80" alt="Mount Fuji winter landscape reflection">
+                </div>
+                <p class="timeline-text">Waking up at 5:00 AM in sub-zero temperatures. Watching the first light hit Mount Fuji while ice floats along the lake edges is an unforgettable, peaceful experience. / 清晨五點在零下低溫中醒來。看著第一道曙光灑落於富士山頭，伴隨著湖畔碎冰折射的光芒，是一段無比寧靜且難忘的感官體驗。</p>
               </div>
-              <div class="card-content">
-                <div class="card-date">January 18, 2025</div>
-                <h2 class="card-title">Neon Shadows in Shinjuku / 新宿霓虹下的冬夜</h2>
-                <p class="card-text">The freezing winter drizzle transforms Tokyo's narrow alleyways into liquid neon mirrors. Stepping into a warm ramen shop provides immediate shelter from the bustling metropolitan cold. / 寒冷的冬夜細雨將東京狹窄的巷弄轉化為液態霓虹鏡面。躲進一家溫暖的拉麵店，在繁華大都市的刺骨寒風中找到了片刻的溫暖庇護所。</p>
+            </div>
+
+            <!-- Timeline Item Node 2: Right Vector -->
+            <div class="timeline-node node-right">
+              <div class="timeline-card">
+                <div class="timeline-date">JANUARY 15, 2025</div>
+                <h3 class="timeline-title">Neon Rain Cascades in Shinjuku / 新宿雨夜的霓虹幻影</h3>
+                <div class="gallery-slider-box">
+                  <img src="https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=800&q=80" alt="Tokyo Shinjuku alleyways in rainy night neon">
+                </div>
+                <p class="timeline-text">A sudden freezing winter drizzle turned the narrow pathways of Tokyo into neon-lit mirrors. Found shelter in a hidden ramen shop tucked behind the main streets. / 一場突如其來的冰冷冬雨，將東京狹窄的巷弄轉化為流動的霓虹鏡面。轉身躲進主幹道後方隱密的小拉麵店，享受著熱氣騰騰的歸屬感。</p>
               </div>
-            </article>
+            </div>
+
+            <!-- Timeline Item Node 3: Left Vector -->
+            <div class="timeline-node node-left">
+              <div class="timeline-card">
+                <div class="timeline-date">JANUARY 22, 2025</div>
+                <h3 class="timeline-title">The Snow Gardens of Kinkaku-ji / 金閣寺的鋪雪金芒</h3>
+                <div class="gallery-slider-box">
+                  <img src="https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=800&q=80" alt="Kyoto temple structure in winter snowfall">
+                </div>
+                <p class="timeline-text">Witnessing Kyoto's iconic Golden Pavilion surrounded by fresh, white snow. The contrast between the brilliant gold leaf and the pristine winter landscape is breathtaking. / 有幸目睹京都著名的金閣寺披上一層無瑕的白雪。耀眼的黃金葉片建築與周圍純淨雪景產生的強烈對比，美得令人屏息、難以忘懷。</p>
+              </div>
+            </div>
+
           </div>
         </section>
 
-        <!-- VIEW PANEL 1: DECEMBER 2025 (AUTUMN LEAVES) -->
-        <!-- 視窗面板 1：2025 年 12 月深秋 -->
+        <!-- =================================================================== -->
+        <!-- VIEW PANEL 1: DECEMBER 2025 (AUTUMN RICH GALLERY MASONRY LAYOUT) -->
+        <!-- =================================================================== -->
         <section class="view-panel view-panel-1">
-          <div class="travel-grid">
-            <article class="log-card">
-              <div class="picture-frame">
-                <span class="season-badge">AUTUMN / 深秋</span>
-                <img src="image/japan-autumn1.jpg" alt="Kyoto autumn maple leaves">
+          <div class="masonry-grid">
+            
+            <!-- Gallery Item Card 1 -->
+            <article class="masonry-card">
+              <div class="gallery-slider-box" style="height: 260px;">
+                <img src="https://images.unsplash.com/photo-1528360983277-13d401cdc186?auto=format&fit=crop&w=800&q=80" alt="Kyoto historic street with traditional lanterns">
               </div>
-              <div class="card-content">
-                <div class="card-date">December 03, 2025</div>
-                <h2 class="card-title">Kyoto's Crimson Canopies / 京都楓落與古寺</h2>
-                <p class="card-text">Walking down the pathways of Eikando Temple as late-season momiji leaves paint the sky in deep shades of amber and vermilion. A breathtaking contrast against ancient wooden architecture. / 漫步在永觀堂的小徑上，季末的紅葉將天空染成深琥珀色與硃砂紅。這片斑斕的自然景致與古老的木造寺廟建築形成了令人屏息的強烈對比。</p>
+              <div style="padding: 20px;">
+                <div class="timeline-date">DECEMBER 03, 2025</div>
+                <h3 class="timeline-title">Crimson Canopies of Eikando / 永觀堂的楓紅漫天</h3>
+                <p class="timeline-text">Late autumn momiji leaves turning a deep vermilion shade over ancient wooden pathways. The autumn foliage season here creates a breathtaking natural roof. / 季末的紅葉在古老的木造迴廊上方交織成深硃砂色的天幕。深秋時節的楓林在頭頂形成了一片極具震撼力的自然穹頂。</p>
               </div>
             </article>
 
-            <article class="log-card">
-              <div class="picture-frame">
-                <span class="season-badge">AUTUMN / 深秋</span>
-                <img src="image/japan-autumn2.jpg" alt="Gion streets at twilight">
+            <!-- Gallery Item Card 2 -->
+            <article class="masonry-card">
+              <div class="gallery-slider-box" style="height: 380px;">
+                <!-- Taller box layout mimicking a dynamic masonry flow structure -->
+                <img src="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=800&q=80" alt="Arashiyama bamboo path with twilight mood">
               </div>
-              <div class="card-content">
-                <div class="card-date">December 08, 2025</div>
-                <h2 class="card-title">Twilight Paths of Gion / 祇園古街的暮色漫步</h2>
-                <p class="card-text">As the evening lantern fires spark up across historic wooden machiya townhouses, twilight catches the soft rustle of autumn leaves falling gently onto the timeless stone-paved pathways. / 當夜幕低垂，歷史悠久的木造町家茶屋紛紛點亮燈籠，暮色捕捉到了秋葉輕柔飄落在大街石板路上的細碎聲響，顯得格外靜謐。</p>
+              <div style="padding: 20px;">
+                <div class="timeline-date">DECEMBER 07, 2025</div>
+                <h3 class="timeline-title">Twilight Shadows in Bamboo Groves / 嵐山竹林的暮色幽徑</h3>
+                <p class="timeline-text">Walking down Arashiyama's pathways as twilight sets in. The gentle rustle of towering green bamboo stalks against the cool winter breeze feels mystical. / 在日落暮色低垂之際漫步於嵐山竹林小徑。高聳入天的翠綠竹節隨清冷冬風搖曳、發出細碎聲響，散發著一抹空靈而神秘的色彩。</p>
               </div>
             </article>
+
+            <!-- Gallery Item Card 3 -->
+            <article class="masonry-card">
+              <div class="gallery-slider-box" style="height: 280px;">
+                <img src="https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=800&q=80" alt="Gion district tea house lantern fire">
+              </div>
+              <div style="padding: 20px;">
+                <div class="timeline-date">DECEMBER 12, 2025</div>
+                <h3 class="timeline-title">Lantern Fires of Gion / 祇園古物町家的紙燈初亮</h3>
+                <p class="timeline-text">As evening approaches, historic wooden machiya houses light up their traditional paper lanterns, casting a warm amber glow onto the stone-paved pathways. / 當夜幕降臨，歷史悠久的木造町家建築相繼點亮傳統紙燈籠，將溫暖的琥珀色光芒灑在古老平滑的石板路面上，增添古樸美感。</p>
+              </div>
+            </article>
+
           </div>
         </section>
 
