@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <p>Memories in journey</p>
       </div>
       <nav>
-        <a href="index.html">Home</a>
+        <a href="TravelLog.html">Home</a>
         <a href="2025-1.html">2025-1</a>
         <a href="2025-12.html">2025-12</a>
       </nav>

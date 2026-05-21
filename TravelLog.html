@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Travel log</title>
+  <link rel="icon" type="image/png" href="image/webicon.png">
+  
+  <!-- Link the shared standalone style sheet -->
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- Link the dynamic structure layout controller -->
+  <script src="navbar-footer.js" defer></script>
+</head>
+
+<body>
+  <!-- The header container is left empty; JS will automatically populate it -->
+  <header></header>
+
+  <section id = "explore" class="hero">
+    <div>
+      <div class="tag">✈ Slow Travel Diary</div>
+      <h2>Moments Across <span>Japan & Taipei</span></h2>
+      <p>A relaxing visual journal capturing cafés, city lights, temples, railways, and cinematic travel memories from Osaka, Kyoto, and Taipei.</p>
+      <div class="buttons">
+        <button class="btn-dark">Explore Trips</button>
+        <button class="btn-light">View Gallery</button>
+      </div>
+    </div>
+
+    <div class="timeline">
+      <div class="timeline-title">
+        <h2>Travel Route</h2>
+        <span>2025</span>
+      </div>
+      <div class="timeline-line">
+        <div class="place"><div class="dot"></div><h3>Osaka</h3><p>Food streets, neon nights, and riverside walks.</p></div>
+        <div class="place"><div class="dot"></div><h3>Kyoto</h3><p>Quiet mornings, temples, and traditional alleys.</p></div>
+        <div class="place"><div class="dot"></div><h3>Taipei</h3><p>Rainy evenings, cafés, and vibrant night markets.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="gallery" class="gallery">
+    <div class="gallery-header">
+      <h3>Upcoming Travel Pages</h3>
+      <p>Each trip page will contain image galleries, vlog stories, cafés, and memorable moments.</p>
+    </div>
+    <div class="cards">
+      <!-- Card 1: Nevigates to 2025-1.html-->
+      <div class="card" data-target="2025-1.html">
+        <div class="card">
+          <img src="https://images.unsplash.com/photo-1542051841857-5f90071e7989?q=80&w=1200&auto=format&fit=crop" alt="Osaka and Kyoto" />
+          <div class="card-content">
+            <small>2025-1</small>
+            <h4>Osaka & Kyoto</h4>
+            <p>A calm winter journey filled with temples, railways, cafés, and cinematic city nights.</p>
+          </div>
+        </div>
+      </div>
+      <div class="card" data-target="2025-12.html">
+        <div class="card">
+          <img src="https://images.unsplash.com/photo-1512453979798-5ea266f8880c?q=80&w=1200&auto=format&fit=crop" alt="Taipei" />
+          <div class="card-content">
+            <small>2025-12</small>
+            <h4>Taipei</h4>
+            <p>Lantern-lit streets, rainy evenings, and the relaxing atmosphere of Taiwan's capital.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- The footer container is left empty; JS will automatically populate it -->
+  <footer></footer>
+</body>
+</html>
