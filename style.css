@@ -352,29 +352,63 @@ footer .footer-content {
   opacity: 1.0; /* Fully brings up the color density on hover */
 }
 
-/* 1. 確保內容區塊不會被固定導航欄遮擋 */
-/* 1. Ensure the content area is not hidden behind the fixed navbar */
+/* ==========================================================================
+   1. 導航欄與頁面內容間距優化 / Navbar & Page Content Spacing Optimization
+   ========================================================================== */
+
+/* 
+   如果你的非首頁子網頁使用了 .page-content-wrapper 作為主要容器，
+   請確保它有足夠的頂部內邊距，讓頁面標題（Title）完美顯現。
+*/
 .page-content-wrapper {
-    padding-top: 80px; /* 根據你導航欄的實際高度調整，留出足夠空間 */
-    /* Adjust this value based on your actual navbar height to retain enough space */
-    margin-bottom: 60px; /* 同理，為 footer 留出底部空間 */
-    /* Similarly, leave enough space at the bottom for the footer */
+    padding-top: 120px;   /* 預留 120px 空間，完美避開固定導航欄並保持美觀間距 */
+    padding-left: 20px;
+    padding-right: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
-/* 2. 假設圖表點是 DOM/SVG 元素，確保填色與層級正確 */
-/* 2. If the chart points are DOM/SVG elements, ensure full coloration and proper layering */
-.chart-point {
-    background-color: #007bff; /* 設置你想要的飽滿顏色，而非透明 */
-    /* Set your desired solid color instead of keeping it transparent */
-    fill: #007bff; /* 若為 SVG 元素則使用 fill 屬性 */
-    /* Use the fill attribute if it is an SVG element */
-    border: none; /* 移除可能導致空心的邊框樣式 */
-    /* Remove any border styles that might cause a hollow appearance */
-    z-index: 10; /* 確保點的層級高於灰色直線 */
-    /* Ensure the layer of the point is higher than the straight grey line */
+/* 
+   若子網頁沒有外層包裹容器，亦可直接針對標準頁面標題（例如常規的 h2 或 h3）
+   設置頂部外邊距，以確保其不會被導航欄遮擋。
+*/
+main h2.page-title, 
+.gallery-header {
+    margin-top: 120px;    /* 確保常規頁面標題下方擁有合適的擺放空間 */
 }
 
-.chart-line {
-    z-index: 1; /* 保持直線在底層 */
-    /* Keep the straight line at the bottom layer */
+/* ==========================================================================
+   2. 時間軸點與線的層級與實心填色優化 / Timeline Dot Layering & Solid Color Fix
+   ========================================================================== */
+
+.timeline-line {
+    position: relative;   /* 建立局部層級上下文，利於子元素定位控制 */
+    border-left: 3px solid #fed7aa;
+    padding-left: 24px;
+    z-index: 1;           /* 將直線層級設為基礎層 */
+}
+
+.place {
+    position: relative;
+    margin-bottom: 36px;
+}
+
+.dot {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    background-color: #f97316; /* 完全填滿飽滿的橘色 */
+    border: none;              /* 移除任何邊框，確保屬於完全填色而非僅有邊緣 */
+    border-radius: 50%;
+    
+    /* 
+       精準對齊微調：
+       直線寬度為 3px，.timeline-line 的 padding-left 為 24px。
+       為了讓 16px 寬的點精準壓在線的中央，left 值計算如下：
+       -(padding-left) - (直線寬度/2) - (點寬度/2) = -24 - 1.5 - 8 = -33.5px
+    */
+    left: -33.5px;             
+    top: 6px;
+    
+    z-index: 10;               /* 關鍵：確保點的層級高於灰色/淺橘色直線，處於最上層 */
 }
