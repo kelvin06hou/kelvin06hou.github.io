@@ -1,414 +1,415 @@
+/* ==========================================================================
+   1. 全域重設與基本樣式 / Global Reset & Base Styles
+   ========================================================================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+body {
+  font-family: Arial, sans-serif;
+  background: linear-gradient(to bottom, #f5f5f4, #ffffff, #fff7ed);
+  color: #292524;
+  overflow-x: hidden;
+}
 
-    body {
-      font-family: Arial, sans-serif;
-      background: linear-gradient(to bottom, #f5f5f4, #ffffff, #fff7ed);
-      color: #292524;
-      overflow-x: hidden;
-    }
+/* ==========================================================================
+   2. 固定導航欄佈局 / Fixed Navbar Layout
+   ========================================================================== */
+header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.95);
+  border-bottom: 1px solid #e7e5e4;
+  z-index: 1000;
+}
 
-    header {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      background: rgba(255,255,255,0.95);
-      border-bottom: 1px solid #e7e5e4;
-      z-index: 1000;
-    }
+.navbar {
+  max-width: 1200px;
+  margin: auto;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 
-    .navbar {
-      max-width: 1200px;
-      margin: auto;
-      padding: 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+.logo h1 {
+  font-size: 28px;
+  margin-bottom: 4px;
+}
 
-    .logo h1 {
-      font-size: 28px;
-      margin-bottom: 4px;
-    }
+.logo p {
+  color: #78716c;
+  font-size: 14px;
+}
 
-    .logo p {
-      color: #78716c;
-      font-size: 14px;
-    }
+nav {
+  display: flex;
+  gap: 30px;
+}
 
-    nav {
-      display: flex;
-      gap: 30px;
-    }
+nav a {
+  text-decoration: none;
+  color: #444;
+  transition: 0.3s;
+}
 
-    nav a {
-      text-decoration: none;
-      color: #444;
-      transition: 0.3s;
-    }
+nav a:hover {
+  color: #f97316;
+}
 
-    nav a:hover {
-      color: #f97316;
-    }
+/* ==========================================================================
+   3. 網頁內容核心排版 (解決重疊關鍵) / Core Content Layout (Fixes Overlap)
+   ========================================================================== */
 
-    .hero {
-      max-width: 1200px;
-      margin: auto;
-      min-height: 100vh;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      align-items: center;
-      gap: 60px;
-      padding: 160px 20px 80px;
-    }
+/* 
+   修正核心：如果子網頁使用包含標題的常規佈局（如畫廊、服務、關於我們等），
+   直接透過 main 元素或通用的 .page-content-wrapper 統一推開頂部空間，
+   確保其與 100px 左右高度的導航欄保持優雅的物理分離。
+*/
+main,
+.page-content-wrapper {
+  padding-top: 130px; /* 預留足夠的物理空間，完美避開固定導航欄並露出網頁 Title */
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-left: 20px;
+  padding-right: 20px;
+}
 
-    .tag {
-      display: inline-block;
-      background: #ffedd5;
-      color: #ea580c;
-      padding: 10px 18px;
-      border-radius: 999px;
-      margin-bottom: 24px;
-      font-size: 14px;
-    }
+/* 
+   如果該頁面是首頁，且使用了 .hero 區塊，因其內部已帶有強大的 padding，
+   我們在此對其進行覆蓋重置，避免與上方 main 的 padding 重疊累加。
+*/
+.hero {
+  max-width: 1200px;
+  margin: auto;
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 60px;
+  /* 首頁專屬的大頂部間距，已包含導航欄高度 */
+  padding: 160px 20px 80px; 
+}
 
-    .hero h2 {
-      font-size: 72px;
-      line-height: 1.1;
-      font-weight: 300;
-    }
+/* 當 main 內部包含首頁 .hero 時，取消 main 的全局 padding-top 影響 */
+main:has(.hero) {
+  padding-top: 0;
+}
 
-    .hero h2 span {
-      color: #f97316;
-      font-style: italic;
-      display: block;
-    }
+/* 常規網頁標題樣式優化 */
+main h2.page-title {
+  margin-bottom: 40px;
+  font-size: 42px;
+  font-weight: 300;
+}
 
-    .hero p {
-      margin-top: 28px;
-      line-height: 1.8;
-      color: #57534e;
-      font-size: 18px;
-    }
+/* ==========================================================================
+   4. 首頁其他組件與按鈕 / Hero Components & Buttons
+   ========================================================================== */
+.tag {
+  display: inline-block;
+  background: #ffedd5;
+  color: #ea580c;
+  padding: 10px 18px;
+  border-radius: 999px;
+  margin-bottom: 24px;
+  font-size: 14px;
+}
 
-    .buttons {
-      margin-top: 36px;
-      display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
+.hero h2 {
+  font-size: 72px;
+  line-height: 1.1;
+  font-weight: 300;
+}
 
-    .btn-dark,
-    .btn-light {
-      padding: 14px 28px;
-      border-radius: 14px;
-      cursor: pointer;
-      font-size: 16px;
-      transition: 0.3s;
-    }
+.hero h2 span {
+  color: #f97316;
+  font-style: italic;
+  display: block;
+}
 
-    .btn-dark {
-      background: #1c1917;
-      color: white;
-      border: none;
-    }
+.hero p {
+  margin-top: 28px;
+  line-height: 1.8;
+  color: #57534e;
+  font-size: 18px;
+}
 
-    .btn-light {
-      background: white;
-      border: 1px solid #ddd;
-    }
+.buttons {
+  margin-top: 36px;
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
 
-    .btn-dark:hover,
-    .btn-light:hover {
-      transform: translateY(-3px);
-    }
+.btn-dark,
+.btn-light {
+  padding: 14px 28px;
+  border-radius: 14px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: 0.3s;
+}
 
-    .timeline {
-      background: rgba(255,255,255,0.85);
-      padding: 40px;
-      border-radius: 28px;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.08);
-    }
+.btn-dark {
+  background: #1c1917;
+  color: white;
+  border: none;
+}
 
-    .timeline-title {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 40px;
-    }
+.btn-light {
+  background: white;
+  border: 1px solid #ddd;
+}
 
-    .timeline-line {
-      border-left: 3px solid #fed7aa;
-      padding-left: 24px;
-    }
+.btn-dark:hover,
+.btn-light:hover {
+  transform: translateY(-3px);
+}
 
-    .place {
-      position: relative;
-      margin-bottom: 36px;
-    }
+/* ==========================================================================
+   5. 時間軸組件 (優化點線層級與實心填色) / Timeline Component (Layering & Solid Fill)
+   ========================================================================== */
+.timeline {
+  background: rgba(255, 255, 255, 0.85);
+  padding: 40px;
+  border-radius: 28px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
+}
 
-    .place:last-child {
-      margin-bottom: 0;
-    }
+.timeline-title {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 40px;
+}
 
-    .dot {
-      position: absolute;
-      width: 16px;
-      height: 16px;
-      background: #f97316;
-      border-radius: 50%;
-      left: -34px;
-      top: 6px;
-    }
+.timeline-line {
+  position: relative;   /* 關鍵：為絕對定位的子元素 dot 提供參考坐標系 */
+  border-left: 3px solid #fed7aa; /* 灰色/淺橘色直線 */
+  padding-left: 24px;
+  z-index: 1;           /* 直線位於基底層 */
+}
 
-    .place h3 {
-      margin-bottom: 8px;
-      font-size: 24px;
-    }
+.place {
+  position: relative;
+  margin-bottom: 36px;
+}
 
-    .place p {
-      color: #666;
-      margin-top: 0;
-      font-size: 16px;
-    }
+.place:last-child {
+  margin-bottom: 0;
+}
 
-    .gallery {
-      max-width: 1200px;
-      margin: auto;
-      padding: 0 20px 100px;
-    }
+/* 修正核心：點改為完全實心填色，且 z-index 設為最高層級 */
+.dot {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  background-color: #f97316; /* 飽滿填充顏色 */
+  border: none;              /* 移除空心描邊邊框 */
+  border-radius: 50%;
+  
+  /* 精準對齊：使 16px 寬度的圓點正中心精準壓在 3px 寬度的邊框線上 */
+  left: -33.5px; 
+  top: 6px;
+  z-index: 10;               /* 確保點處於直線的上層，不會被直線穿透 */
+}
 
-    .gallery-header {
-      text-align: center;
-      margin-bottom: 60px;
-    }
+.place h3 {
+  margin-bottom: 8px;
+  font-size: 24px;
+}
 
-    .gallery-header h3 {
-      font-size: 48px;
-      font-weight: 300;
-      margin-bottom: 16px;
-    }
+.place p {
+  color: #666;
+  margin-top: 0;
+  font-size: 16px;
+}
 
-    .gallery-header p {
-      color: #666;
-      line-height: 1.8;
-    }
+/* ==========================================================================
+   6. 畫廊與卡片組件 / Gallery & Cards
+   ========================================================================== */
+.gallery {
+  max-width: 1200px;
+  margin: auto;
+  padding: 0 20px 100px;
+}
 
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 32px;
-    }
+.gallery-header {
+  text-align: center;
+  margin-bottom: 60px;
+}
 
-    .card {
-      background: white;
-      border-radius: 24px;
-      overflow: hidden;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.08);
-      transition: 0.3s;
-    }
+.gallery-header h3 {
+  font-size: 48px;
+  font-weight: 300;
+  margin-bottom: 16px;
+}
 
-    .card:hover {
-      transform: translateY(-8px);
-    }
+.gallery-header p {
+  color: #666;
+  line-height: 1.8;
+}
 
-    .card img {
-      width: 100%;
-      height: 320px;
-      object-fit: cover;
-      display: block;
-    }
+.cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 32px;
+}
 
-    .card-content {
-      padding: 30px;
-    }
-
-    .card-content small {
-      color: #f97316;
-      letter-spacing: 2px;
-    }
-
-    .card-content h4 {
-      font-size: 36px;
-      margin: 14px 0;
-      font-weight: 300;
-    }
-
-    .card-content p {
-      color: #666;
-      line-height: 1.8;
-    }
-
-    footer {
-      text-align: center;
-      padding: 40px 20px;
-      border-top: 1px solid #e7e5e4;
-      color: #666;
-      background: rgba(255,255,255,0.8);
-    }
-
-    @media (max-width: 900px) {
-      .hero {
-        grid-template-columns: 1fr;
-        padding-top: 140px;
-      }
-
-      .hero h2 {
-        font-size: 48px;
-      }
-
-      .cards {
-        grid-template-columns: 1fr;
-      }
-
-      nav {
-        gap: 16px;
-        font-size: 14px;
-      }
-    }
-
-    @media (max-width: 600px) {
-      .hero h2 {
-        font-size: 40px;
-      }
-
-      .navbar {
-        flex-direction: column;
-        gap: 14px;
-      }
-
-      nav {
-        flex-wrap: wrap;
-        justify-content: center;
-      }
-    }
-
-/* style.css updates */
-
-/* Style adjustments directly applied to the native card layout container */
+/* 修正優化：卡片交互容器樣式合併 */
 .card {
   background: white;
   border-radius: 24px;
   overflow: hidden;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.08);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-  cursor: pointer; /* Critical characteristic: Tells users the block is interactive */
+  cursor: pointer; /* 提示使用者此區塊具備點擊互動屬性 */
 }
 
-/* Re-apply the crisp hover animation back to the card container layer */
+/* 動態懸浮動畫效果 */
 .card:hover {
   transform: translateY(-8px);
-  box-shadow: 0 30px 60px rgba(0,0,0,0.15);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
 }
 
-/* style.css updates for footer socials */
+.card img {
+  width: 100%;
+  height: 320px;
+  object-fit: cover;
+  display: block;
+}
 
-/* Flexbox layout to align text and icons vertically */
+.card-content {
+  padding: 30px;
+}
+
+.card-content small {
+  color: #f97316;
+  letter-spacing: 2px;
+}
+
+.card-content h4 {
+  font-size: 36px;
+  margin: 14px 0;
+  font-weight: 300;
+}
+
+.card-content p {
+  color: #666;
+  line-height: 1.8;
+}
+
+/* ==========================================================================
+   7. 頁尾與社交圖標 / Footer & Social Icons
+   ========================================================================== */
+footer {
+  text-align: center;
+  padding: 40px 20px;
+  border-top: 1px solid #e7e5e4;
+  color: #666;
+  background: rgba(255, 255, 255, 0.8);
+}
+
 footer .footer-content {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px; /* Creates clean spatial separation between text and icons */
+  gap: 16px; /* 文字與社交圖標的上下間距 */
 }
 
-/* Horizontal flex alignment container for the image tags */
 .footer-socials {
   display: flex;
-  gap: 20px; /* Comfortable breathing room between the two icons */
+  gap: 20px; /* 圖標之間的橫向舒緩間距 */
   justify-content: center;
   align-items: center;
 }
 
-/* Base link wrapper to remove default hyperlink boundaries */
 .social-icon-link {
   display: inline-block;
   text-decoration: none;
-  border: none; /* Overrides any global anchor border styles */
+  border: none;
   padding: 0;
   margin: 0;
   transition: transform 0.2s ease;
 }
 
-/* Appropriate sizing and rendering configuration for social icons */
 .social-icon {
-  width: 24px;   /* Perfect functional dimension for footer interface icons */
-  height: 24px;  /* Keeps the visual proportions perfectly square */
+  width: 24px;
+  height: 24px;
   object-fit: contain;
   display: block;
-  opacity: 0.7;  /* Muted appearance so it doesn't distract from core content */
+  opacity: 0.7; /* 預設略微淡化，使其不奪主視覺 */
   transition: opacity 0.2s ease;
 }
 
-/* Subtle feedback animations when hovering over the icons */
+/* 懸浮回饋效果 */
 .social-icon-link:hover {
-  transform: translateY(-2px); /* Slight elevation rise */
+  transform: translateY(-2px);
 }
 
 .social-icon-link:hover .social-icon {
-  opacity: 1.0; /* Fully brings up the color density on hover */
+  opacity: 1.0; /* 懸浮時圖標顏色完全恢復 */
 }
 
 /* ==========================================================================
-   1. 導航欄與頁面內容間距優化 / Navbar & Page Content Spacing Optimization
+   8. 響應式斷點設計 (自適應導航欄高度) / Responsive Breakpoints
    ========================================================================== */
+@media (max-width: 900px) {
+  /* 手機與平版端：同步微調內容區與首頁的頂部距離 */
+  main,
+  .page-content-wrapper {
+    padding-top: 120px;
+  }
 
-/* 
-   如果你的非首頁子網頁使用了 .page-content-wrapper 作為主要容器，
-   請確保它有足夠的頂部內邊距，讓頁面標題（Title）完美顯現。
-*/
-.page-content-wrapper {
-    padding-top: 120px;   /* 預留 120px 空間，完美避開固定導航欄並保持美觀間距 */
-    padding-left: 20px;
-    padding-right: 20px;
-    max-width: 1200px;
-    margin: 0 auto;
+  .hero {
+    grid-template-columns: 1fr;
+    padding-top: 140px;
+  }
+
+  .hero h2 {
+    font-size: 48px;
+  }
+
+  .cards {
+    grid-template-columns: 1fr;
+  }
+
+  nav {
+    gap: 16px;
+    font-size: 14px;
+  }
 }
 
-/* 
-   若子網頁沒有外層包裹容器，亦可直接針對標準頁面標題（例如常規的 h2 或 h3）
-   設置頂部外邊距，以確保其不會被導航欄遮擋。
-*/
-main h2.page-title, 
-.gallery-header {
-    margin-top: 120px;    /* 確保常規頁面標題下方擁有合適的擺放空間 */
-}
+@media (max-width: 600px) {
+  /* 
+     關鍵修正：在小於 600px 寬度時，導航欄會變成上下兩排（垂直堆疊），
+     這使得 header 的高度大幅增加。因此，我們必須將內容區域的頂部間距擴大到 160px，
+     否則子網頁的標題（Title）依然會在窄螢幕下被遮擋。
+  */
+  main,
+  .page-content-wrapper {
+    padding-top: 170px; 
+  }
 
-/* ==========================================================================
-   2. 時間軸點與線的層級與實心填色優化 / Timeline Dot Layering & Solid Color Fix
-   ========================================================================== */
+  .hero {
+    padding-top: 180px;
+  }
 
-.timeline-line {
-    position: relative;   /* 建立局部層級上下文，利於子元素定位控制 */
-    border-left: 3px solid #fed7aa;
-    padding-left: 24px;
-    z-index: 1;           /* 將直線層級設為基礎層 */
-}
+  .hero h2 {
+    font-size: 40px;
+  }
 
-.place {
-    position: relative;
-    margin-bottom: 36px;
-}
+  .navbar {
+    flex-direction: column;
+    gap: 14px;
+  }
 
-.dot {
-    position: absolute;
-    width: 16px;
-    height: 16px;
-    background-color: #f97316; /* 完全填滿飽滿的橘色 */
-    border: none;              /* 移除任何邊框，確保屬於完全填色而非僅有邊緣 */
-    border-radius: 50%;
-    
-    /* 
-       精準對齊微調：
-       直線寬度為 3px，.timeline-line 的 padding-left 為 24px。
-       為了讓 16px 寬的點精準壓在線的中央，left 值計算如下：
-       -(padding-left) - (直線寬度/2) - (點寬度/2) = -24 - 1.5 - 8 = -33.5px
-    */
-    left: -33.5px;             
-    top: 6px;
-    
-    z-index: 10;               /* 關鍵：確保點的層級高於灰色/淺橘色直線，處於最上層 */
+  nav {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
 }
