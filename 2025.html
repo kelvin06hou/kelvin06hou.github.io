@@ -8,46 +8,62 @@
   
   <link rel="stylesheet" href="style.css">
   
-  <script src="navbar-footer.js" defer>
+  <script src="navbar-footer.js" defer></script>
 
+  <script>
     // 監聽網頁滾動事件
-// Listen for scroll events on the window
-window.onscroll = function() {
-  toggleGoToTopButton();
-};
+    window.onscroll = function() {
+      toggleGoToTopButton();
+    };
 
-function toggleGoToTopButton() {
-  const btn = document.getElementById("goToTopBtn");
-  // 當使用者向下滾動超過 400 像素時，顯示按鈕；否則隱藏
-  // Display the button when scrolling exceeds 400px; hide it otherwise
-  if (document.body.scrollTop > 400 || document.documentElement.scrollTop > 400) {
-    btn.classList.add("show");
-  } else {
-    btn.classList.remove("show");
-  }
-}
+    function toggleGoToTopButton() {
+      const btn = document.getElementById("goToTopBtn");
+      // 當使用者向下滾動超過 400 像素時，顯示按鈕；否則隱藏
+      if (document.body.scrollTop > 400 || document.documentElement.scrollTop > 400) {
+        btn.classList.add("show");
+      } else {
+        btn.classList.remove("show");
+      }
+    }
 
-// 點擊按鈕執行返回最頂端動作
-// Function to command the viewport back to the absolute top
-function scrollToTop() {
-  // 由於 html 已設定 scroll-behavior: smooth，此處會自動執行平滑滾動
-  // Smooth scroll will execute automatically due to the CSS global property
-  window.scrollTo({
-    top: 0,
-    behavior: 'smooth'
-  });
-}
+    // 點擊按鈕執行返回最頂端動作
+    function scrollToTop() {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
+
+    // 修正 3：動態計算 3 個頁籤的水平滑動與底線位移（基於 1/3 寬度原理）
+    function switchTimeline(panelIndex) {
+      const wrapper = document.getElementById("canvas-wrapper");
+      const indicator = document.getElementById("tab-indicator");
+      const buttons = document.querySelectorAll(".tab-btn");
+
+      // 三個面板時，每次切換移動 -33.333% 的畫布寬度
+      wrapper.style.transform = `translateX(${panelIndex * -33.333}%)`;
+
+      // 橘色底線向右平移對齊，每次移動 100% 自身的寬度
+      indicator.style.transform = `translateX(${panelIndex * 100}%)`;
+
+      // 同步更新高亮按鈕類別
+      buttons.forEach((btn, idx) => {
+        btn.classList.toggle("active", idx === panelIndex);
+      });
+
+      // 觸發對應面板的級聯入場動畫
+      wrapper.className = `sliding-canvas-wrapper active-panel-${panelIndex}`;
+    }
   </script>
 
   <style>
     /* ==========================================================================
        1. 導航欄與頁面主體分離關鍵修復 / Navbar & Body Separation Key Fixes
        ========================================================================== */
-    
-    /* 給主要內容容器加上明確的類別，並使用 padding-top 將內容完全推開。
-       因為固定定位的 navbar 佔用了大約 90px 的高度，這裡給予 140px 的安全間距，
-       確保標題 "JAPAN CHRONICLES" 絕對不會被任何選單遮擋。
-    */
+    html {
+      scroll-behavior: smooth; /* 全域平滑滾動 */
+    }
+
     .travel-dashboard-container {
       padding-top: 140px; 
       max-width: 1400px;
@@ -61,7 +77,7 @@ function scrollToTop() {
       text-align: center;
       margin-bottom: 40px;
       position: relative;
-      z-index: 10; /* 確保標題層級正常 */
+      z-index: 10;
     }
     .dashboard-intro h2 {
       font-size: 2.2rem;
@@ -77,7 +93,7 @@ function scrollToTop() {
     }
 
     /* ==========================================================================
-       2. 滑動切換控制器樣式 / Sliding Tab Controller Styles
+       2. 滑動切換控制器樣式（修正：3頁籤寬度比例）/ Sliding Tab Controller Styles
        ========================================================================== */
     .tab-control-container {
       display: flex;
@@ -90,7 +106,10 @@ function scrollToTop() {
       border-radius: 8px;
     }
     .tab-btn {
-      padding: 20px 40px;
+      flex: 1; /* 讓 3 個按鈕平分寬度 */
+      max-width: 250px;
+      padding: 20px 10px;
+      text-align: center;
       font-size: 1.1rem;
       font-weight: 500;
       color: #7f8c8d;
@@ -104,38 +123,45 @@ function scrollToTop() {
       color: #f97316;
       font-weight: 600;
     }
+    
+    /* 修正核心：因為有 3 個按鈕，橘色底線寬度必須嚴格修改為 1/3 (即 33.333%) 
+       如果是之前的 50% 會導致線段過長且無法與按鈕對齊！ */
     .sliding-bar {
       position: absolute;
       bottom: 0;
-      left: 0;
+      left: calc(50% - 375px); /* 電腦端居中對齊修正：3個按鈕最大總寬 750px */
       height: 4px;
-      background-color: #f97316; /* 與 style.css 主色調橘色同步 */
-      width: 50%;
+      background-color: #f97316; 
+      width: 250px; /* 精準等於一個按鈕的最大寬度 */
       transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
       z-index: 1;
       border-radius: 2px;
     }
 
     /* ==========================================================================
-       3. 視窗畫布與滑動外殼 / Viewport & Sliding Canvas Wrapper
+       3. 視窗畫布與滑動外殼（修正：容納 3 個面版）/ Viewport & Canvas Wrapper
        ========================================================================== */
     .window-viewport {
       width: 100%;
       overflow: hidden;
     }
+    
+    /* 修正核心：有 3 個面版時，畫布總寬度必須擴大為 300% */
     .sliding-canvas-wrapper {
       display: flex;
-      width: 200%;
+      width: 300%; 
       transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
       transform: translateX(0);
     }
+    
+    /* 每個面板平分 300% 總寬度中的一份，即 1/3 (33.333%) */
     .view-panel {
-      width: 50%;
+      width: 33.333%; 
       padding: 10px 5px;
     }
 
     /* ==========================================================================
-       4. 時間軸樣式修正（點在線的上層、實心填色）/ Timeline Fixes
+       4. 時間軸樣式與點線層級修正 / Timeline Layout Styles
        ========================================================================== */
     .timeline-container {
       position: relative;
@@ -143,17 +169,16 @@ function scrollToTop() {
       margin: 0 auto;
       padding: 20px 0;
     }
-    /* 中央軸線 */
     .timeline-container::after {
       content: '';
       position: absolute;
       width: 4px;
-      background-color: #fed7aa; /* 採用 style.css 的明亮時間軸色 */
+      background-color: #fed7aa; 
       top: 0;
       bottom: 0;
       left: 50%;
       margin-left: -2px;
-      z-index: 1; /* 軸線設在底層 */
+      z-index: 1;
     }
     .timeline-node {
       padding: 10px 40px;
@@ -166,22 +191,20 @@ function scrollToTop() {
     .node-left { left: 0; }
     .node-right { left: 50%; }
     
-    /* 修正核心 1：完全飽滿填色的橘色圓點，無空心邊框，
-       並且 z-index 明確設為 10，百分之百壓在灰色/淺橘色軸線之上。
-    */
+    /* 橘色實心圓點，高圖層 z-index: 10 牢牢壓在線的上方 */
     .timeline-node::after {
       content: '';
       position: absolute;
       width: 16px;
       height: 16px;
-      background-color: #f97316; /* 完全實心填色 */
-      border: none;              /* 移除任何可能導致空心的外框 */
+      background-color: #f97316; 
+      border: none;              
       right: -8px;
       top: 30px;
       border-radius: 50%;
-      z-index: 10;               /* 確保圓點圖層高於直線 */
+      z-index: 10;               
       transition: transform 0.3s ease;
-      box-shadow: 0 0 0 4px #ffffff; /* 白框陰影，使點與線交界更乾淨 */
+      box-shadow: 0 0 0 4px #ffffff; 
     }
     .node-right::after { left: -8px; }
 
@@ -211,7 +234,6 @@ function scrollToTop() {
       margin-bottom: 12px;
     }
 
-    /* 相簿卡片影像容器 */
     .gallery-slider-box {
       width: 100%;
       height: 320px;
@@ -236,7 +258,7 @@ function scrollToTop() {
     }
 
     /* ==========================================================================
-       5. 畫廊網格不對稱佈局 (December 區塊) / Masonry Gallery Grid Layout
+       5. 畫廊網格瀑布流佈局 / Masonry Gallery Grid Layout
        ========================================================================== */
     .masonry-grid {
       display: grid;
@@ -259,9 +281,10 @@ function scrollToTop() {
       box-shadow: 0 10px 30px rgba(0,0,0,0.08);
     }
 
-    /* 入場淡入動畫觸發權杖 */
+    /* 入場淡入動畫觸發 */
     .sliding-canvas-wrapper.active-panel-0 .view-panel-0 .timeline-node,
-    .sliding-canvas-wrapper.active-panel-1 .view-panel-1 .masonry-card {
+    .sliding-canvas-wrapper.active-panel-1 .view-panel-1 .masonry-card,
+    .sliding-canvas-wrapper.active-panel-2 .view-panel-2 .timeline-node {
       animation: smoothCardReveal 0.7s cubic-bezier(0.25, 1, 0.5, 1) forwards;
     }
 
@@ -272,7 +295,7 @@ function scrollToTop() {
       }
     }
 
-    /* 級聯延遲載入曲線 */
+    /* 延遲動畫載入曲線 */
     .view-panel-0 .timeline-node:nth-child(1) { animation-delay: 0.1s; }
     .view-panel-0 .timeline-node:nth-child(2) { animation-delay: 0.25s; }
     .view-panel-0 .timeline-node:nth-child(3) { animation-delay: 0.4s; }
@@ -282,9 +305,45 @@ function scrollToTop() {
     .view-panel-1 .masonry-card:nth-child(3) { animation-delay: 0.3s; }
 
     /* ==========================================================================
-       6. 窄螢幕響應式適應（動態調整導航欄高度防遮擋）/ Responsive Spacing Fixes
+       6. 返回頂部按鈕樣式 / Go To Top Button Styles
+       ========================================================================== */
+    .go-to-top-btn {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      z-index: 99;
+      border: none;
+      outline: none;
+      background-color: #f97316;
+      color: white;
+      cursor: pointer;
+      padding: 15px 20px;
+      border-radius: 50%;
+      font-size: 18px;
+      font-weight: bold;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+      transition: all 0.3s ease;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(10px);
+    }
+    .go-to-top-btn:hover {
+      background-color: #ea580c;
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    }
+    .go-to-top-btn.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    /* ==========================================================================
+       7. 窄螢幕與手機端響應式調整 / Responsive Spacing Fixes
        ========================================================================== */
     @media screen and (max-width: 768px) {
+      .tab-control-container { width: 100%; }
+      .sliding-bar { left: 0; width: 33.333%; }
       .timeline-container::after { left: 31px; }
       .timeline-node { width: 100%; padding-left: 70px; padding-right: 20px; }
       .node-left, .node-right { left: 0; }
@@ -293,37 +352,9 @@ function scrollToTop() {
     }
 
     @media screen and (max-width: 600px) {
-      /* 當螢幕寬度小於 600px 時，你的選單會變成上下垂直排列，
-         Navbar 的物理高度會大幅暴增。因此我們將推擠空間增加到 180px，
-         徹底防止手機版檢視時 Title 再次被遮擋。
-      */
-      .travel-dashboard-container {
-        padding-top: 180px;
-      }
+      .travel-dashboard-container { padding-top: 180px; }
     }
   </style>
-
-  <script>
-    function switchTimeline(panelIndex) {
-      const wrapper = document.getElementById("canvas-wrapper");
-      const indicator = document.getElementById("tab-indicator");
-      const buttons = document.querySelectorAll(".tab-btn");
-
-      // 執行水平畫布滑動位移
-      wrapper.style.transform = `translateX(${panelIndex * -50}%)`;
-
-      // 移動滑動條指示器
-      indicator.style.transform = `translateX(${panelIndex * 100}%)`;
-
-      // 同步高亮文字狀態
-      buttons.forEach((btn, idx) => {
-        btn.classList.toggle("active", idx === panelIndex);
-      });
-
-      // 觸發對應面板的淡入級聯動畫
-      wrapper.className = `sliding-canvas-wrapper active-panel-${panelIndex}`;
-    }
-  </script>
 </head>
 
 <body>
@@ -332,8 +363,8 @@ function scrollToTop() {
   <main class="travel-dashboard-container">
     
     <div class="dashboard-intro">
-      <h2>2025</h2>
-      <p>Exploring the cities in Asia.</p>
+      <h2>2025 TRAVEL CHRONICLES</h2>
+      <p>Exploring the diverse culture and architecture across major cities in Asia.</p>
     </div>
 
     <div class="tab-control-container">
@@ -348,79 +379,46 @@ function scrollToTop() {
         
         <section class="view-panel view-panel-0">
           <div class="timeline-container">
-            
             <div class="timeline-node node-left">
               <div class="timeline-card">
-                <div class="timeline-date">Jan 23~27, 2025</div>
-                <h3 class="timeline-title">Osaka and Kyoto</h3>
+                <div class="timeline-date">January 23~27, 2025</div>
+                <h3 class="timeline-title">Historical Shrines of Kyoto</h3>
                 <div class="gallery-slider-box">
-                  <img src="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=800&q=80" alt="Mount Fuji winter landscape reflection">
+                  <img src="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=800&q=80" alt="Kyoto landscape">
                 </div>
-                <p class="timeline-text">Waking up at 5:00 AM in sub-zero temperatures. Watching the first light hit Mount Fuji while ice floats along the lake edges is an unforgettable, peaceful experience. / 清晨五點在零下低溫中醒來。看著第一道曙光灑落於富士山頭，伴隨著湖畔碎冰折射的光芒，是一段無比寧靜且難忘的感官體驗。</p>
+                <p class="timeline-text">Walking down traditional alleys at dawn. The crisp winter air combined with the sight of preserved wooden machiya architecture brings a deep sense of historical continuity. / 黎明時分漫步於傳統小徑。清冽的冬夜空氣與完整保存的木造町家建築相輝映，帶來一種強烈的歷史延續感。</p>
               </div>
             </div>
-
-            <div class="timeline-node node-right">
-              <div class="timeline-card">
-                <div class="timeline-date">Jul 1~22, 2025</div>
-                <h3 class="timeline-title">Shanghai exchange</h3>
-                <div class="gallery-slider-box">
-                  <img src="https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=800&q=80" alt="Tokyo Shinjuku alleyways in rainy night neon">
-                </div>
-                <p class="timeline-text">A sudden freezing winter drizzle turned the narrow pathways of Tokyo into neon-lit mirrors. Found shelter in a hidden ramen shop tucked behind the main streets. / 一場突如其來的冰冷冬雨，將東京狹窄的巷弄轉化為流動的霓虹鏡面。轉身躲進主幹道後方隱密的小拉麵店，享受著熱氣騰騰的歸屬感。</p>
-              </div>
-            </div>
-
-            <div class="timeline-node node-left">
-              <div class="timeline-card">
-                <div class="timeline-date">Dec 20~25, 2025</div>
-                <h3 class="timeline-title">Taipei</h3>
-                <div class="gallery-slider-box">
-                  <img src="https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=800&q=80" alt="Kyoto temple structure in winter snowfall">
-                </div>
-                <p class="timeline-text">Witnessing Kyoto's iconic Golden Pavilion surrounded by fresh, white snow. The contrast between the brilliant gold leaf and the pristine winter landscape is breathtaking. / 有幸目睹京都著名的金閣寺披上一層無瑕的白雪。耀眼的黃金葉片建築與周圍純淨雪景產生的強烈對比，美得令人息、難以忘懷。</p>
-              </div>
-            </div>
-
           </div>
         </section>
 
         <section class="view-panel view-panel-1">
           <div class="masonry-grid">
-            
             <article class="masonry-card">
               <div class="gallery-slider-box" style="height: 260px;">
-                <img src="https://images.unsplash.com/photo-1528360983277-13d401cdc186?auto=format&fit=crop&w=800&q=80" alt="Kyoto historic street with traditional lanterns">
+                <img src="https://images.unsplash.com/photo-1528360983277-13d401cdc186?auto=format&fit=crop&w=800&q=80" alt="Shanghai city">
               </div>
               <div style="padding: 20px;">
-                <div class="timeline-date">DECEMBER 03, 2025</div>
-                <h3 class="timeline-title">Crimson Canopies of Eikando / 永觀堂的楓紅漫天</h3>
-                <p class="timeline-text">Late autumn momiji leaves turning a deep vermilion shade over ancient wooden pathways. The autumn foliage season here creates a breathtaking natural roof. / 季末的紅葉在古老的木造迴廊上方交織成深硃砂色的天幕。深秋時節的楓林在頭頂形成了一片極具震撼力的自然穹頂。</p>
+                <div class="timeline-date">July 01~22, 2025</div>
+                <h3 class="timeline-title">The Bund and Modern Skyscrapers</h3>
+                <p class="timeline-text">Witnessing the stunning contrast between European historic facades on one side and futuristic neon towers on the other across the Huangpu River. / 目睹黃浦江兩岸的震撼對比：一側是充滿歷史底蘊的歐式建築群，另一側則是科技感十足的未來派摩天大樓。</p>
               </div>
             </article>
+          </div>
+        </section>
 
-            <article class="masonry-card">
-              <div class="gallery-slider-box" style="height: 380px;">
-                <img src="https://images.unsplash.com/photo-1504618223053-559bdef9dd5a?auto=format&fit=crop&w=800&q=80" alt="Arashiyama bamboo path with twilight mood">
+        <section class="view-panel view-panel-2">
+          <div class="timeline-container">
+            <div class="timeline-node node-left">
+              <div class="timeline-card">
+                <div class="timeline-date">December 20~25, 2025</div>
+                <h3 class="timeline-title">Vibrant Night Markets & Taipei 101</h3>
+                <div class="gallery-slider-box">
+                  <img src="https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=800&q=80" alt="Taipei night">
+                </div>
+                <p class="timeline-text">Savoring hot traditional street food under the glittering city lights. The dynamic pulse of the night market stands as a perfect conclusion to the 2025 journey. / 在閃爍的城市燈火下細細品嚐熱騰騰的傳統街頭小吃。夜市裡充滿生命力的律動，為這趟 2025 年的旅程畫下了最完美的句點。</p>
               </div>
-              <div style="padding: 20px;">
-                <div class="timeline-date">DECEMBER 07, 2025</div>
-                <h3 class="timeline-title">Twilight Shadows in Bamboo Groves / 嵐山竹林的暮色幽徑</h3>
-                <p class="timeline-text">Walking down Arashiyama's pathways as twilight sets in. The gentle rustle of towering green bamboo stalks against the cool winter breeze feels mystical. / 在日落暮色低垂之際漫步於嵐山竹林小徑。高聳入天的翠綠竹節隨清冷冬風搖曳、發出細碎聲響，散發著一抹空靈而神秘的色彩。</p>
-              </div>
-            </article>
-
-            <article class="masonry-card">
-              <div class="gallery-slider-box" style="height: 280px;">
-                <img src="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=800&q=80" alt="Gion district tea house lantern fire">
-              </div>
-              <div style="padding: 20px;">
-                <div class="timeline-date">DECEMBER 12, 2025</div>
-                <h3 class="timeline-title">Lantern Fires of Gion / 祇園古物町家的紙燈初亮</h3>
-                <p class="timeline-text">As evening approaches, historic wooden machiya houses light up their traditional paper lanterns, casting a warm amber glow onto the stone-paved pathways. / 當夜幕降臨，歷史悠久的木造町家建築相繼點亮傳統紙燈籠，將溫暖的琥珀色光芒灑在古老平滑的石板路面上，增添古樸美感。</p>
-              </div>
-            </article>
-
+            </div>
           </div>
         </section>
 
@@ -429,8 +427,9 @@ function scrollToTop() {
   </main>
 
   <footer></footer>
+  
   <button id="goToTopBtn" class="go-to-top-btn" onclick="scrollToTop()" title="Go to top">
-  ↑
-</button>
+    ↑
+  </button>
 </body>
 </html>
