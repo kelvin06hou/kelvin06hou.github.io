@@ -71,4 +71,32 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   });
+
+
+const footerHTML = `
+    <div class="footer-content">
+      <p>© 2026 Kelvin Ho • Peaceful Travel Storytelling</p>
+      
+      <div class="footer-socials">
+        <!-- Instagram Link Wrapper -->
+        <a href="https://www.instagram.com/your_username" target="_blank" class="social-icon-link">
+          <img src="image/instagram.png" alt="Instagram" class="social-icon" />
+        </a>
+        
+        <!-- Threads Link Wrapper -->
+        <a href="https://www.threads.net/@your_username" target="_blank" class="social-icon-link">
+          <img src="image/threads.png" alt="Threads" class="social-icon" />
+        </a>
+      </div>
+    </div>
+  `;
+  
+  let footerElement = document.querySelector("footer");
+  if (!footerElement) {
+    footerElement = document.createElement("footer");
+    document.body.appendChild(footerElement);
+  }
+  footerElement.innerHTML = footerHTML;
+
+
 });
