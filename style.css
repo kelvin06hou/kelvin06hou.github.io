@@ -351,3 +351,30 @@ footer .footer-content {
 .social-icon-link:hover .social-icon {
   opacity: 1.0; /* Fully brings up the color density on hover */
 }
+
+/* 1. 確保內容區塊不會被固定導航欄遮擋 */
+/* 1. Ensure the content area is not hidden behind the fixed navbar */
+.page-content-wrapper {
+    padding-top: 80px; /* 根據你導航欄的實際高度調整，留出足夠空間 */
+    /* Adjust this value based on your actual navbar height to retain enough space */
+    margin-bottom: 60px; /* 同理，為 footer 留出底部空間 */
+    /* Similarly, leave enough space at the bottom for the footer */
+}
+
+/* 2. 假設圖表點是 DOM/SVG 元素，確保填色與層級正確 */
+/* 2. If the chart points are DOM/SVG elements, ensure full coloration and proper layering */
+.chart-point {
+    background-color: #007bff; /* 設置你想要的飽滿顏色，而非透明 */
+    /* Set your desired solid color instead of keeping it transparent */
+    fill: #007bff; /* 若為 SVG 元素則使用 fill 屬性 */
+    /* Use the fill attribute if it is an SVG element */
+    border: none; /* 移除可能導致空心的邊框樣式 */
+    /* Remove any border styles that might cause a hollow appearance */
+    z-index: 10; /* 確保點的層級高於灰色直線 */
+    /* Ensure the layer of the point is higher than the straight grey line */
+}
+
+.chart-line {
+    z-index: 1; /* 保持直線在底層 */
+    /* Keep the straight line at the bottom layer */
+}
