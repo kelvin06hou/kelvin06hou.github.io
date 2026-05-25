@@ -6,18 +6,40 @@
   <title>Travel Log</title>
   <link rel="icon" type="image/png" href="image/webicon.png">
   
-  <!-- Link the shared standalone style sheet -->
   <link rel="stylesheet" href="style.css">
   
-  <!-- Link the dynamic structure layout controller -->
   <script src="navbar-footer.js" defer></script>
+
+  <script>
+    window.addEventListener("DOMContentLoaded", () => {
+      initCardRouter();
+    });
+
+    function initCardRouter() {
+      // 獲取所有帶有路由目標的卡片
+      const cards = document.querySelectorAll('.card[data-target]');
+      
+      cards.forEach(card => {
+        // 讓滑鼠移到卡片上時，自動顯示為可點擊的手指游標
+        card.style.cursor = "pointer";
+        
+        // 監聽點擊事件
+        card.addEventListener("click", function(e) {
+          // 獲取當前卡片設定的帶錨點新網址
+          const targetUrl = this.getAttribute("data-target");
+          if (targetUrl) {
+            window.location.href = targetUrl;
+          }
+        });
+      });
+    }
+  </script>
 </head>
 
 <body>
-  <!-- The header container is left empty; JS will automatically populate it -->
   <header></header>
 
-  <section id = "explore" class="hero">
+  <section id="explore" class="hero">
     <div>
       <div class="tag">✈ Slow Travel Diary</div>
       <h2>Moments Across <span>Japan & Taipei</span></h2>
@@ -46,11 +68,10 @@
       <h3>Upcoming Travel Pages</h3>
       <p>Each trip page will contain image galleries, vlog stories, cafés, and memorable moments.</p>
     </div>
+    
     <div class="cards">
-      <!-- Card 1: Nevigates to 2025-1.html-->
-      <div class="card" data-target="2025-1.html">
-        <div class="card">
-          <img src="https://images.unsplash.com/photo-1542051841857-5f90071e7989?q=80&w=1200&auto=format&fit=crop" alt="Osaka and Kyoto" />
+      <div class="card" data-target="2025.html#january">
+        <div class="card-inner"> <img src="https://images.unsplash.com/photo-1542051841857-5f90071e7989?q=80&w=1200&auto=format&fit=crop" alt="Osaka and Kyoto" />
           <div class="card-content">
             <small>2025-1</small>
             <h4>Osaka & Kyoto</h4>
@@ -58,9 +79,9 @@
           </div>
         </div>
       </div>
-      <div class="card" data-target="2025-12.html">
-        <div class="card">
-          <img src="https://images.unsplash.com/photo-1512453979798-5ea266f8880c?q=80&w=1200&auto=format&fit=crop" alt="Taipei" />
+
+      <div class="card" data-target="2025.html#december">
+        <div class="card-inner"> <img src="https://images.unsplash.com/photo-1512453979798-5ea266f8880c?q=80&w=1200&auto=format&fit=crop" alt="Taipei" />
           <div class="card-content">
             <small>2025-12</small>
             <h4>Taipei</h4>
@@ -71,7 +92,6 @@
     </div>
   </section>
 
-  <!-- The footer container is left empty; JS will automatically populate it -->
   <footer></footer>
 </body>
 </html>
