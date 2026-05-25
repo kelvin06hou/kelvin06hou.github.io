@@ -18,7 +18,6 @@
 
     function toggleGoToTopButton() {
       const btn = document.getElementById("goToTopBtn");
-      // 當使用者向下滾動超過 400 像素時，顯示按鈕；否則隱藏
       if (document.body.scrollTop > 400 || document.documentElement.scrollTop > 400) {
         btn.classList.add("show");
       } else {
@@ -34,24 +33,19 @@
       });
     }
 
-    // 修正 3：動態計算 3 個頁籤的水平滑動與底線位移（基於 1/3 寬度原理）
+    // 頁籤切換與水平畫布滑動控制
     function switchTimeline(panelIndex) {
       const wrapper = document.getElementById("canvas-wrapper");
       const indicator = document.getElementById("tab-indicator");
       const buttons = document.querySelectorAll(".tab-btn");
 
-      // 三個面板時，每次切換移動 -33.333% 的畫布寬度
       wrapper.style.transform = `translateX(${panelIndex * -33.333}%)`;
-
-      // 橘色底線向右平移對齊，每次移動 100% 自身的寬度
       indicator.style.transform = `translateX(${panelIndex * 100}%)`;
 
-      // 同步更新高亮按鈕類別
       buttons.forEach((btn, idx) => {
         btn.classList.toggle("active", idx === panelIndex);
       });
 
-      // 觸發對應面板的級聯入場動畫
       wrapper.className = `sliding-canvas-wrapper active-panel-${panelIndex}`;
     }
   </script>
@@ -61,7 +55,7 @@
        1. 導航欄與頁面主體分離關鍵修復 / Navbar & Body Separation Key Fixes
        ========================================================================== */
     html {
-      scroll-behavior: smooth; /* 全域平滑滾動 */
+      scroll-behavior: smooth; 
     }
 
     .travel-dashboard-container {
@@ -93,7 +87,7 @@
     }
 
     /* ==========================================================================
-       2. 滑動切換控制器樣式（修正：3頁籤寬度比例）/ Sliding Tab Controller Styles
+       2. 滑動切換控制器樣式 / Sliding Tab Controller Styles
        ========================================================================== */
     .tab-control-container {
       display: flex;
@@ -106,7 +100,7 @@
       border-radius: 8px;
     }
     .tab-btn {
-      flex: 1; /* 讓 3 個按鈕平分寬度 */
+      flex: 1; 
       max-width: 250px;
       padding: 20px 10px;
       text-align: center;
@@ -124,29 +118,26 @@
       font-weight: 600;
     }
     
-    /* 修正核心：因為有 3 個按鈕，橘色底線寬度必須嚴格修改為 1/3 (即 33.333%) 
-       如果是之前的 50% 會導致線段過長且無法與按鈕對齊！ */
     .sliding-bar {
       position: absolute;
       bottom: 0;
-      left: calc(50% - 375px); /* 電腦端居中對齊修正：3個按鈕最大總寬 750px */
+      left: calc(50% - 375px); 
       height: 4px;
       background-color: #f97316; 
-      width: 250px; /* 精準等於一個按鈕的最大寬度 */
+      width: 250px; 
       transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
       z-index: 1;
       border-radius: 2px;
     }
 
     /* ==========================================================================
-       3. 視窗畫布與滑動外殼（修正：容納 3 個面版）/ Viewport & Canvas Wrapper
+       3. 視窗畫布與滑動外殼 / Viewport & Canvas Wrapper
        ========================================================================== */
     .window-viewport {
       width: 100%;
       overflow: hidden;
     }
     
-    /* 修正核心：有 3 個面版時，畫布總寬度必須擴大為 300% */
     .sliding-canvas-wrapper {
       display: flex;
       width: 300%; 
@@ -154,14 +145,13 @@
       transform: translateX(0);
     }
     
-    /* 每個面板平分 300% 總寬度中的一份，即 1/3 (33.333%) */
     .view-panel {
       width: 33.333%; 
       padding: 10px 5px;
     }
 
     /* ==========================================================================
-       4. 時間軸樣式與點線層級修正 / Timeline Layout Styles
+       4. 【修正】時間軸骨架與交錯樣式重構 / Fixed Timeline Component Styles
        ========================================================================== */
     .timeline-container {
       position: relative;
@@ -258,7 +248,7 @@
     }
 
     /* ==========================================================================
-       5. 畫廊網格瀑布流佈局 / Masonry Gallery Grid Layout
+       5. 畫廊網格瀑布流佈局（維持原樣不變動）/ Gallery Grid Styles (Unchanged)
        ========================================================================== */
     .masonry-grid {
       display: grid;
@@ -281,7 +271,7 @@
       box-shadow: 0 10px 30px rgba(0,0,0,0.08);
     }
 
-    /* 入場淡入動畫觸發 */
+    /* 入場淡入動畫觸發權杖 */
     .sliding-canvas-wrapper.active-panel-0 .view-panel-0 .timeline-node,
     .sliding-canvas-wrapper.active-panel-1 .view-panel-1 .masonry-card,
     .sliding-canvas-wrapper.active-panel-2 .view-panel-2 .timeline-node {
@@ -295,7 +285,7 @@
       }
     }
 
-    /* 延遲動畫載入曲線 */
+    /* 【修正】完整時間軸與畫廊的級聯動畫載入曲線延遲宣告 */
     .view-panel-0 .timeline-node:nth-child(1) { animation-delay: 0.1s; }
     .view-panel-0 .timeline-node:nth-child(2) { animation-delay: 0.25s; }
     .view-panel-0 .timeline-node:nth-child(3) { animation-delay: 0.4s; }
@@ -303,6 +293,11 @@
     .view-panel-1 .masonry-card:nth-child(1) { animation-delay: 0.1s; }
     .view-panel-1 .masonry-card:nth-child(2) { animation-delay: 0.2s; }
     .view-panel-1 .masonry-card:nth-child(3) { animation-delay: 0.3s; }
+
+    /* 補齊台北分頁（Panel 2）時間軸節點的級聯淡入延遲，防止多卡片時閃現 */
+    .view-panel-2 .timeline-node:nth-child(1) { animation-delay: 0.1s; }
+    .view-panel-2 .timeline-node:nth-child(2) { animation-delay: 0.25s; }
+    .view-panel-2 .timeline-node:nth-child(3) { animation-delay: 0.4s; }
 
     /* ==========================================================================
        6. 返回頂部按鈕樣式 / Go To Top Button Styles
@@ -379,6 +374,7 @@
         
         <section class="view-panel view-panel-0">
           <div class="timeline-container">
+            
             <div class="timeline-node node-left">
               <div class="timeline-card">
                 <div class="timeline-date">January 23~27, 2025</div>
@@ -389,7 +385,8 @@
                 <p class="timeline-text">Walking down traditional alleys at dawn. The crisp winter air combined with the sight of preserved wooden machiya architecture brings a deep sense of historical continuity. / 黎明時分漫步於傳統小徑。清冽的冬夜空氣與完整保存的木造町家建築相輝映，帶來一種強烈的歷史延續感。</p>
               </div>
             </div>
-          </div>
+
+            </div>
         </section>
 
         <section class="view-panel view-panel-1">
@@ -409,6 +406,7 @@
 
         <section class="view-panel view-panel-2">
           <div class="timeline-container">
+            
             <div class="timeline-node node-left">
               <div class="timeline-card">
                 <div class="timeline-date">December 20~25, 2025</div>
@@ -419,6 +417,7 @@
                 <p class="timeline-text">Savoring hot traditional street food under the glittering city lights. The dynamic pulse of the night market stands as a perfect conclusion to the 2025 journey. / 在閃爍的城市燈火下細細品嚐熱騰騰的傳統街頭小吃。夜市裡充滿生命力的律動，為這趟 2025 年的旅程畫下了最完美的句點。</p>
               </div>
             </div>
+
           </div>
         </section>
 
