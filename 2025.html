@@ -11,7 +11,6 @@
   <script src="navbar-footer.js" defer></script>
 
   <script>
-    // 監聽網頁滾動事件
     window.onscroll = function() {
       toggleGoToTopButton();
     };
@@ -25,7 +24,6 @@
       }
     }
 
-    // 點擊按鈕執行返回最頂端動作
     function scrollToTop() {
       window.scrollTo({
         top: 0,
@@ -33,7 +31,6 @@
       });
     }
 
-    // 頁籤切換與水平畫布滑動控制
     function switchTimeline(panelIndex) {
       const wrapper = document.getElementById("canvas-wrapper");
       const indicator = document.getElementById("tab-indicator");
@@ -52,7 +49,7 @@
 
   <style>
     /* ==========================================================================
-       1. 導航欄與頁面主體分離關鍵修復 / Navbar & Body Separation Key Fixes
+       1. 導航欄與頁面主體分離 / Navbar & Body Separation
        ========================================================================== */
     html {
       scroll-behavior: smooth; 
@@ -151,7 +148,7 @@
     }
 
     /* ==========================================================================
-       4. 【修正】時間軸骨架與交錯樣式重構 / Fixed Timeline Component Styles
+       4. 【Bug 徹底修復】同步自 About Me 頁面的頂級實心時間軸樣式
        ========================================================================== */
     .timeline-container {
       position: relative;
@@ -159,6 +156,8 @@
       margin: 0 auto;
       padding: 20px 0;
     }
+    
+    /* 軸線基座，確保位於底層 (z-index: 1) */
     .timeline-container::after {
       content: '';
       position: absolute;
@@ -170,6 +169,7 @@
       margin-left: -2px;
       z-index: 1;
     }
+    
     .timeline-node {
       padding: 10px 40px;
       position: relative;
@@ -181,22 +181,27 @@
     .node-left { left: 0; }
     .node-right { left: 50%; }
     
-    /* 橘色實心圓點，高圖層 z-index: 10 牢牢壓在線的上方 */
+    /* 核心修復樣式：採用與 About Me 相同的白影遮罩，徹底阻絕軸線穿透 Bug */
     .timeline-node::after {
       content: '';
       position: absolute;
       width: 16px;
       height: 16px;
       background-color: #f97316; 
-      border: none;              
+      border: none;              /* 移除任何可能導致透明度穿透的邊框 */
       right: -8px;
       top: 30px;
       border-radius: 50%;
-      z-index: 10;               
-      transition: transform 0.3s ease;
-      box-shadow: 0 0 0 4px #ffffff; 
+      z-index: 10;               /* 最高層級，牢牢壓在直線上方 */
+      box-shadow: 0 0 0 4px #ffffff; /* 透過 4px 純白外擴陰影切斷底層線條 */
+      transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1); /* 平滑縮放動畫 */
     }
     .node-right::after { left: -8px; }
+
+    /* 當滑鼠懸浮在卡片上時，觸發圓點放大特效，並與卡片同步聯動 */
+    .timeline-node:hover::after {
+      transform: scale(1.25);
+    }
 
     .timeline-card {
       padding: 24px;
@@ -248,7 +253,7 @@
     }
 
     /* ==========================================================================
-       5. 畫廊網格瀑布流佈局（維持原樣不變動）/ Gallery Grid Styles (Unchanged)
+       5. 畫廊網格瀑布流佈局（遵照指示：完全維持原樣不作任何修改）
        ========================================================================== */
     .masonry-grid {
       display: grid;
@@ -271,7 +276,7 @@
       box-shadow: 0 10px 30px rgba(0,0,0,0.08);
     }
 
-    /* 入場淡入動畫觸發權杖 */
+    /* 入場淡入動畫觸發 */
     .sliding-canvas-wrapper.active-panel-0 .view-panel-0 .timeline-node,
     .sliding-canvas-wrapper.active-panel-1 .view-panel-1 .masonry-card,
     .sliding-canvas-wrapper.active-panel-2 .view-panel-2 .timeline-node {
@@ -285,7 +290,7 @@
       }
     }
 
-    /* 【修正】完整時間軸與畫廊的級聯動畫載入曲線延遲宣告 */
+    /* 延遲動畫載入曲線 */
     .view-panel-0 .timeline-node:nth-child(1) { animation-delay: 0.1s; }
     .view-panel-0 .timeline-node:nth-child(2) { animation-delay: 0.25s; }
     .view-panel-0 .timeline-node:nth-child(3) { animation-delay: 0.4s; }
@@ -294,13 +299,12 @@
     .view-panel-1 .masonry-card:nth-child(2) { animation-delay: 0.2s; }
     .view-panel-1 .masonry-card:nth-child(3) { animation-delay: 0.3s; }
 
-    /* 補齊台北分頁（Panel 2）時間軸節點的級聯淡入延遲，防止多卡片時閃現 */
     .view-panel-2 .timeline-node:nth-child(1) { animation-delay: 0.1s; }
     .view-panel-2 .timeline-node:nth-child(2) { animation-delay: 0.25s; }
     .view-panel-2 .timeline-node:nth-child(3) { animation-delay: 0.4s; }
 
     /* ==========================================================================
-       6. 返回頂部按鈕樣式 / Go To Top Button Styles
+       6. 返回頂部按鈕樣式
        ========================================================================== */
     .go-to-top-btn {
       position: fixed;
@@ -334,7 +338,7 @@
     }
 
     /* ==========================================================================
-       7. 窄螢幕與手機端響應式調整 / Responsive Spacing Fixes
+       7. 窄螢幕與手機端響應式調整
        ========================================================================== */
     @media screen and (max-width: 768px) {
       .tab-control-container { width: 100%; }
@@ -374,7 +378,6 @@
         
         <section class="view-panel view-panel-0">
           <div class="timeline-container">
-            
             <div class="timeline-node node-left">
               <div class="timeline-card">
                 <div class="timeline-date">January 23~27, 2025</div>
@@ -385,8 +388,7 @@
                 <p class="timeline-text">Walking down traditional alleys at dawn. The crisp winter air combined with the sight of preserved wooden machiya architecture brings a deep sense of historical continuity. / 黎明時分漫步於傳統小徑。清冽的冬夜空氣與完整保存的木造町家建築相輝映，帶來一種強烈的歷史延續感。</p>
               </div>
             </div>
-
-            </div>
+          </div>
         </section>
 
         <section class="view-panel view-panel-1">
@@ -406,7 +408,6 @@
 
         <section class="view-panel view-panel-2">
           <div class="timeline-container">
-            
             <div class="timeline-node node-left">
               <div class="timeline-card">
                 <div class="timeline-date">December 20~25, 2025</div>
@@ -417,7 +418,6 @@
                 <p class="timeline-text">Savoring hot traditional street food under the glittering city lights. The dynamic pulse of the night market stands as a perfect conclusion to the 2025 journey. / 在閃爍的城市燈火下細細品嚐熱騰騰的傳統街頭小吃。夜市裡充滿生命力的律動，為這趟 2025 年的旅程畫下了最完美的句點。</p>
               </div>
             </div>
-
           </div>
         </section>
 
