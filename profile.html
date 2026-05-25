@@ -3,19 +3,332 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Travel log</title>
-  <link rel="icon" type="image/png" href="image/webicon.png">
+  <title>About Me - Travel Log</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✨</text></svg>" />
   
-  <!-- Link the shared standalone style sheet -->
   <link rel="stylesheet" href="style.css">
   
-  <!-- Link the dynamic structure layout controller -->
   <script src="navbar-footer.js" defer></script>
+
+  <script>
+    window.onscroll = function() {
+      toggleGoToTopButton();
+    };
+
+    function toggleGoToTopButton() {
+      const btn = document.getElementById("goToTopBtn");
+      if (document.body.scrollTop > 400 || document.documentElement.scrollTop > 400) {
+        btn.classList.add("show");
+      } else {
+        btn.classList.remove("show");
+      }
+    }
+
+    function scrollToTop() {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
+  </script>
+
+  <style>
+    html {
+      scroll-behavior: smooth;
+    }
+
+    /* ==========================================================================
+       1. 頂部安全間距與大框架定義（防止 Navbar 遮擋標題）
+       ========================================================================== */
+    .about-page-container {
+      padding-top: 140px; 
+      max-width: 1200px;
+      margin: 0 auto;
+      padding-left: 20px;
+      padding-right: 20px;
+    }
+
+    /* ==========================================================================
+       2. 關於我 - 雙欄非對稱主體區塊樣式
+       ========================================================================== */
+    .profile-hero {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 50px;
+      align-items: center;
+      margin-bottom: 80px;
+    }
+
+    .profile-image-box {
+      width: 100%;
+      height: 480px;
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.06);
+    }
+
+    .profile-image-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .profile-text-box {
+      padding: 10px;
+    }
+
+    .profile-tag {
+      display: inline-block;
+      background: #ffedd5;
+      color: #ea580c;
+      padding: 8px 16px;
+      border-radius: 999px;
+      margin-bottom: 20px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .profile-text-box h2 {
+      font-size: 2.5rem;
+      color: #2c3e50;
+      margin-bottom: 24px;
+      font-weight: 600;
+    }
+
+    .profile-text-box p {
+      color: #57534e;
+      font-size: 1.05rem;
+      line-height: 1.8;
+      margin-bottom: 20px;
+    }
+
+    /* ==========================================================================
+       3. 核心學術與足跡時間軸樣式（完美重構：點壓線上、實心橘色）
+       ========================================================================== */
+    .section-title {
+      text-align: center;
+      font-size: 2rem;
+      color: #2c3e50;
+      margin-bottom: 50px;
+      position: relative;
+    }
+    
+    .section-title::after {
+      content: '';
+      display: block;
+      width: 50px;
+      height: 4px;
+      background-color: #f97316;
+      margin: 12px auto 0;
+      border-radius: 2px;
+    }
+
+    .about-timeline {
+      position: relative;
+      max-width: 900px;
+      margin: 0 auto 100px;
+      padding: 20px 0;
+    }
+
+    /* 中央軸線基座 */
+    .about-timeline::after {
+      content: '';
+      position: absolute;
+      width: 4px;
+      background-color: #fed7aa; 
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      margin-left: -2px;
+      z-index: 1;
+    }
+
+    .about-node {
+      padding: 10px 40px;
+      position: relative;
+      width: 50%;
+    }
+    .about-node-left { left: 0; text-align: right; }
+    .about-node-right { left: 50%; text-align: left; }
+
+    /* 修正核心：完全填滿的實心橘色高層級圓點，徹底覆蓋底層時間軸線 */
+    .about-node::after {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      background-color: #f97316; 
+      border: none;              
+      right: -8px;
+      top: 24px;
+      border-radius: 50%;
+      z-index: 10;               
+      box-shadow: 0 0 0 4px #ffffff; 
+      transition: transform 0.3s ease;
+    }
+    .about-node-right::after { left: -8px; }
+
+    .about-card {
+      padding: 24px;
+      background-color: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      display: inline-block;
+      width: 100%;
+      text-align: left;
+    }
+    
+    .about-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.07);
+    }
+
+    .about-date {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #f97316;
+      margin-bottom: 6px;
+      letter-spacing: 0.5px;
+    }
+
+    .about-card h3 {
+      font-size: 1.2rem;
+      color: #2c3e50;
+      margin-bottom: 10px;
+    }
+
+    .about-card p {
+      font-size: 0.95rem;
+      color: #666;
+      line-height: 1.7;
+    }
+
+    /* ==========================================================================
+       4. 返回頂部按鈕基本樣式
+       ========================================================================== */
+    .go-to-top-btn {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      z-index: 99;
+      border: none;
+      background-color: #f97316;
+      color: white;
+      cursor: pointer;
+      padding: 15px 20px;
+      border-radius: 50%;
+      font-size: 18px;
+      font-weight: bold;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+      transition: all 0.3s ease;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(10px);
+    }
+    .go-to-top-btn.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+    .go-to-top-btn:hover {
+      background-color: #ea580c;
+      transform: translateY(-3px);
+    }
+
+    /* ==========================================================================
+       5. 響應式斷點設計（防窄螢幕重疊崩壞）
+       ========================================================================== */
+    @media screen and (max-width: 900px) {
+      .profile-hero {
+        grid-template-columns: 1fr;
+        gap: 30px;
+      }
+      .profile-image-box {
+        height: 350px;
+      }
+    }
+
+    @media screen and (max-width: 768px) {
+      .about-timeline::after { left: 31px; }
+      .about-node { width: 100%; padding-left: 70px; padding-right: 20px; }
+      .about-node-left, .about-node-right { left: 0; text-align: left; }
+      .about-node::after { left: 23px; right: auto; }
+      .about-node-right::after { left: 23px; }
+    }
+
+    @media screen and (max-width: 600px) {
+      .about-page-container {
+        padding-top: 180px; /* 手機端垂直選單拉高時的防遮擋補償 */
+      }
+    }
+  </style>
 </head>
 
 <body>
-  <!-- The header container is left empty; JS will automatically populate it -->
   <header></header>
+
+  <main class="about-page-container">
+    
+    <section class="profile-hero">
+      <div class="profile-image-box">
+        <img src="https://images.unsplash.com/photo-1532187863486-abf9d39d6618?auto=format&fit=crop&w=1000&q=80" alt="Biomedical researcher portrait">
+      </div>
+      
+      <div class="profile-text-box">
+        <span class="profile-tag">Biomedical Student & Explorer</span>
+        <h2>Hello, I'm a passionate mind bridging science and global culture.</h2>
+        
+        <p>Balancing the rigorous pursuit of laboratory research with a profound fascination for regional histories, I use this travel log as a digital canvas. My academic training teaches me to observe microscopic mechanisms closely, while traveling inspires me to capture macroeconomic, cultural connections across major Asian cities. / 平衡實驗室研究的嚴謹追求與對區域歷史的深厚著迷，我將這份旅遊日誌視為數位畫布。我的學術訓練教會我近距離觀察微觀機制，而旅行則啟發我捕捉亞洲各大城市宏觀的文化連結。</p>
+        
+        <p>Every photograph taken and journal entry compiled serves as an exploration of structural beauty, whether found in a complex biological pathway or ancient temple architecture. Through this platform, I document the fluid evolution of modern cities like Osaka, Shanghai, and Taipei. / 每張拍攝的照片與彙編的日誌條目，都是對結構美學的探索，無論是在複雜的生物通路中，還是古老的寺廟建築裡。透過這個平台，我記錄了大阪、上海和台北等現代城市的流動演變。</p>
+      </div>
+    </section>
+
+    <h2 class="section-title">My Journey & Milestones</h2>
+    
+    <div class="about-timeline">
+      
+      <div class="about-node about-node-left">
+        <div class="about-card">
+          <div class="about-date">2023 - PRESENT</div>
+          <h3>Biomedical Sciences Major / 生物醫學專業探索</h3>
+          <p>Delving deep into molecular biology, clinical pharmacology, and cellular mechanics to unravel the complexities of human physiological pathways and innovative therapeutic developments. / 深入鑽研分子生物學、臨床藥理學與細胞力學，致力於解開人體生理通路的複雜奧秘，並探索創新的藥物治療發展。</p>
+        </div>
+      </div>
+
+      <div class="about-node about-node-right">
+        <div class="about-card">
+          <div class="about-date">JANUARY 2025</div>
+          <h3>Kansai Cultural Expedition / 關西文化思維考察</h3>
+          <p>Traversing the historic grid layouts of Kyoto and the commercial dynamism of Osaka, analyzing how traditional architectural preservation thrives alongside rapid technological urbanization. / 橫跨京都具歷史感的棋盤式街道與大阪的商業活力，分析傳統建築保存如何在科技化的快速都市化進程中繁榮共生。</p>
+        </div>
+      </div>
+
+      <div class="about-node about-node-left">
+        <div class="about-card">
+          <div class="about-date">JULY 2025</div>
+          <h3>Shanghai Academic Exchange / 上海學術雙向交流</h3>
+          <p>Participating in intensive university exchange programs, observing cutting-edge biotechnology hubs while exploring the dramatic, neoclassical-to-futuristic architectural skyline along the Bund. / 參與密集的大學交換計畫，在考察前沿生物科技樞紐的同時，探索外灘沿岸從新古典主義到未來主義交織的震撼城市天際線。</p>
+        </div>
+      </div>
+
+      <div class="about-node about-node-right">
+        <div class="about-card">
+          <div class="about-date">DECEMBER 2025</div>
+          <h3>Taipei Urban Pulse Study / 台北都市脈絡與人文觀察</h3>
+          <p>Documenting the rich juxtaposition of local night market ecosystem with global landmarks like Taipei 101, gathering cultural data and completing the 2025 travel chronicle trilogy. / 記錄在地夜市生態系統與台北 101 等國際地標的豐富並存，收集人文素材並正式完成 2025 年城市旅遊紀實三部曲。</p>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
   <footer></footer>
+
+  <button id="goToTopBtn" class="go-to-top-btn" onclick="scrollToTop()" title="Go to top">
+    ↑
+  </button>
 </body>
 </html>
